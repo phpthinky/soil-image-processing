@@ -1,7 +1,10 @@
 -- ============================================================
 -- Soil Fertility Analyzer - Database Setup
--- Compatible with: MySQL 5.7+ / MariaDB 10.3+
+-- Compatible with: MariaDB 10.4+ (XAMPP 8.2)
 -- ============================================================
+
+-- Drop database if exists (optional - comment out if you want to preserve data)
+-- DROP DATABASE IF EXISTS soil_analyzer;
 
 CREATE DATABASE IF NOT EXISTS soil_analyzer
     CHARACTER SET utf8mb4
@@ -19,7 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
     email       VARCHAR(100)    NOT NULL,
     password    VARCHAR(255)    NOT NULL,
     user_type   ENUM('farmer', 'professional', 'admin') NOT NULL DEFAULT 'farmer',
-    created_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP(),
 
     PRIMARY KEY (id),
     UNIQUE KEY uq_users_username (username),
@@ -47,7 +50,7 @@ CREATE TABLE IF NOT EXISTS crops (
     -- Potassium level (ppm)
     min_potassium   DECIMAL(6,2)    NOT NULL DEFAULT 0.00,
     max_potassium   DECIMAL(6,2)    NOT NULL DEFAULT 100.00,
-    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP(),
 
     PRIMARY KEY (id),
     UNIQUE KEY uq_crops_name (name)
@@ -90,8 +93,8 @@ CREATE TABLE IF NOT EXISTS soil_samples (
     fertility_score     TINYINT UNSIGNED DEFAULT NULL,
 
     -- Timestamps
-    analyzed_at         TIMESTAMP       DEFAULT NULL,
-    created_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    analyzed_at         TIMESTAMP       NULL DEFAULT NULL,
+    created_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP(),
 
     PRIMARY KEY (id),
     CONSTRAINT fk_soil_samples_user
@@ -193,3 +196,8 @@ INSERT INTO crops (name, description, min_ph, max_ph, min_nitrogen, max_nitrogen
 ('Coconut',
  'Multipurpose palm; tolerates a wide range of soils; prefers sandy loam.',
  5.5, 8.0,  15.00, 45.00,  10.00, 30.00,  20.00, 60.00);
+
+-- ============================================================
+-- VERIFICATION: Show created tables
+-- ============================================================
+SHOW TABLES;
