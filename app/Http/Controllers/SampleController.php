@@ -116,8 +116,9 @@ class SampleController extends Controller
         }
 
         $aiEnabled = !empty(env('ANTHROPIC_API_KEY'));
+        $allCrops  = Crop::orderBy('name')->get();
 
-        return view('samples.show', compact('sample', 'readings', 'recommendations', 'fertRec', 'aiEnabled'));
+        return view('samples.show', compact('sample', 'readings', 'recommendations', 'fertRec', 'aiEnabled', 'allCrops'));
     }
 
     // Show individual test readings report

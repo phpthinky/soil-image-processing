@@ -395,31 +395,9 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                         <label class="form-label fw-semibold">Crop</label>
                         <select class="form-select" id="cropSelect">
                             <option value="">— Select a crop —</option>
-                            <optgroup label="Vegetables">
-                                <option value="ampalaya">Ampalaya (Bitter Gourd)</option>
-                                <option value="tomato">Tomato</option>
-                                <option value="eggplant">Eggplant</option>
-                                <option value="pechay">Pechay</option>
-                                <option value="cabbage">Cabbage</option>
-                                <option value="onion">Onion</option>
-                                <option value="garlic">Garlic</option>
-                            </optgroup>
-                            <optgroup label="Root Crops & Grains">
-                                <option value="rice">Rice</option>
-                                <option value="corn">Corn</option>
-                                <option value="potato">Potato</option>
-                                <option value="sweet_potato">Sweet Potato</option>
-                                <option value="cassava">Cassava</option>
-                                <option value="sugarcane">Sugarcane</option>
-                            </optgroup>
-                            <optgroup label="Fruits & Tree Crops">
-                                <option value="banana">Banana</option>
-                                <option value="mango">Mango</option>
-                                <option value="citrus">Citrus</option>
-                                <option value="coffee">Coffee</option>
-                                <option value="cacao">Cacao</option>
-                                <option value="coconut">Coconut</option>
-                            </optgroup>
+                            @foreach($allCrops as $crop)
+                            <option value="{{ $crop->id }}">{{ $crop->name }}</option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -704,27 +682,18 @@ function captureTest(parameter, testNumber) {
 @if($sample->isAnalyzed())
 <script>
 // ── Fertilizer Calculator ──────────────────────────────────────────────────
-// Crop NPK requirements in kg/ha (N, P2O5, K2O) — BSWM/PhilRice reference
+// Crop NPK targets (ppm) sourced from the Crop seeder / database.
+// Target = max_nitrogen/phosphorus/potassium (upper bound of optimal soil range).
+// Deficit = max(0, target_ppm - soil_ppm); converted to kg/ha via ×2.
 const CROP_NPK = {
-    ampalaya:         { n: 150, p: 80,  k: 120, label: 'Ampalaya (Bitter Gourd)' },
-    tomato:           { n: 200, p: 100, k: 180, label: 'Tomato' },
-    eggplant:         { n: 180, p: 90,  k: 160, label: 'Eggplant' },
-    pechay:           { n: 120, p: 60,  k: 80,  label: 'Pechay' },
-    cabbage:          { n: 160, p: 80,  k: 140, label: 'Cabbage' },
-    onion:            { n: 100, p: 60,  k: 80,  label: 'Onion' },
-    garlic:           { n:  80, p: 40,  k:  60, label: 'Garlic' },
-    rice:             { n:  90, p: 40,  k:  60, label: 'Rice' },
-    corn:             { n: 150, p: 60,  k:  80, label: 'Corn' },
-    potato:           { n: 200, p: 120, k: 200, label: 'Potato' },
-    sweet_potato:     { n:  80, p: 40,  k: 100, label: 'Sweet Potato' },
-    cassava:          { n:  60, p: 30,  k:  80, label: 'Cassava' },
-    sugarcane:        { n: 200, p: 80,  k: 160, label: 'Sugarcane' },
-    banana:           { n: 180, p: 60,  k: 300, label: 'Banana' },
-    mango:            { n: 100, p: 50,  k: 120, label: 'Mango' },
-    citrus:           { n: 120, p: 60,  k: 100, label: 'Citrus' },
-    coffee:           { n: 100, p: 50,  k:  80, label: 'Coffee' },
-    cacao:            { n:  80, p: 40,  k: 100, label: 'Cacao' },
-    coconut:          { n: 120, p: 60,  k: 200, label: 'Coconut' },
+    @foreach($allCrops as $crop)
+    {{ $crop->id }}: {
+        n: {{ (float)$crop->max_nitrogen }},
+        p: {{ (float)$crop->max_phosphorus }},
+        k: {{ (float)$crop->max_potassium }},
+        label: @json($crop->name)
+    },
+    @endforeach
 };
 
 // Fertilizer nutrient analysis (fraction) and supplemental fertilizers needed
@@ -753,15 +722,16 @@ function calculateFertilizer() {
     const fert  = FERT_TYPE[fType];
     const BAG   = 50; // kg per bag
 
-    // Convert soil ppm to kg/ha (1 ppm ≈ 2 kg/ha at 0–15 cm depth)
-    const soilN = SOIL_N * 2;
-    const soilP = SOIL_P * 2;
-    const soilK = SOIL_K * 2;
-
-    // Nutrient deficit per hectare (kg/ha)
-    const defN = Math.max(0, req.n - soilN);
-    const defP = Math.max(0, req.p - soilP);
-    const defK = Math.max(0, req.k - soilK);
+    // req.n/p/k are in ppm (from DB). Soil readings are also ppm.
+    // Deficit in ppm → convert to kg/ha via ×2 (1 ppm ≈ 2 kg/ha at 0–15 cm depth).
+    const defNppm = Math.max(0, req.n - SOIL_N);
+    const defPppm = Math.max(0, req.p - SOIL_P);
+    const defKppm = Math.max(0, req.k - SOIL_K);
+    const defN = defNppm * 2;
+    const defP = defPppm * 2;
+    const defK = defKppm * 2;
+    // For the deficit table, keep ppm values for display
+    const soilN = SOIL_N, soilP = SOIL_P, soilK = SOIL_K;
 
     // Bags of primary fertilizer needed (per ha) — cover the most limiting nutrient
     let primaryBagsHa = 0, limitedBy = '';
@@ -827,8 +797,9 @@ function calculateFertilizer() {
             <table class="table table-bordered table-sm align-middle mb-0">
                 <thead class="table-light"><tr>
                     <th>Nutrient</th>
-                    <th class="text-center">Crop Need (kg/ha)</th>
-                    <th class="text-center">Available in Soil (kg/ha)</th>
+                    <th class="text-center">Crop Target (ppm)</th>
+                    <th class="text-center">Current Soil (ppm)</th>
+                    <th class="text-center">Deficit (ppm)</th>
                     <th class="text-center">Deficit (kg/ha)</th>
                 </tr></thead>
                 <tbody>
@@ -836,19 +807,22 @@ function calculateFertilizer() {
                         <td>Nitrogen (N)</td>
                         <td class="text-center">${req.n}</td>
                         <td class="text-center">${fmt(soilN)}</td>
-                        <td class="text-center fw-bold ${defN > 0 ? 'text-danger' : 'text-success'}">${fmt(defN)}</td>
+                        <td class="text-center fw-bold ${defNppm > 0 ? 'text-danger' : 'text-success'}">${fmt(defNppm)}</td>
+                        <td class="text-center text-muted">${fmt(defN)}</td>
                     </tr>
                     <tr>
                         <td>Phosphorus (P)</td>
                         <td class="text-center">${req.p}</td>
                         <td class="text-center">${fmt(soilP)}</td>
-                        <td class="text-center fw-bold ${defP > 0 ? 'text-danger' : 'text-success'}">${fmt(defP)}</td>
+                        <td class="text-center fw-bold ${defPppm > 0 ? 'text-danger' : 'text-success'}">${fmt(defPppm)}</td>
+                        <td class="text-center text-muted">${fmt(defP)}</td>
                     </tr>
                     <tr>
                         <td>Potassium (K)</td>
                         <td class="text-center">${req.k}</td>
                         <td class="text-center">${fmt(soilK)}</td>
-                        <td class="text-center fw-bold ${defK > 0 ? 'text-danger' : 'text-success'}">${fmt(defK)}</td>
+                        <td class="text-center fw-bold ${defKppm > 0 ? 'text-danger' : 'text-success'}">${fmt(defKppm)}</td>
+                        <td class="text-center text-muted">${fmt(defK)}</td>
                     </tr>
                 </tbody>
             </table>
