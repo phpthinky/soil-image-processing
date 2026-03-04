@@ -22,7 +22,7 @@ class PhTestController extends Controller
 
     public function show(SoilSample $sample)
     {
-        $this->authorize($sample);
+        $this->authorizeAccess($sample);
         $phTest = $sample->phTest ?? new PhTest(['status' => 'step1']);
         return view('ph-test.show', compact('sample', 'phTest'));
     }
@@ -41,7 +41,7 @@ class PhTestController extends Controller
         ]);
 
         $sample = SoilSample::findOrFail($validated['sample_id']);
-        $this->authorize($sample);
+        $this->authorizeAccess($sample);
 
         $colorHex     = strtoupper($validated['color_hex']);
         $step         = (int) $validated['step'];
@@ -208,7 +208,7 @@ class PhTestController extends Controller
 
     public function reset(SoilSample $sample)
     {
-        $this->authorize($sample);
+        $this->authorizeAccess($sample);
         $sample->phTest?->delete();
 
         // Clear pH readings from soil_color_readings
@@ -229,7 +229,7 @@ class PhTestController extends Controller
 
     // ─────────────────────────────────────────────────────────────
 
-    private function authorize(SoilSample $sample): void
+    private function authorizeAccess(SoilSample $sample): void
     {
         $user = Auth::user();
         if (!$user->isAdmin() && $sample->user_id !== $user->id) {
