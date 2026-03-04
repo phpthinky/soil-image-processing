@@ -40,9 +40,6 @@ body { background: linear-gradient(135deg, #4caf50, #2e7d32); min-height: 100vh;
                 </div>
                 <button type="submit" class="btn btn-success w-100"><i class="fas fa-sign-in-alt me-2"></i>Login</button>
             </form>
-            <div class="text-center mt-3">
-                <p class="mb-0">Don't have an account? <a href="{{ route('register') }}" class="text-success fw-bold">Register here</a></p>
-            </div>
         </div>
     </div>
 </div>
