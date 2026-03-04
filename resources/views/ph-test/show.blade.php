@@ -104,7 +104,7 @@ $current     = $statusOrder[$phTest->status] ?? 0;
                 <li>Mix well by tapping into palm for <strong>1 minute</strong>.</li>
                 <li>Let stand for <strong>2 minutes</strong>, then mix again for 1 minute.</li>
                 <li>Let stand for <strong>5 minutes</strong>.</li>
-                <li>Incline the test tube against a white background and match color with the CPR chart.</li>
+                <li>Insert the test tube into the image capturing box for color capture.</li>
                 <li>Take <strong>3 captures</strong> for accuracy.</li>
             </ol>
         </div>
@@ -308,7 +308,7 @@ $timerSec = str_pad($timer % 60, 2, '0', STR_PAD_LEFT);
                 <li>Mix well by tapping into palm for <strong>1 minute</strong>.</li>
                 <li>Let stand for <strong>2 minutes</strong>, then mix again for 1 minute.</li>
                 <li>Let stand for <strong>5 minutes</strong>.</li>
-                <li>Incline against a white background and match the color with the {{ $solution }} chart.</li>
+                <li>Insert the test tube into the image capturing box for color capture.</li>
                 <li>Take <strong>3 captures</strong> for accuracy. (If color is between two values, the average is recorded.)</li>
             </ol>
         </div>
