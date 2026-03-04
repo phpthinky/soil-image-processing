@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class SoilSample extends Model
 {
     protected $fillable = [
-        'user_id', 'sample_name', 'location', 'sample_date',
+        'user_id', 'farmer_id', 'sample_name', 'location', 'sample_date',
         'farmer_name', 'address', 'date_tested', 'color_hex',
         'ph_color_hex', 'nitrogen_color_hex', 'phosphorus_color_hex', 'potassium_color_hex',
         'ph_level', 'nitrogen_level', 'phosphorus_level', 'potassium_level',
@@ -33,6 +33,11 @@ class SoilSample extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function farmer(): BelongsTo
+    {
+        return $this->belongsTo(Farmer::class);
     }
 
     public function colorReadings(): HasMany
