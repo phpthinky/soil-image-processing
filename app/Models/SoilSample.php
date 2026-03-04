@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SoilSample extends Model
 {
@@ -38,6 +39,11 @@ class SoilSample extends Model
     public function farmer(): BelongsTo
     {
         return $this->belongsTo(Farmer::class);
+    }
+
+    public function phTest(): HasOne
+    {
+        return $this->hasOne(PhTest::class, 'sample_id');
     }
 
     public function colorReadings(): HasMany

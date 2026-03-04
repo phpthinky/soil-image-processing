@@ -9,6 +9,7 @@ use App\Http\Controllers\AiRecommendationController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\FarmerController;
+use App\Http\Controllers\PhTestController;
 use Illuminate\Support\Facades\Route;
 
 // Redirect root to login or dashboard
@@ -42,8 +43,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/samples/{sample}/report', [SampleController::class, 'report'])->name('samples.report');
     Route::post('/samples/{sample}/reset', [SampleController::class, 'reset'])->name('samples.reset');
 
+    // pH test workflow (separate 2-step page)
+    Route::get('/samples/{sample}/ph-test',       [PhTestController::class, 'show'])->name('ph-test.show');
+    Route::post('/samples/{sample}/ph-test/reset',[PhTestController::class, 'reset'])->name('ph-test.reset');
+
     // API endpoints (called by JavaScript)
     Route::post('/api/color-readings',      [ColorReadingController::class,    'store'])->name('color-readings.store');
+    Route::post('/api/ph-test/capture',     [PhTestController::class,          'capture'])->name('ph-test.capture');
     Route::post('/api/ai-recommendation',   [AiRecommendationController::class,'generate'])->name('ai-recommendation.generate');
 
     // Farmers (CRUD + CSV import + JSON for autocomplete)

@@ -167,6 +167,7 @@ else                     $activeTab = 3;
                                     <td>
                                         <i class="fas {{ $meta['icon'] }} me-1 text-success"></i>
                                         <strong>{{ $meta['label'] }}</strong>
+                                        @if($key === 'ph')<span class="badge bg-info ms-1" style="font-size:.6rem;">2-Step Test</span>@endif
                                     </td>
                                     <td class="text-center">
                                         @if($rd)
@@ -178,7 +179,25 @@ else                     $activeTab = 3;
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        @if($rd)
+                                        @if($key === 'ph')
+                                            {{-- pH uses the dedicated 2-step test page --}}
+                                            @php $phDone = ($ph_count >= $testNum); @endphp
+                                            @if($phDone)
+                                                <div class="text-success small mb-1">
+                                                    <i class="fas fa-check"></i>
+                                                    pH {{ $rd ? number_format($rd->computed_value, 2) : '—' }}
+                                                </div>
+                                                <a href="{{ route('ph-test.show', $sample) }}"
+                                                   class="btn btn-outline-secondary btn-sm py-0 px-2">
+                                                    <i class="fas fa-redo" style="font-size:.75rem;"></i> Re-test
+                                                </a>
+                                            @else
+                                                <a href="{{ route('ph-test.show', $sample) }}"
+                                                   class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-flask me-1"></i>pH Test
+                                                </a>
+                                            @endif
+                                        @elseif($rd)
                                             <div class="text-success small mb-1">
                                                 <i class="fas fa-check"></i>
                                                 {{ number_format($rd->computed_value, 2) }} {{ $meta['unit'] }}
