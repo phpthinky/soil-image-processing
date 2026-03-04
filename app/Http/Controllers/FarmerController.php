@@ -123,7 +123,7 @@ class FarmerController extends Controller
                 ]);
                 $imported++;
             } catch (\Throwable $e) {
-                $errors[] = "Row for "{$name}": " . $e->getMessage();
+                $errors[] = "Row for ".$name.": " . $e->getMessage();
             }
         }
 
