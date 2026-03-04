@@ -3,15 +3,6 @@
 -- Compatible with: MariaDB 10.4+ (XAMPP 8.2)
 -- ============================================================
 
--- Drop database if exists (optional - comment out if you want to preserve data)
--- DROP DATABASE IF EXISTS soil_analyzer;
-
-CREATE DATABASE IF NOT EXISTS soil_analyzer
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-
-USE soil_analyzer;
-
 -- ============================================================
 -- TABLE: users
 -- Stores all system users (farmers, professionals, admins)

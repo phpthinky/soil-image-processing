@@ -1,0 +1,22 @@
+RewriteEngine On
+
+# Handle root URL (https://democodes.online/)
+RewriteRule ^$ public/index.php [L]
+
+# Handle all other URLs
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/index.php?url=$1 [L,QSA]
+
+# Security
+Options -Indexes
+
+# Block sensitive folders
+RewriteRule ^app/ - [F,L]
+RewriteRule ^database/ - [F,L]
+
+# Block sensitive files
+<FilesMatch "\.(sql|db|log|ini|conf|bak|env|htaccess)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
