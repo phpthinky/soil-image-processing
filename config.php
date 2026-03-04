@@ -99,9 +99,85 @@ function rgbToLab(int $r, int $g, int $b): array {
 }
 
 /**
- * CIE76 Delta-E — perceptual color distance between two Lab values.
- * Values < 2 are imperceptible; > 10 are clearly different colors.
+ * CIEDE2000 Delta-E — the most accurate perceptual color distance.
+ * Recommended by research for colorimetric strip analysis (ACS Omega 2021).
+ * Better than CIE76 for saturated colors and the blue region used by
+ * molybdenum-blue phosphorus tests.
+ * Values < 2 are just-noticeable; < 3 is considered a match for strip reading.
  */
+function deltaE2000(array $lab1, array $lab2): float {
+    $L1 = $lab1['L']; $a1 = $lab1['a']; $b1 = $lab1['b'];
+    $L2 = $lab2['L']; $a2 = $lab2['a']; $b2 = $lab2['b'];
+
+    $kL = 1.0; $kC = 1.0; $kH = 1.0;
+
+    $C1ab = sqrt($a1 ** 2 + $b1 ** 2);
+    $C2ab = sqrt($a2 ** 2 + $b2 ** 2);
+    $Cab  = ($C1ab + $C2ab) / 2.0;
+    $Cab7 = $Cab ** 7;
+    $G    = 0.5 * (1.0 - sqrt($Cab7 / ($Cab7 + 25.0 ** 7)));
+
+    $a1p  = $a1 * (1.0 + $G);
+    $a2p  = $a2 * (1.0 + $G);
+    $C1p  = sqrt($a1p ** 2 + $b1 ** 2);
+    $C2p  = sqrt($a2p ** 2 + $b2 ** 2);
+
+    $h1p  = ($b1 == 0 && $a1p == 0) ? 0.0 : atan2($b1, $a1p) * 180.0 / M_PI;
+    if ($h1p < 0) $h1p += 360.0;
+    $h2p  = ($b2 == 0 && $a2p == 0) ? 0.0 : atan2($b2, $a2p) * 180.0 / M_PI;
+    if ($h2p < 0) $h2p += 360.0;
+
+    $dLp  = $L2 - $L1;
+    $dCp  = $C2p - $C1p;
+
+    if ($C1p * $C2p == 0.0) {
+        $dhp = 0.0;
+    } elseif (abs($h2p - $h1p) <= 180.0) {
+        $dhp = $h2p - $h1p;
+    } elseif ($h2p - $h1p > 180.0) {
+        $dhp = $h2p - $h1p - 360.0;
+    } else {
+        $dhp = $h2p - $h1p + 360.0;
+    }
+    $dHp = 2.0 * sqrt($C1p * $C2p) * sin(deg2rad($dhp / 2.0));
+
+    $Lbp  = ($L1 + $L2) / 2.0;
+    $Cbp  = ($C1p + $C2p) / 2.0;
+
+    if ($C1p * $C2p == 0.0) {
+        $Hbp = $h1p + $h2p;
+    } elseif (abs($h1p - $h2p) <= 180.0) {
+        $Hbp = ($h1p + $h2p) / 2.0;
+    } elseif ($h1p + $h2p < 360.0) {
+        $Hbp = ($h1p + $h2p + 360.0) / 2.0;
+    } else {
+        $Hbp = ($h1p + $h2p - 360.0) / 2.0;
+    }
+
+    $T  = 1.0
+        - 0.17 * cos(deg2rad($Hbp - 30.0))
+        + 0.24 * cos(deg2rad(2.0 * $Hbp))
+        + 0.32 * cos(deg2rad(3.0 * $Hbp + 6.0))
+        - 0.20 * cos(deg2rad(4.0 * $Hbp - 63.0));
+
+    $SL = 1.0 + 0.015 * ($Lbp - 50.0) ** 2 / sqrt(20.0 + ($Lbp - 50.0) ** 2);
+    $SC = 1.0 + 0.045 * $Cbp;
+    $SH = 1.0 + 0.015 * $Cbp * $T;
+
+    $Cbp7    = $Cbp ** 7;
+    $RC      = 2.0 * sqrt($Cbp7 / ($Cbp7 + 25.0 ** 7));
+    $dTheta  = 30.0 * exp(-(($Hbp - 275.0) / 25.0) ** 2);
+    $RT      = -$RC * sin(deg2rad(2.0 * $dTheta));
+
+    return sqrt(
+        ($dLp  / ($kL * $SL)) ** 2 +
+        ($dCp  / ($kC * $SC)) ** 2 +
+        ($dHp  / ($kH * $SH)) ** 2 +
+        $RT * ($dCp / ($kC * $SC)) * ($dHp / ($kH * $SH))
+    );
+}
+
+// Keep CIE76 as a fast fallback
 function deltaE76(array $lab1, array $lab2): float {
     return sqrt(
         ($lab1['L'] - $lab2['L']) ** 2 +
@@ -112,12 +188,11 @@ function deltaE76(array $lab1, array $lab2): float {
 
 /**
  * Given a captured hex color and a reference chart (hex → value),
- * returns an interpolated reading using inverse-distance weighting
- * in CIE Lab color space.
+ * returns an interpolated reading using CIEDE2000 inverse-distance
+ * weighted interpolation in CIE Lab color space.
  *
- * This replaces the old hue-bracket approach with actual color
- * science: the two nearest reference colors are found and the
- * final value is a distance-weighted blend.
+ * Research confirms: CIELAB + CIEDE2000 gives the best accuracy for
+ * colorimetric strip analysis (ACS Omega 2021, 96.6% classification).
  */
 function matchColorToValue(string $capturedHex, array $chart): float {
     $capturedRgb = hexToRgb($capturedHex);
@@ -127,7 +202,7 @@ function matchColorToValue(string $capturedHex, array $chart): float {
     foreach ($chart as $refHex => $refValue) {
         $refRgb      = hexToRgb($refHex);
         $refLab      = rgbToLab($refRgb['r'], $refRgb['g'], $refRgb['b']);
-        $distances[] = ['value' => $refValue, 'de' => deltaE76($capturedLab, $refLab)];
+        $distances[] = ['value' => $refValue, 'de' => deltaE2000($capturedLab, $refLab)];
     }
 
     // Sort by distance ascending
@@ -186,22 +261,27 @@ define('PH_COLOR_CHART', [
 ]);
 
 /**
- * Nitrogen (NO3-N) test strip reference chart.
- * Method: Cadmium-reduction + colorimetric (nitrate → nitrite)
- * Color scale: Pale yellow (low) → orange-red (high)
+ * Nitrogen test strip reference chart.
+ * Method: BSWM STK uses indophenol blue or diphenylamine-type reagent.
+ * Color scale: Colorless/pale → PINK → PURPLE (darker = higher N)
+ * This is NOT a yellow scale — confirmed by BSWM STK documentation.
  * Range: 0–80 ppm
+ *
+ * NOTE: Once you receive actual scanned images of the BSWM STK color
+ * chart from the agriculture office, replace these hex values with
+ * values extracted from the scanned chart using an eyedropper tool.
  */
 define('NITROGEN_COLOR_CHART', [
-    '#FEFEE8' =>  2.0,  // Near-white cream  — very low
-    '#FFFAAA' =>  8.0,  // Pale yellow
-    '#FFF176' => 15.0,  // Light yellow
-    '#FFE033' => 22.0,  // Yellow
-    '#FFD000' => 30.0,  // Golden yellow
-    '#FFAA00' => 40.0,  // Orange
-    '#FF8800' => 50.0,  // Dark orange
-    '#FF5500' => 60.0,  // Orange-red
-    '#CC2200' => 70.0,  // Red-orange     — very high
-    '#991100' => 80.0,  // Dark red
+    '#FFF5F5' =>  2.0,  // Near-white / colorless   — very low N
+    '#FFE0E8' =>  8.0,  // Faint pink blush
+    '#FFB3C6' => 15.0,  // Light pink
+    '#FF80A0' => 22.0,  // Pink
+    '#FF4D80' => 30.0,  // Medium pink
+    '#E6006B' => 40.0,  // Hot pink
+    '#CC0066' => 50.0,  // Deep pink-magenta
+    '#990066' => 60.0,  // Purple-pink
+    '#660066' => 70.0,  // Purple            — high N
+    '#440044' => 80.0,  // Dark purple        — very high N
 ]);
 
 /**
@@ -225,21 +305,28 @@ define('PHOSPHORUS_COLOR_CHART', [
 
 /**
  * Potassium (K) test strip reference chart.
- * Method: Sodium tetraphenylborate turbidity or colorimetric
- * Color scale: Pale (low) → orange/amber (high)
+ * Method: BSWM STK uses TURBIDIMETRIC method (not true colorimetric).
+ * Color scale: Clear water → cloudy → milky white / opaque gray
+ * Low K = clear; High K = turbid/cloudy precipitate
+ * The "color" captured is essentially a whiteness/cloudiness scale.
  * Range: 0–120 ppm
+ *
+ * NOTE: Because this is turbidity-based, the captured hex will trend
+ * from near-transparent (dark background shows through) to opaque
+ * white-gray. For best results, photograph against a BLACK background
+ * so that turbidity is apparent as reduction in darkness.
+ * Replace these values with actual BSWM chart scans when available.
  */
 define('POTASSIUM_COLOR_CHART', [
-    '#FAFAFA' =>  5.0,  // Near-clear       — very low
-    '#FFF9C4' => 15.0,  // Cream
-    '#FFE082' => 25.0,  // Light yellow
-    '#FFD54F' => 35.0,  // Yellow
-    '#FFB300' => 50.0,  // Amber
-    '#FF9800' => 65.0,  // Orange
-    '#FF7043' => 80.0,  // Orange-red
-    '#F4511E' => 95.0,  // Red-orange
-    '#BF360C' => 110.0, // Dark red-orange  — high
-    '#7F1A00' => 120.0, // Brown-red        — very high
+    '#0A0A0A' =>  5.0,  // Nearly transparent (black bg shows)  — very low
+    '#2A2A2A' => 15.0,  // Very slightly turbid
+    '#555555' => 25.0,  // Lightly turbid gray
+    '#808080' => 40.0,  // Medium turbid / mid-gray
+    '#AAAAAA' => 60.0,  // Turbid — light gray
+    '#C8C8C8' => 80.0,  // Quite turbid / light cloudy
+    '#DEDEDE' => 95.0,  // Very turbid / near-white cloudy
+    '#F0F0F0' => 110.0, // Opaque milky              — high K
+    '#FAFAFA' => 120.0, // Fully opaque white         — very high K
 ]);
 
 // ── Public conversion API (used throughout the app) ─────────
