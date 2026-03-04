@@ -367,7 +367,7 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                 </div>
             </div>
         </div>
-        <ul class="list-group list-group-flush">
+        <ul class="list-group list-group-flush mb-4">
             @foreach($fertRec['notes'] as $note)
             <li class="list-group-item py-1">
                 <i class="fas fa-circle-info text-warning me-2"></i>
@@ -375,6 +375,137 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
             </li>
             @endforeach
         </ul>
+
+        {{-- ── Crop-Specific Fertilizer Calculator ─────────────────────── --}}
+        <hr class="my-3">
+        <h6 class="fw-bold mb-3">
+            <i class="fas fa-calculator me-2 text-success"></i>
+            Crop-Specific Fertilizer Calculator
+            <small class="fw-normal text-muted ms-2" style="font-size:.75rem;">
+                Adjusts requirements by crop and farm area
+            </small>
+        </h6>
+
+        <form id="fertilizerForm" onsubmit="return false;">
+            <div class="row g-3">
+
+                {{-- Left: inputs --}}
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Crop</label>
+                        <select class="form-select" id="cropSelect">
+                            <option value="">— Select a crop —</option>
+                            <optgroup label="Vegetables">
+                                <option value="ampalaya">Ampalaya (Bitter Gourd)</option>
+                                <option value="tomato">Tomato</option>
+                                <option value="eggplant">Eggplant</option>
+                                <option value="pechay">Pechay</option>
+                                <option value="cabbage">Cabbage</option>
+                                <option value="onion">Onion</option>
+                                <option value="garlic">Garlic</option>
+                            </optgroup>
+                            <optgroup label="Root Crops & Grains">
+                                <option value="rice">Rice</option>
+                                <option value="corn">Corn</option>
+                                <option value="potato">Potato</option>
+                                <option value="sweet_potato">Sweet Potato</option>
+                                <option value="cassava">Cassava</option>
+                                <option value="sugarcane">Sugarcane</option>
+                            </optgroup>
+                            <optgroup label="Fruits & Tree Crops">
+                                <option value="banana">Banana</option>
+                                <option value="mango">Mango</option>
+                                <option value="citrus">Citrus</option>
+                                <option value="coffee">Coffee</option>
+                                <option value="cacao">Cacao</option>
+                                <option value="coconut">Coconut</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Farm Area (hectares)</label>
+                        <input type="number" class="form-control" id="areaSize"
+                               step="0.01" min="0.01" value="1.00">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Primary Fertilizer Type</label>
+                        <select class="form-select" id="fertilizerType">
+                            <option value="urea">Urea (46-0-0)</option>
+                            <option value="complete">Complete (14-14-14)</option>
+                            <option value="ammonium_sulfate">Ammonium Sulfate (21-0-0)</option>
+                            <option value="dap">DAP (18-46-0)</option>
+                            <option value="mop">Muriate of Potash (0-0-60)</option>
+                            <option value="organic">Organic Fertilizer (~2-1.5-1)</option>
+                        </select>
+                    </div>
+
+                    <button type="button" class="btn btn-success w-100" onclick="calculateFertilizer()">
+                        <i class="fas fa-calculator me-1"></i> Calculate Fertilizer Requirement
+                    </button>
+                </div>
+
+                {{-- Right: current soil status --}}
+                <div class="col-md-6">
+                    <p class="fw-semibold mb-2">Current Soil Status</p>
+                    <table class="table table-bordered table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Parameter</th>
+                                <th class="text-center">Value</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php
+                            $calcParams = [
+                                ['key'=>'ph',         'label'=>'Soil pH',   'value'=>$sample->ph_level,         'unit'=>''],
+                                ['key'=>'nitrogen',   'label'=>'Nitrogen',  'value'=>$sample->nitrogen_level,   'unit'=>' ppm'],
+                                ['key'=>'phosphorus', 'label'=>'Phosphorus','value'=>$sample->phosphorus_level, 'unit'=>' ppm'],
+                                ['key'=>'potassium',  'label'=>'Potassium', 'value'=>$sample->potassium_level,  'unit'=>' ppm'],
+                            ];
+                            @endphp
+                            @foreach($calcParams as $cp)
+                            @php
+                            $st   = $fertilizerSvc->getNutrientStatus($cp['key'], (float)$cp['value']);
+                            $stBg = match($st) {
+                                'Acidic','Low' => 'danger',
+                                'Medium'       => 'warning',
+                                'Optimal'      => 'success',
+                                'Alkaline'     => 'info',
+                                'High'         => 'primary',
+                                default        => 'secondary',
+                            };
+                            @endphp
+                            <tr>
+                                <td>{{ $cp['label'] }}</td>
+                                <td class="text-center fw-bold">{{ number_format($cp['value'],1) }}{{ $cp['unit'] }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-{{ $stBg }}">{{ $st }}</span>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    <div class="mt-2 p-2 rounded bg-light small text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Calculator uses 1 ppm ≈ 2 kg/ha soil nutrient availability (0–15 cm depth).
+                        Bags are 50 kg each.
+                    </div>
+                </div>
+            </div>{{-- /row --}}
+
+            {{-- Results panel (hidden until Calculate is clicked) --}}
+            <div id="calcResults" class="d-none mt-4">
+                <hr class="mb-3">
+                <h6 class="fw-bold mb-3" id="calcResultsTitle"></h6>
+                <div class="row g-3" id="calcResultsCards"></div>
+                <div class="alert mt-3 mb-0" id="calcResultsAlert"></div>
+            </div>
+
+        </form>
+
     </div>
 </div>
 @endif
@@ -572,6 +703,190 @@ function captureTest(parameter, testNumber) {
 
 @if($sample->isAnalyzed())
 <script>
+// ── Fertilizer Calculator ──────────────────────────────────────────────────
+// Crop NPK requirements in kg/ha (N, P2O5, K2O) — BSWM/PhilRice reference
+const CROP_NPK = {
+    ampalaya:         { n: 150, p: 80,  k: 120, label: 'Ampalaya (Bitter Gourd)' },
+    tomato:           { n: 200, p: 100, k: 180, label: 'Tomato' },
+    eggplant:         { n: 180, p: 90,  k: 160, label: 'Eggplant' },
+    pechay:           { n: 120, p: 60,  k: 80,  label: 'Pechay' },
+    cabbage:          { n: 160, p: 80,  k: 140, label: 'Cabbage' },
+    onion:            { n: 100, p: 60,  k: 80,  label: 'Onion' },
+    garlic:           { n:  80, p: 40,  k:  60, label: 'Garlic' },
+    rice:             { n:  90, p: 40,  k:  60, label: 'Rice' },
+    corn:             { n: 150, p: 60,  k:  80, label: 'Corn' },
+    potato:           { n: 200, p: 120, k: 200, label: 'Potato' },
+    sweet_potato:     { n:  80, p: 40,  k: 100, label: 'Sweet Potato' },
+    cassava:          { n:  60, p: 30,  k:  80, label: 'Cassava' },
+    sugarcane:        { n: 200, p: 80,  k: 160, label: 'Sugarcane' },
+    banana:           { n: 180, p: 60,  k: 300, label: 'Banana' },
+    mango:            { n: 100, p: 50,  k: 120, label: 'Mango' },
+    citrus:           { n: 120, p: 60,  k: 100, label: 'Citrus' },
+    coffee:           { n: 100, p: 50,  k:  80, label: 'Coffee' },
+    cacao:            { n:  80, p: 40,  k: 100, label: 'Cacao' },
+    coconut:          { n: 120, p: 60,  k: 200, label: 'Coconut' },
+};
+
+// Fertilizer nutrient analysis (fraction) and supplemental fertilizers needed
+const FERT_TYPE = {
+    urea:             { n: 0.46, p: 0,    k: 0,    name: 'Urea (46-0-0)',              suppP: 'TSP (0-46-0)', suppK: 'MOP (0-0-60)' },
+    complete:         { n: 0.14, p: 0.14, k: 0.14, name: 'Complete (14-14-14)',        suppP: null,           suppK: null },
+    ammonium_sulfate: { n: 0.21, p: 0,    k: 0,    name: 'Ammonium Sulfate (21-0-0)', suppP: 'TSP (0-46-0)', suppK: 'MOP (0-0-60)' },
+    dap:              { n: 0.18, p: 0.46, k: 0,    name: 'DAP (18-46-0)',             suppP: null,            suppK: 'MOP (0-0-60)' },
+    mop:              { n: 0,    p: 0,    k: 0.60, name: 'Muriate of Potash (0-0-60)', suppP: 'TSP (0-46-0)', suppK: null },
+    organic:          { n: 0.02, p: 0.015,k: 0.01, name: 'Organic Fertilizer (~2-1.5-1)', suppP: null,        suppK: null },
+};
+
+const SOIL_N  = {{ (float)$sample->nitrogen_level }};
+const SOIL_P  = {{ (float)$sample->phosphorus_level }};
+const SOIL_K  = {{ (float)$sample->potassium_level }};
+const SOIL_PH = {{ (float)$sample->ph_level }};
+
+function calculateFertilizer() {
+    const crop  = document.getElementById('cropSelect').value;
+    const area  = parseFloat(document.getElementById('areaSize').value) || 1;
+    const fType = document.getElementById('fertilizerType').value;
+
+    if (!crop) { alert('Please select a crop first.'); return; }
+
+    const req   = CROP_NPK[crop];
+    const fert  = FERT_TYPE[fType];
+    const BAG   = 50; // kg per bag
+
+    // Convert soil ppm to kg/ha (1 ppm ≈ 2 kg/ha at 0–15 cm depth)
+    const soilN = SOIL_N * 2;
+    const soilP = SOIL_P * 2;
+    const soilK = SOIL_K * 2;
+
+    // Nutrient deficit per hectare (kg/ha)
+    const defN = Math.max(0, req.n - soilN);
+    const defP = Math.max(0, req.p - soilP);
+    const defK = Math.max(0, req.k - soilK);
+
+    // Bags of primary fertilizer needed (per ha) — cover the most limiting nutrient
+    let primaryBagsHa = 0, limitedBy = '';
+    if (fert.n > 0 && fert.p > 0 && fert.k > 0) {
+        // Multi-nutrient (e.g. 14-14-14): drive by the nutrient needing the most bags
+        const byN = fert.n > 0 ? defN / (BAG * fert.n) : 0;
+        const byP = fert.p > 0 ? defP / (BAG * fert.p) : 0;
+        const byK = fert.k > 0 ? defK / (BAG * fert.k) : 0;
+        primaryBagsHa = Math.max(byN, byP, byK);
+        if (primaryBagsHa === byN) limitedBy = 'Nitrogen';
+        else if (primaryBagsHa === byP) limitedBy = 'Phosphorus';
+        else limitedBy = 'Potassium';
+    } else if (fert.n > 0) { primaryBagsHa = defN / (BAG * fert.n); limitedBy = 'Nitrogen'; }
+    else if (fert.p > 0)   { primaryBagsHa = defP / (BAG * fert.p); limitedBy = 'Phosphorus'; }
+    else if (fert.k > 0)   { primaryBagsHa = defK / (BAG * fert.k); limitedBy = 'Potassium'; }
+
+    const primaryBagsTotal = primaryBagsHa * area;
+
+    // Lime recommendation (from soil pH)
+    let limeTons = 0, limeNote = '';
+    if (SOIL_PH < 5.0)      { limeTons = 2.0; limeNote = 'Strongly acidic (pH < 5.0) — apply 2 t/ha dolomitic lime before planting.'; }
+    else if (SOIL_PH < 5.5) { limeTons = 1.0; limeNote = 'Moderately acidic (pH 5.0–5.5) — apply 1 t/ha dolomitic lime.'; }
+    else if (SOIL_PH > 7.5) { limeNote = 'Alkaline soil (pH > 7.5) — consider organic matter or elemental sulfur to lower pH.'; }
+
+    // Supplemental fertilizers needed (for single-nutrient primary)
+    const suppPBagsHa = (fert.p === 0 && defP > 0) ? defP / (BAG * 0.46) : 0; // TSP
+    const suppKBagsHa = (fert.k === 0 && defK > 0) ? defK / (BAG * 0.60) : 0; // MOP
+
+    // Build result cards HTML
+    const fmt = (n) => n.toFixed(2);
+    let cards = '';
+
+    if (limeTons > 0) {
+        cards += card('fa-mountain', 'danger',
+            'Dolomitic Lime',
+            `${fmt(limeTons * area)} tonnes`,
+            `${fmt(limeTons)} t/ha × ${fmt(area)} ha`, 'pH correction');
+    }
+
+    cards += card('fa-seedling', 'success',
+        fert.name,
+        `${fmt(primaryBagsTotal)} bags`,
+        `${fmt(primaryBagsHa)} bags/ha × ${fmt(area)} ha`,
+        `Limited by: ${limitedBy || 'N/A'}`);
+
+    if (suppPBagsHa > 0) {
+        cards += card('fa-atom', 'primary',
+            'TSP (0-46-0) — Supp. P',
+            `${fmt(suppPBagsHa * area)} bags`,
+            `${fmt(suppPBagsHa)} bags/ha × ${fmt(area)} ha`, 'Phosphorus supplement');
+    }
+    if (suppKBagsHa > 0) {
+        cards += card('fa-flask', 'info',
+            'MOP (0-0-60) — Supp. K',
+            `${fmt(suppKBagsHa * area)} bags`,
+            `${fmt(suppKBagsHa)} bags/ha × ${fmt(area)} ha`, 'Potassium supplement');
+    }
+
+    // Deficits row
+    cards += `
+    <div class="col-12">
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle mb-0">
+                <thead class="table-light"><tr>
+                    <th>Nutrient</th>
+                    <th class="text-center">Crop Need (kg/ha)</th>
+                    <th class="text-center">Available in Soil (kg/ha)</th>
+                    <th class="text-center">Deficit (kg/ha)</th>
+                </tr></thead>
+                <tbody>
+                    <tr>
+                        <td>Nitrogen (N)</td>
+                        <td class="text-center">${req.n}</td>
+                        <td class="text-center">${fmt(soilN)}</td>
+                        <td class="text-center fw-bold ${defN > 0 ? 'text-danger' : 'text-success'}">${fmt(defN)}</td>
+                    </tr>
+                    <tr>
+                        <td>Phosphorus (P)</td>
+                        <td class="text-center">${req.p}</td>
+                        <td class="text-center">${fmt(soilP)}</td>
+                        <td class="text-center fw-bold ${defP > 0 ? 'text-danger' : 'text-success'}">${fmt(defP)}</td>
+                    </tr>
+                    <tr>
+                        <td>Potassium (K)</td>
+                        <td class="text-center">${req.k}</td>
+                        <td class="text-center">${fmt(soilK)}</td>
+                        <td class="text-center fw-bold ${defK > 0 ? 'text-danger' : 'text-success'}">${fmt(defK)}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>`;
+
+    // Show results
+    document.getElementById('calcResultsTitle').innerHTML =
+        `<i class="fas fa-check-circle text-success me-1"></i>` +
+        `Result for <strong>${req.label}</strong> — ` +
+        `<strong>${fmt(area)} ha</strong> using <strong>${fert.name}</strong>`;
+    document.getElementById('calcResultsCards').innerHTML = cards;
+
+    const alertEl = document.getElementById('calcResultsAlert');
+    alertEl.className = 'alert mt-3 mb-0 alert-' + (limeNote ? (SOIL_PH < 5.0 ? 'danger' : 'warning') : 'success');
+    alertEl.innerHTML = limeNote
+        ? `<i class="fas fa-exclamation-triangle me-1"></i>${limeNote}`
+        : `<i class="fas fa-check-circle me-1"></i>Soil pH (${SOIL_PH}) is within an acceptable range. No lime amendment needed.`;
+
+    document.getElementById('calcResults').classList.remove('d-none');
+    document.getElementById('calcResults').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function card(icon, color, title, value, sub, footnote) {
+    return `
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-center h-100 border-${color}">
+            <div class="card-body py-3">
+                <i class="fas ${icon} fa-2x text-${color} mb-2"></i>
+                <div class="fw-bold fs-5 text-${color}">${value}</div>
+                <div class="fw-semibold small">${title}</div>
+                <div class="text-muted" style="font-size:11px;">${sub}</div>
+                <div class="text-muted" style="font-size:10px;">${footnote}</div>
+            </div>
+        </div>
+    </div>`;
+}
+
 function generateAI() {
     const btn     = document.getElementById('aiBtn');
     const loading = document.getElementById('aiLoading');
