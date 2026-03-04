@@ -198,6 +198,50 @@ INSERT INTO crops (name, description, min_ph, max_ph, min_nitrogen, max_nitrogen
  5.5, 8.0,  15.00, 45.00,  10.00, 30.00,  20.00, 60.00);
 
 -- ============================================================
+-- TABLE: soil_color_readings
+-- Stores individual test readings (up to 3 per parameter per
+-- sample) for the 3-test averaging accuracy system.
+-- After all 3 tests are captured the average RGB is written
+-- back to soil_samples.{param}_color_hex.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS soil_color_readings (
+    id              INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+    sample_id       INT UNSIGNED    NOT NULL,
+    parameter       ENUM('ph','nitrogen','phosphorus','potassium') NOT NULL,
+    test_number     TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '1, 2 or 3',
+    color_hex       VARCHAR(7)      NOT NULL,
+    r               SMALLINT UNSIGNED NOT NULL,
+    g               SMALLINT UNSIGNED NOT NULL,
+    b               SMALLINT UNSIGNED NOT NULL,
+    computed_value  DECIMAL(6,2)    DEFAULT NULL COMMENT 'Individual reading value',
+    captured_at     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_reading (sample_id, parameter, test_number),
+    CONSTRAINT fk_readings_sample
+        FOREIGN KEY (sample_id) REFERENCES soil_samples (id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+
+    INDEX idx_readings_sample (sample_id),
+    INDEX idx_readings_param  (sample_id, parameter)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- ALTER soil_samples — add AI recommendation & top crop columns
+-- (safe to run on existing databases)
+-- ============================================================
+ALTER TABLE soil_samples
+    ADD COLUMN IF NOT EXISTS ai_recommendation  TEXT            DEFAULT NULL
+        COMMENT 'AI-generated agronomic advice'
+        AFTER fertility_score,
+    ADD COLUMN IF NOT EXISTS recommended_crop   VARCHAR(150)    DEFAULT NULL
+        COMMENT 'Top-matching crop name'
+        AFTER ai_recommendation,
+    ADD COLUMN IF NOT EXISTS tests_completed    TINYINT UNSIGNED DEFAULT 0
+        COMMENT 'Number of parameter-test sets completed (max 12 = 4 params × 3 tests)'
+        AFTER recommended_crop;
+
+-- ============================================================
 -- VERIFICATION: Show created tables
 -- ============================================================
 SHOW TABLES;
