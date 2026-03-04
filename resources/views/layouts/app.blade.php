@@ -246,7 +246,6 @@
                         </a>
                     </li>
                     <li><div class="sidebar-divider"></div></li>
-                    <li><span class="sidebar-section">Samples</span></li>
                 @else
                     <li><span class="sidebar-section">Menu</span></li>
                     <li class="nav-item">
