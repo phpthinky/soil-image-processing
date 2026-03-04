@@ -162,10 +162,28 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('export') ? 'active' : '' }}"
-                               href="{{ route('export') }}">
+                            <a class="nav-link {{ request()->routeIs('farmers.*') ? 'active' : '' }}"
+                               href="{{ route('farmers.index') }}">
+                                <i class="fa fa-user-tie me-1"></i>Farmers
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {{ request()->routeIs('export*') ? 'active' : '' }}"
+                               href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="fa fa-file-csv me-1"></i>Export
                             </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('export') }}">
+                                        <i class="fa fa-file-csv me-1"></i>Full Export
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('export.phase2') }}">
+                                        <i class="fa fa-microchip me-1"></i>Phase 2 Export
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     @endauth
                 </ul>
@@ -240,6 +258,7 @@
                     <li><div class="sidebar-divider"></div></li>
                 @endif
 
+                <li><span class="sidebar-section">Samples</span></li>
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('samples.index') ? 'active' : '' }}"
                        href="{{ route('samples.index') }}">
@@ -254,11 +273,32 @@
                 </li>
 
                 <li><div class="sidebar-divider"></div></li>
-
+                <li><span class="sidebar-section">Farmers</span></li>
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('export') ? 'active' : '' }}"
+                    <a class="nav-link {{ request()->routeIs('farmers.*') ? 'active' : '' }}"
+                       href="{{ route('farmers.index') }}">
+                        <i class="fa fa-user-tie"></i> Farmers
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('farmers.import') ? 'active' : '' }}"
+                       href="{{ route('farmers.import') }}">
+                        <i class="fa fa-file-import"></i> Import Farmers
+                    </a>
+                </li>
+
+                <li><div class="sidebar-divider"></div></li>
+                <li><span class="sidebar-section">Export</span></li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('export') && !request()->routeIs('export.phase2') ? 'active' : '' }}"
                        href="{{ route('export') }}">
-                        <i class="fa fa-file-csv"></i> Export CSV
+                        <i class="fa fa-file-csv"></i> Full Export
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('export.phase2') ? 'active' : '' }}"
+                       href="{{ route('export.phase2') }}">
+                        <i class="fa fa-microchip"></i> Phase 2 Export
                     </a>
                 </li>
 

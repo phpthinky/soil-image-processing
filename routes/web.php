@@ -8,6 +8,7 @@ use App\Http\Controllers\ColorReadingController;
 use App\Http\Controllers\AiRecommendationController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\FarmerController;
 use Illuminate\Support\Facades\Route;
 
 // Redirect root to login or dashboard
@@ -45,8 +46,20 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/color-readings',      [ColorReadingController::class,    'store'])->name('color-readings.store');
     Route::post('/api/ai-recommendation',   [AiRecommendationController::class,'generate'])->name('ai-recommendation.generate');
 
+    // Farmers (CRUD + CSV import + JSON for autocomplete)
+    Route::get('/farmers',                [FarmerController::class, 'index'])->name('farmers.index');
+    Route::get('/farmers/create',         [FarmerController::class, 'create'])->name('farmers.create');
+    Route::post('/farmers',               [FarmerController::class, 'store'])->name('farmers.store');
+    Route::get('/farmers/import',         [FarmerController::class, 'importForm'])->name('farmers.import');
+    Route::post('/farmers/import',        [FarmerController::class, 'import'])->name('farmers.import.store');
+    Route::get('/farmers/json',           [FarmerController::class, 'json'])->name('farmers.json');
+    Route::get('/farmers/{farmer}/edit',  [FarmerController::class, 'edit'])->name('farmers.edit');
+    Route::put('/farmers/{farmer}',       [FarmerController::class, 'update'])->name('farmers.update');
+    Route::delete('/farmers/{farmer}',    [FarmerController::class, 'destroy'])->name('farmers.destroy');
+
     // Export
-    Route::get('/export', [ExportController::class, 'export'])->name('export');
+    Route::get('/export',         [ExportController::class, 'export'])->name('export');
+    Route::get('/export/phase2',  [ExportController::class, 'exportPhase2'])->name('export.phase2');
 
     // ── Admin-only ────────────────────────────────────────────────────────────
     Route::middleware('can:admin')->prefix('admin')->name('admin.')->group(function () {
