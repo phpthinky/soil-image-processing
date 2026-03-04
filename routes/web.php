@@ -37,7 +37,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/samples',              [SampleController::class, 'index'])->name('samples.index');
     Route::get('/samples/create',       [SampleController::class, 'create'])->name('samples.create');
     Route::post('/samples',             [SampleController::class, 'store'])->name('samples.store');
-    Route::get('/samples/{sample}',     [SampleController::class, 'show'])->name('samples.show');
+    Route::get('/samples/{sample}',        [SampleController::class, 'show'])->name('samples.show');
+    Route::get('/samples/{sample}/report', [SampleController::class, 'report'])->name('samples.report');
     Route::post('/samples/{sample}/reset', [SampleController::class, 'reset'])->name('samples.reset');
 
     // API endpoints (called by JavaScript)

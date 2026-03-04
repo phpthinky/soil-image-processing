@@ -40,8 +40,8 @@ class SampleController extends Controller
             'sample_name' => 'required|string|max:150',
             'farmer_name' => 'required|string|max:150',
             'address'     => 'required|string|max:255',
-            'sample_date' => 'required|date',
-            'date_tested' => 'required|date',
+            'sample_date' => 'required|date|before_or_equal:today',
+            'date_tested' => 'required|date|before_or_equal:today|after_or_equal:sample_date',
             'location'    => 'nullable|string|max:200',
         ]);
 
@@ -107,7 +107,22 @@ class SampleController extends Controller
             );
         }
 
-        return view('samples.show', compact('sample', 'readings', 'recommendations', 'fertRec'));
+        $aiEnabled = !empty(env('ANTHROPIC_API_KEY'));
+
+        return view('samples.show', compact('sample', 'readings', 'recommendations', 'fertRec', 'aiEnabled'));
+    }
+
+    // Show individual test readings report
+    public function report(SoilSample $sample)
+    {
+        $user = Auth::user();
+        if (!$user->isAdmin() && $sample->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $readings = $sample->getReadingsByParameter();
+
+        return view('samples.report', compact('sample', 'readings'));
     }
 
     // Reset all readings for re-capture

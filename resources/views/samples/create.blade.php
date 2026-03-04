@@ -39,10 +39,6 @@
                         <input type="text" class="form-control" name="location" value="{{ old('location') }}" placeholder="e.g., Field A, North Section">
                         <div class="form-text">Optional: Specify where the sample was taken from</div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Date Tested *</label>
-                        <input type="date" class="form-control" name="date_tested" value="{{ old('date_tested') }}" required>
-                    </div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -54,7 +50,30 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Date Received *</label>
-                                <input type="date" class="form-control" name="sample_date" value="{{ old('sample_date', date('Y-m-d')) }}" required>
+                                <input type="date" class="form-control @error('sample_date') is-invalid @enderror"
+                                       name="sample_date" id="sample_date"
+                                       value="{{ old('sample_date', date('Y-m-d')) }}"
+                                       max="{{ date('Y-m-d') }}" required>
+                                <div class="form-text">Cannot be a future date.</div>
+                                @error('sample_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Date Tested *</label>
+                                <input type="date" class="form-control @error('date_tested') is-invalid @enderror"
+                                       name="date_tested" id="date_tested"
+                                       value="{{ old('date_tested', date('Y-m-d')) }}"
+                                       min="{{ old('sample_date', date('Y-m-d')) }}"
+                                       max="{{ date('Y-m-d') }}" required>
+                                <div class="form-text">Must be on or after the received date, not a future date.</div>
+                                @error('date_tested')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -85,4 +104,29 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+(function () {
+    const today      = '{{ date('Y-m-d') }}';
+    const received   = document.getElementById('sample_date');
+    const tested     = document.getElementById('date_tested');
+
+    // When received date changes: update tested min to match
+    received.addEventListener('change', function () {
+        tested.min = this.value;
+        // If tested is now before received, push it forward
+        if (tested.value && tested.value < this.value) {
+            tested.value = this.value;
+        }
+    });
+
+    // Guard: tested cannot exceed today
+    tested.addEventListener('change', function () {
+        if (this.value > today) this.value = today;
+        if (this.value < received.value) this.value = received.value;
+    });
+})();
+</script>
 @endsection
