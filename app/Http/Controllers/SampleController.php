@@ -120,28 +120,31 @@ class SampleController extends Controller
         }
 
         $readings        = $sample->getReadingsByParameter();
-        $recommendations = [];
-        $fertRec         = [];
+        $cropsByTolerance = [];
+        $cropsByFertility = [];
+        $cropsByPh        = [];
+        $fertRec          = [];
 
         if ($sample->isAnalyzed()) {
-            $recommendations = Crop::matchingForSoil(
-                (float)$sample->ph_level,
-                (float)$sample->nitrogen_level,
-                (float)$sample->phosphorus_level,
-                (float)$sample->potassium_level
-            );
-            $fertRec = $this->fertilizer->recommend(
-                (float)$sample->ph_level,
-                (float)$sample->nitrogen_level,
-                (float)$sample->phosphorus_level,
-                (float)$sample->potassium_level
-            );
+            $ph = (float)$sample->ph_level;
+            $n  = (float)$sample->nitrogen_level;
+            $p  = (float)$sample->phosphorus_level;
+            $k  = (float)$sample->potassium_level;
+
+            $cropsByTolerance = Crop::groupByTolerance($ph, $n, $p, $k);
+            $cropsByFertility = Crop::groupByFertility($n, $p, $k);
+            $cropsByPh        = Crop::groupByPh($ph, $n, $p, $k);
+            $fertRec          = $this->fertilizer->recommend($ph, $n, $p, $k);
         }
 
         $aiEnabled = !empty(env('ANTHROPIC_API_KEY'));
         $allCrops  = Crop::orderBy('name')->get();
 
-        return view('samples.show', compact('sample', 'readings', 'recommendations', 'fertRec', 'aiEnabled', 'allCrops'));
+        return view('samples.show', compact(
+            'sample', 'readings',
+            'cropsByTolerance', 'cropsByFertility', 'cropsByPh',
+            'fertRec', 'aiEnabled', 'allCrops'
+        ));
     }
 
     // Show individual test readings report
@@ -156,6 +159,39 @@ class SampleController extends Controller
         $phTest   = $sample->phTest;
 
         return view('samples.report', compact('sample', 'readings', 'phTest'));
+    }
+
+    // Print-friendly PDF view (browser print-to-PDF)
+    public function pdf(SoilSample $sample)
+    {
+        $user = Auth::user();
+        if (!$user->isAdmin() && $sample->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $phTest           = $sample->phTest;
+        $cropsByTolerance = [];
+        $cropsByFertility = [];
+        $cropsByPh        = [];
+        $fertRec          = [];
+
+        if ($sample->isAnalyzed()) {
+            $ph = (float)$sample->ph_level;
+            $n  = (float)$sample->nitrogen_level;
+            $p  = (float)$sample->phosphorus_level;
+            $k  = (float)$sample->potassium_level;
+
+            $cropsByTolerance = Crop::groupByTolerance($ph, $n, $p, $k);
+            $cropsByFertility = Crop::groupByFertility($n, $p, $k);
+            $cropsByPh        = Crop::groupByPh($ph, $n, $p, $k);
+            $fertRec          = $this->fertilizer->recommend($ph, $n, $p, $k);
+        }
+
+        return view('samples.pdf', compact(
+            'sample', 'phTest',
+            'cropsByTolerance', 'cropsByFertility', 'cropsByPh',
+            'fertRec'
+        ));
     }
 
     // Reset all readings for re-capture

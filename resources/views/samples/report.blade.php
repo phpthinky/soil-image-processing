@@ -11,6 +11,9 @@
         <a href="{{ route('export', ['sample_id' => $sample->id]) }}" class="btn btn-sm btn-success ms-2">
             <i class="fas fa-file-excel"></i> Export to Excel
         </a>
+        <a href="{{ route('samples.pdf', $sample) }}" target="_blank" class="btn btn-sm btn-primary ms-2">
+            <i class="fas fa-print"></i> Print / Save as PDF
+        </a>
         @endif
     </div>
 </div>

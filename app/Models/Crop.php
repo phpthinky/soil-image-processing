@@ -33,6 +33,64 @@ class Crop extends Model
     }
 
     /**
+     * Group 1 — Tolerance Match
+     * pH must be within range; ranked by how many of all 4 parameters match.
+     * "Can plant with the current soil as-is."
+     */
+    public static function groupByTolerance(float $ph, float $n, float $p, float $k, int $limit = 20)
+    {
+        return static::selectRaw("*, (
+            CASE WHEN ? BETWEEN min_ph AND max_ph THEN 1 ELSE 0 END +
+            CASE WHEN ? BETWEEN min_nitrogen AND max_nitrogen THEN 1 ELSE 0 END +
+            CASE WHEN ? BETWEEN min_phosphorus AND max_phosphorus THEN 1 ELSE 0 END +
+            CASE WHEN ? BETWEEN min_potassium AND max_potassium THEN 1 ELSE 0 END
+        ) AS match_score", [$ph, $n, $p, $k])
+            ->whereRaw('? BETWEEN min_ph AND max_ph', [$ph])
+            ->orderByDesc('match_score')
+            ->orderBy('name')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * Group 2 — Fertility Score
+     * Ranked by NPK compatibility only; no pH filter.
+     * Addresses crops that match the soil's nutrient profile but whose pH requirement
+     * differs slightly — a lime or sulfur amendment can correct the pH.
+     */
+    public static function groupByFertility(float $n, float $p, float $k, int $limit = 20)
+    {
+        return static::selectRaw("*, (
+            CASE WHEN ? BETWEEN min_nitrogen AND max_nitrogen THEN 1 ELSE 0 END +
+            CASE WHEN ? BETWEEN min_phosphorus AND max_phosphorus THEN 1 ELSE 0 END +
+            CASE WHEN ? BETWEEN min_potassium AND max_potassium THEN 1 ELSE 0 END
+        ) AS npk_score", [$n, $p, $k])
+            ->orderByDesc('npk_score')
+            ->orderBy('name')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * Group 3 — pH Threshold
+     * All crops whose pH tolerance covers the current soil pH, ranked by NPK score.
+     * Shows every species that can survive this soil's acidity/alkalinity level.
+     */
+    public static function groupByPh(float $ph, float $n, float $p, float $k, int $limit = 20)
+    {
+        return static::selectRaw("*, (
+            CASE WHEN ? BETWEEN min_nitrogen AND max_nitrogen THEN 1 ELSE 0 END +
+            CASE WHEN ? BETWEEN min_phosphorus AND max_phosphorus THEN 1 ELSE 0 END +
+            CASE WHEN ? BETWEEN min_potassium AND max_potassium THEN 1 ELSE 0 END
+        ) AS npk_score", [$n, $p, $k])
+            ->whereRaw('? BETWEEN min_ph AND max_ph', [$ph])
+            ->orderByDesc('npk_score')
+            ->orderBy('name')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
      * Return the top-matching crop name for the given soil readings.
      */
     public static function topMatchName(float $ph, float $n, float $p, float $k): ?string
