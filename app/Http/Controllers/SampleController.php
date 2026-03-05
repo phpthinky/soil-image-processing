@@ -145,8 +145,9 @@ class SampleController extends Controller
         }
 
         $readings = $sample->getReadingsByParameter();
+        $phTest   = $sample->phTest;
 
-        return view('samples.report', compact('sample', 'readings'));
+        return view('samples.report', compact('sample', 'readings', 'phTest'));
     }
 
     // Reset all readings for re-capture

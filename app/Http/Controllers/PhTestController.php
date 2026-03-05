@@ -265,8 +265,14 @@ class PhTestController extends Controller
         if ($image === false) {
             return null;
         }
-        $path = "captures/{$sampleId}/{$param}-{$testNumber}.jpg";
-        Storage::disk('public')->put($path, $image);
-        return $path;
+        // Write directly into public/ — works on shared hosts (e.g. Hostinger) without needing a storage symlink.
+        $dir  = public_path("captures/{$sampleId}");
+        $file = "{$param}-{$testNumber}.jpg";
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, recursive: true);
+        }
+        file_put_contents("{$dir}/{$file}", $image);
+
+        return "captures/{$sampleId}/{$file}";
     }
 }
