@@ -10,6 +10,7 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\FarmerController;
 use App\Http\Controllers\PhTestController;
+use App\Http\Controllers\ParameterTestController;
 use Illuminate\Support\Facades\Route;
 
 // Redirect root to login or dashboard
@@ -46,6 +47,11 @@ Route::middleware('auth')->group(function () {
     // pH test workflow (separate 2-step page)
     Route::get('/samples/{sample}/ph-test',       [PhTestController::class, 'show'])->name('ph-test.show');
     Route::post('/samples/{sample}/ph-test/reset',[PhTestController::class, 'reset'])->name('ph-test.reset');
+
+    // N / P / K individual capture pages
+    Route::get('/samples/{sample}/test/{parameter}', [ParameterTestController::class, 'show'])
+        ->name('parameter-test.show')
+        ->where('parameter', 'nitrogen|phosphorus|potassium');
 
     // API endpoints (called by JavaScript)
     Route::post('/api/color-readings',      [ColorReadingController::class,    'store'])->name('color-readings.store');

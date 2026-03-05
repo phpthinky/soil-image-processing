@@ -55,216 +55,152 @@
     </div>
 </div>
 
+
+{{-- ── TESTING PROGRESS SECTION ────────────────────────────────────────────── --}}
+@if(!$sample->isAnalyzed())
 @php
-$params = [
-    'ph'         => ['label' => 'Soil pH',       'unit' => '',    'icon' => 'fa-flask'],
-    'nitrogen'   => ['label' => 'Nitrogen (N)',   'unit' => 'ppm', 'icon' => 'fa-leaf'],
-    'phosphorus' => ['label' => 'Phosphorus (P)', 'unit' => 'ppm', 'icon' => 'fa-atom'],
-    'potassium'  => ['label' => 'Potassium (K)',  'unit' => 'ppm', 'icon' => 'fa-seedling'],
+$ph_count = count($readings['ph'] ?? []);
+$n_count  = count($readings['nitrogen'] ?? []);
+$p_count  = count($readings['phosphorus'] ?? []);
+$k_count  = count($readings['potassium'] ?? []);
+$totalDone = (int)($sample->tests_completed ?? 0);
+
+$paramCards = [
+    'ph' => [
+        'label'   => 'Soil pH',
+        'icon'    => 'fa-flask',
+        'color'   => 'primary',
+        'count'   => $ph_count,
+        'avgHex'  => $sample->ph_color_hex,
+        'route'   => route('ph-test.show', $sample),
+        'badge'   => '2-Step',
+    ],
+    'nitrogen' => [
+        'label'  => 'Nitrogen (N)',
+        'icon'   => 'fa-leaf',
+        'color'  => 'success',
+        'count'  => $n_count,
+        'avgHex' => $sample->nitrogen_color_hex,
+        'route'  => route('parameter-test.show', [$sample, 'nitrogen']),
+        'badge'  => null,
+    ],
+    'phosphorus' => [
+        'label'  => 'Phosphorus (P)',
+        'icon'   => 'fa-atom',
+        'color'  => 'primary',
+        'count'  => $p_count,
+        'avgHex' => $sample->phosphorus_color_hex,
+        'route'  => route('parameter-test.show', [$sample, 'phosphorus']),
+        'badge'  => null,
+    ],
+    'potassium' => [
+        'label'  => 'Potassium (K)',
+        'icon'   => 'fa-seedling',
+        'color'  => 'info',
+        'count'  => $k_count,
+        'avgHex' => $sample->potassium_color_hex,
+        'route'  => route('parameter-test.show', [$sample, 'potassium']),
+        'badge'  => null,
+    ],
 ];
 @endphp
 
-{{-- ── WEBCAM CAPTURE SECTION ─────────────────────────────────────────────── --}}
-@if(!$sample->isAnalyzed())
-@php
-$ph_count = count($readings['ph']);
-$n_count  = count($readings['nitrogen']);
-$p_count  = count($readings['phosphorus']);
-$k_count  = count($readings['potassium']);
-
-$tab1Complete = ($ph_count >= 1 && $n_count >= 1 && $p_count >= 1 && $k_count >= 1);
-$tab2Complete = ($ph_count >= 2 && $n_count >= 2 && $p_count >= 2 && $k_count >= 2);
-$tab3Complete = ($ph_count >= 3 && $n_count >= 3 && $p_count >= 3 && $k_count >= 3);
-$tab2Enabled  = $tab1Complete;
-$tab3Enabled  = $tab2Complete;
-
-if      (!$tab1Complete) $activeTab = 1;
-elseif  (!$tab2Complete) $activeTab = 2;
-else                     $activeTab = 3;
-@endphp
-
 <div class="card border-warning mb-4">
-    <div class="card-header bg-warning text-dark">
-        <h5 class="mb-0"><i class="fas fa-camera me-2"></i>Webcam Capture — 3-Test Accuracy System</h5>
+    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-microscope me-2"></i>Soil Parameter Testing</h5>
+        <span class="badge bg-dark">{{ $totalDone }}/12 captures</span>
     </div>
     <div class="card-body">
-        <div class="alert alert-info py-2 mb-3">
+
+        <div class="alert alert-info py-2 mb-4">
             <i class="fas fa-info-circle me-1"></i>
-            <strong>Step-by-step:</strong> Complete <strong>Test 1</strong> for all 4 parameters first, then Test 2, then Test 3.
-            Each test must be finished before the next unlocks. The system averages all three readings per parameter.
+            Each parameter has its own dedicated test page with <strong>3 captures</strong> for accuracy.
+            Complete all 4 parameters to compute the soil analysis.
         </div>
 
-        <div class="row">
-            {{-- Webcam feed --}}
-            <div class="col-md-5 text-center mb-3">
-                <div style="position:relative;display:inline-block;">
-                    <video id="webcam" width="380" height="280" autoplay playsinline
-                           style="border:2px solid #ccc;border-radius:8px;"></video>
-                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-                                width:80px;height:80px;border:3px dashed rgba(255,255,255,0.85);
-                                border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,0.3);"></div>
-                </div>
-                <canvas id="snapshot" width="380" height="280" style="display:none;"></canvas>
-                <br>
-                <button id="startCameraBtn" class="btn btn-outline-secondary mt-2" onclick="startCamera()">
-                    <i class="fas fa-video"></i> Start Camera
-                </button>
-                <div id="cameraStatus" class="mt-2 text-muted small"></div>
-            </div>
+        {{-- Parameter cards --}}
+        <div class="row g-3 mb-4">
+            @foreach($paramCards as $key => $pc)
+            @php
+                $done   = ($pc['count'] >= 3);
+                $active = !$done;
+            @endphp
+            <div class="col-md-3 col-sm-6">
+                <div class="card h-100 {{ $done ? 'border-success' : 'border-' . $pc['color'] }}">
+                    <div class="card-header text-center py-2 bg-{{ $done ? 'success' : $pc['color'] }} text-white">
+                        <i class="fas {{ $pc['icon'] }} me-1"></i>
+                        <strong>{{ $pc['label'] }}</strong>
+                        @if($pc['badge'])
+                        <span class="badge bg-white text-dark ms-1" style="font-size:.6rem;">{{ $pc['badge'] }}</span>
+                        @endif
+                    </div>
+                    <div class="card-body text-center py-3">
 
-            {{-- Tabbed capture panel --}}
-            <div class="col-md-7">
+                        {{-- Capture progress dots --}}
+                        <div class="d-flex justify-content-center gap-2 mb-2">
+                            @for($i = 1; $i <= 3; $i++)
+                            <div style="width:18px;height:18px;border-radius:50%;
+                                        background:{{ $pc['count'] >= $i ? ($done ? '#198754' : 'var(--bs-' . $pc['color'] . ')') : '#dee2e6' }};
+                                        border:2px solid {{ $pc['count'] >= $i ? ($done ? '#157347' : 'currentColor') : '#adb5bd' }};">
+                            </div>
+                            @endfor
+                        </div>
 
-                {{-- Tab navigation --}}
-                <ul class="nav nav-tabs mb-0" id="captureTab" role="tablist">
-                    @foreach([1 => 'Test 1', 2 => 'Test 2', 3 => 'Test 3'] as $t => $label)
-                    @php
-                        $isActive  = ($activeTab === $t);
-                        $isEnabled = ($t === 1) || ($t === 2 && $tab2Enabled) || ($t === 3 && $tab3Enabled);
-                        $isDone    = ($t === 1 && $tab1Complete) || ($t === 2 && $tab2Complete) || ($t === 3 && $tab3Complete);
-                    @endphp
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link {{ $isActive ? 'active' : '' }} {{ !$isEnabled ? 'disabled text-muted' : '' }}"
-                                data-bs-toggle="{{ $isEnabled ? 'tab' : '' }}"
-                                data-bs-target="#test{{ $t }}Tab"
-                                type="button" role="tab"
-                                {{ !$isEnabled ? 'disabled' : '' }}>
-                            <i class="fas {{ $isDone ? 'fa-check-circle text-success' : 'fa-circle-dot' }} me-1" style="font-size:.8rem;"></i>
-                            {{ $label }}
-                            @if(!$isEnabled)
-                                <i class="fas fa-lock ms-1 opacity-50" style="font-size:.65rem;" title="Finish previous test first"></i>
-                            @endif
-                        </button>
-                    </li>
-                    @endforeach
-                </ul>
-
-                {{-- Tab panes --}}
-                <div class="tab-content border border-top-0 rounded-bottom p-3" id="captureTabContent">
-                    @for($testNum = 1; $testNum <= 3; $testNum++)
-                    @php
-                        $tabEnabled = ($testNum === 1) ||
-                                      ($testNum === 2 && $tab2Enabled) ||
-                                      ($testNum === 3 && $tab3Enabled);
-                        $tabDoneCount = collect(array_keys($params))->filter(fn($k) => isset($readings[$k][$testNum]))->count();
-                    @endphp
-                    <div class="tab-pane fade {{ $activeTab === $testNum ? 'show active' : '' }}"
-                         id="test{{ $testNum }}Tab" role="tabpanel">
-
-                        @if($tabEnabled)
-                        <table class="table table-bordered align-middle table-sm mb-2">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th class="text-center" style="width:110px;">Captured Color</th>
-                                    <th class="text-center" style="width:150px;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($params as $key => $meta)
-                                @php $rd = $readings[$key][$testNum] ?? null; @endphp
-                                <tr>
-                                    <td>
-                                        <i class="fas {{ $meta['icon'] }} me-1 text-success"></i>
-                                        <strong>{{ $meta['label'] }}</strong>
-                                        @if($key === 'ph')<span class="badge bg-info ms-1" style="font-size:.6rem;">2-Step Test</span>@endif
-                                    </td>
-                                    <td class="text-center">
-                                        @if($rd)
-                                            <div style="width:38px;height:20px;background:{{ $rd->color_hex }};
-                                                        border:1px solid #ccc;border-radius:3px;margin:0 auto 2px;"></div>
-                                            <small class="text-muted" style="font-size:10px;">{{ $rd->color_hex }}</small>
-                                        @else
-                                            <span class="text-muted small">—</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        @if($key === 'ph')
-                                            {{-- pH uses the dedicated 2-step test page --}}
-                                            @php $phDone = ($ph_count >= $testNum); @endphp
-                                            @if($phDone)
-                                                <div class="text-success small mb-1">
-                                                    <i class="fas fa-check"></i>
-                                                    pH {{ $rd ? number_format($rd->computed_value, 2) : '—' }}
-                                                </div>
-                                                <a href="{{ route('ph-test.show', $sample) }}"
-                                                   class="btn btn-outline-secondary btn-sm py-0 px-2">
-                                                    <i class="fas fa-redo" style="font-size:.75rem;"></i> Re-test
-                                                </a>
-                                            @else
-                                                <a href="{{ route('ph-test.show', $sample) }}"
-                                                   class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-flask me-1"></i>pH Test
-                                                </a>
-                                            @endif
-                                        @elseif($rd)
-                                            <div class="text-success small mb-1">
-                                                <i class="fas fa-check"></i>
-                                                {{ number_format($rd->computed_value, 2) }} {{ $meta['unit'] }}
-                                            </div>
-                                            <button class="btn btn-outline-secondary btn-sm py-0 px-2"
-                                                    id="btn-{{ $key }}-{{ $testNum }}"
-                                                    onclick="captureTest('{{ $key }}', {{ $testNum }})">
-                                                <i class="fas fa-redo" style="font-size:.75rem;"></i> Redo
-                                            </button>
-                                        @else
-                                            <button class="btn btn-sm btn-success"
-                                                    id="btn-{{ $key }}-{{ $testNum }}"
-                                                    onclick="captureTest('{{ $key }}', {{ $testNum }})">
-                                                <i class="fas fa-camera"></i> Capture
-                                            </button>
-                                        @endif
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                        <div class="small {{ $tabDoneCount === 4 ? 'text-success fw-bold' : 'text-muted' }}">
-                            <i class="fas {{ $tabDoneCount === 4 ? 'fa-check-circle' : 'fa-info-circle' }} me-1"></i>
-                            {{ $tabDoneCount }}/4 parameters captured for Test {{ $testNum }}.
-                            @if($tabDoneCount === 4 && $testNum < 3)
-                                Proceed to Test {{ $testNum + 1 }}.
-                            @elseif($tabDoneCount === 4 && $testNum === 3)
-                                All tests complete — ready to compute!
+                        <div class="small mb-2 {{ $done ? 'text-success fw-bold' : 'text-muted' }}">
+                            @if($done)
+                                <i class="fas fa-check-circle me-1"></i>3/3 Complete
+                            @else
+                                {{ $pc['count'] }}/3 captures
                             @endif
                         </div>
 
-                        @else
-                        <div class="text-center py-4 text-muted">
-                            <i class="fas fa-lock fa-2x mb-2 opacity-50"></i>
-                            <p class="mb-0">Complete <strong>Test {{ $testNum - 1 }}</strong> for all 4 parameters to unlock this step.</p>
-                        </div>
+                        {{-- Average color swatch --}}
+                        @if($pc['avgHex'])
+                        <div style="width:44px;height:24px;background:{{ $pc['avgHex'] }};border:1px solid #ccc;
+                                    border-radius:4px;margin:0 auto 4px;"></div>
+                        <div class="text-muted" style="font-size:10px;">{{ $pc['avgHex'] }}</div>
                         @endif
 
                     </div>
-                    @endfor
-                </div>
-
-                {{-- Overall progress --}}
-                @php $done = (int)($sample->tests_completed ?? 0); @endphp
-                <div class="mt-3">
-                    <div class="d-flex justify-content-between small text-muted mb-1">
-                        <span>Overall Progress</span>
-                        <span id="progressLabel">{{ $done }}/12 tests</span>
-                    </div>
-                    <div class="progress" style="height:8px;">
-                        <div class="progress-bar bg-success" id="progressBar"
-                             style="width:{{ round($done/12*100) }}%"></div>
+                    <div class="card-footer text-center py-2">
+                        <a href="{{ $pc['route'] }}"
+                           class="btn btn-sm {{ $done ? 'btn-outline-success' : 'btn-' . $pc['color'] }} w-100">
+                            @if($done)
+                                <i class="fas fa-redo me-1"></i>Re-test
+                            @else
+                                <i class="fas fa-camera me-1"></i>
+                                {{ $pc['count'] > 0 ? 'Continue' : 'Start' }} Test
+                            @endif
+                        </a>
                     </div>
                 </div>
+            </div>
+            @endforeach
+        </div>
 
-                {{-- Compute button --}}
-                <div id="computeSection" class="{{ $sample->allAveraged() ? '' : 'd-none' }} mt-3">
-                    <div class="alert alert-success py-2 mb-2">
-                        <i class="fas fa-check-circle me-1"></i>All 12 tests captured. Ready to compute results.
-                    </div>
-                    <a href="{{ route('samples.show', $sample) }}" class="btn btn-success w-100">
-                        <i class="fas fa-calculator me-1"></i>Compute &amp; View Results
-                    </a>
-                </div>
+        {{-- Overall progress bar --}}
+        <div class="mb-3">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+                <span>Overall Progress</span>
+                <span>{{ $totalDone }}/12 captures</span>
+            </div>
+            <div class="progress" style="height:10px;">
+                <div class="progress-bar bg-success"
+                     style="width:{{ round($totalDone/12*100) }}%;transition:width .4s;"></div>
+            </div>
+        </div>
 
-            </div>{{-- /col-md-7 --}}
-        </div>{{-- /row --}}
+        {{-- Compute button --}}
+        @if($sample->allAveraged())
+        <div class="alert alert-success py-2 mb-2">
+            <i class="fas fa-check-circle me-1"></i>
+            All 12 captures complete. Ready to compute the full soil analysis.
+        </div>
+        <a href="{{ route('samples.show', $sample) }}" class="btn btn-success w-100">
+            <i class="fas fa-calculator me-1"></i>Compute &amp; View Results
+        </a>
+        @endif
+
     </div>
 </div>
 @endif
@@ -614,70 +550,7 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
 
 @endsection
 
-@section('scripts')
-@if(!$sample->isAnalyzed())
-<script>
-const sampleId   = {{ $sample->id }};
-const csrfToken  = document.querySelector('meta[name="csrf-token"]').content;
-let   videoStream = null;
-let   totalReadings = {{ (int)($sample->tests_completed ?? 0) }};
-
-function startCamera() {
-    navigator.mediaDevices.getUserMedia({ video: { width: 380, height: 280 }, audio: false })
-        .then(stream => {
-            videoStream = stream;
-            document.getElementById('webcam').srcObject = stream;
-            const btn = document.getElementById('startCameraBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-check-circle"></i> Camera Active';
-            btn.classList.replace('btn-outline-secondary', 'btn-success');
-            document.getElementById('cameraStatus').textContent = 'Camera is live. Point at the test strip and click Capture.';
-        })
-        .catch(err => alert('Could not access webcam: ' + err.message));
-}
-
-function captureTest(parameter, testNumber) {
-    if (!videoStream) { alert('Please start the camera first.'); return; }
-
-    const video  = document.getElementById('webcam');
-    const canvas = document.getElementById('snapshot');
-    const ctx    = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const cx   = Math.floor(canvas.width / 2) - 40;
-    const cy   = Math.floor(canvas.height / 2) - 40;
-    const data = ctx.getImageData(cx, cy, 80, 80).data;
-    let r = 0, g = 0, b = 0, n = 0;
-    for (let i = 0; i < data.length; i += 4) { r += data[i]; g += data[i+1]; b += data[i+2]; n++; }
-    r = Math.round(r/n); g = Math.round(g/n); b = Math.round(b/n);
-    const hex = '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('').toUpperCase();
-
-    const btn = document.getElementById(`btn-${parameter}-${testNumber}`);
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
-
-    fetch('{{ route("color-readings.store") }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-        body: JSON.stringify({ sample_id: sampleId, parameter, color_hex: hex, r, g, b, test_number: testNumber })
-    })
-    .then(res => res.json())
-    .then(resp => {
-        if (!resp.success) { alert('Error: ' + resp.message); return; }
-        totalReadings = resp.total_readings;
-        document.getElementById('progressLabel').textContent = totalReadings + '/12 tests';
-        document.getElementById('progressBar').style.width = Math.round(totalReadings / 12 * 100) + '%';
-        if (totalReadings >= 12) {
-            document.getElementById('computeSection').classList.remove('d-none');
-        }
-        setTimeout(() => location.reload(), 600);
-    })
-    .catch(() => {
-        alert('Network error — please try again.');
-        if (btn) { btn.disabled = false; btn.innerHTML = `<i class="fas fa-camera"></i> Capture`; }
-    });
-}
-</script>
-@endif
+@section('scripts'>
 
 @if($sample->isAnalyzed())
 <script>
