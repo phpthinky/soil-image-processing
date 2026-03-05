@@ -550,7 +550,7 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
 
 @endsection
 
-@section('scripts'>
+@section('scripts')
 
 @if($sample->isAnalyzed())
 <script>
