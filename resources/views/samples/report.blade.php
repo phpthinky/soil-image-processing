@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Test Report — ' . $sample->sample_name)
+@php use Illuminate\Support\Facades\Storage; @endphp
 @section('content')
 
 <div class="row mb-3">
@@ -91,9 +92,10 @@ $params = [
                 <table class="table table-bordered table-sm align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th style="width:100px;">Test #</th>
-                            <th class="text-center" style="width:100px;">Color</th>
-                            <th class="text-center" style="width:110px;">Hex Value</th>
+                            <th style="width:80px;">Test #</th>
+                            <th class="text-center" style="width:130px;">Captured Photo</th>
+                            <th class="text-center" style="width:80px;">Extracted<br>Color</th>
+                            <th class="text-center" style="width:100px;">Hex Value</th>
                             <th class="text-center">Computed Value</th>
                             <th class="text-center">Captured At</th>
                         </tr>
@@ -103,14 +105,43 @@ $params = [
                         @php $rd = $paramReadings[$t] ?? null; @endphp
                         <tr class="{{ $rd ? '' : 'table-light text-muted' }}">
                             <td class="fw-bold">Test {{ $t }}</td>
+
+                            {{-- Actual photo from webcam --}}
+                            <td class="text-center p-1">
+                                @if($rd && $rd->captured_image)
+                                    <img src="{{ Storage::url($rd->captured_image) }}"
+                                         width="120" height="90"
+                                         style="border-radius:4px;border:1px solid #ccc;object-fit:cover;cursor:pointer;"
+                                         title="Click to enlarge"
+                                         onclick="document.getElementById('imgModal{{ $key }}{{ $t }}').style.display='flex'">
+                                    {{-- Lightbox overlay --}}
+                                    <div id="imgModal{{ $key }}{{ $t }}"
+                                         style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);
+                                                z-index:9999;align-items:center;justify-content:center;"
+                                         onclick="this.style.display='none'">
+                                        <img src="{{ Storage::url($rd->captured_image) }}"
+                                             style="max-width:90vw;max-height:90vh;border-radius:8px;border:3px solid #fff;">
+                                    </div>
+                                @else
+                                    <div style="width:120px;height:90px;background:#f8f9fa;border:1px dashed #ccc;
+                                                border-radius:4px;display:flex;align-items:center;justify-content:center;
+                                                margin:0 auto;">
+                                        <small class="text-muted" style="font-size:10px;">No image</small>
+                                    </div>
+                                @endif
+                            </td>
+
+                            {{-- System-extracted color swatch --}}
                             <td class="text-center">
                                 @if($rd)
-                                    <div style="width:44px;height:24px;background:{{ $rd->color_hex }};
-                                                border:1px solid #ccc;border-radius:4px;margin:0 auto;"></div>
+                                    <div style="width:44px;height:44px;background:{{ $rd->color_hex }};
+                                                border:2px solid #ccc;border-radius:6px;margin:0 auto 2px;" title="{{ $rd->color_hex }}"></div>
+                                    <small class="text-muted" style="font-size:10px;">System</small>
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
+
                             <td class="text-center">
                                 @if($rd)
                                     <code style="font-size:12px;">{{ $rd->color_hex }}</code>
@@ -143,13 +174,14 @@ $params = [
 
             {{-- Averaged result column --}}
             <div class="col-md-3 text-center">
-                <p class="text-muted small mb-1">Averaged Color</p>
+                <p class="text-muted small mb-1 fw-semibold">System Avg. Color</p>
+                <p class="text-muted" style="font-size:10px;margin-top:-4px;">(mean of 3 extracted colors)</p>
                 @if($avgHex)
-                    <div style="width:64px;height:36px;background:{{ $avgHex }};border:2px solid #999;
-                                border-radius:6px;margin:0 auto 6px;"></div>
+                    <div style="width:72px;height:48px;background:{{ $avgHex }};border:2px solid #999;
+                                border-radius:6px;margin:0 auto 6px;" title="{{ $avgHex }}"></div>
                     <code style="font-size:12px;">{{ $avgHex }}</code>
                 @else
-                    <div style="width:64px;height:36px;background:#eee;border:2px dashed #ccc;
+                    <div style="width:72px;height:48px;background:#eee;border:2px dashed #ccc;
                                 border-radius:6px;margin:0 auto 6px;"></div>
                     <small class="text-muted">Not averaged yet</small>
                 @endif

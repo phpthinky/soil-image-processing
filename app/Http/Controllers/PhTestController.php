@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PhTestController extends Controller
 {
@@ -38,6 +39,7 @@ class PhTestController extends Controller
             'r'         => 'required|integer|min:0|max:255',
             'g'         => 'required|integer|min:0|max:255',
             'b'         => 'required|integer|min:0|max:255',
+            'snapshot'  => 'nullable|string',  // base64 data-URL from canvas
         ]);
 
         $sample = SoilSample::findOrFail($validated['sample_id']);
@@ -58,6 +60,7 @@ class PhTestController extends Controller
             'g'              => $validated['g'],
             'b'              => $validated['b'],
             'computed_value' => $computedPh,
+            'image'          => null,  // filled in below once we know the test number
         ];
 
         if ($step === 1) {
@@ -68,6 +71,10 @@ class PhTestController extends Controller
             if (count($readings) >= 3) {
                 return response()->json(['success' => false, 'message' => 'Step 1 already has 3 captures.'], 422);
             }
+            $testNumber = count($readings) + 1;
+            $reading['image'] = $this->saveSnapshot(
+                $validated['snapshot'] ?? null, $sample->id, 'ph-step1', $testNumber
+            );
             $readings[] = $reading;
             $phTest->step1_readings = $readings;
 
@@ -100,13 +107,14 @@ class PhTestController extends Controller
                             'parameter'      => 'ph',
                             'test_number'    => $i + 1,
                             'color_hex'      => $rd['hex'],
+                            'captured_image' => $rd['image'] ?? null,
                             'r'              => $rd['r'],
                             'g'              => $rd['g'],
                             'b'              => $rd['b'],
                             'computed_value' => $rd['computed_value'],
                             'captured_at'    => now(),
                         ], ['sample_id', 'parameter', 'test_number'], [
-                            'color_hex', 'r', 'g', 'b', 'computed_value', 'captured_at',
+                            'color_hex', 'captured_image', 'r', 'g', 'b', 'computed_value', 'captured_at',
                         ]);
                     }
                     $sample->update([
@@ -142,6 +150,10 @@ class PhTestController extends Controller
         if (count($readings) >= 3) {
             return response()->json(['success' => false, 'message' => 'Step 2 already has 3 captures.'], 422);
         }
+        $testNumber = count($readings) + 1;
+        $reading['image'] = $this->saveSnapshot(
+            $validated['snapshot'] ?? null, $sample->id, 'ph-step2', $testNumber
+        );
         $readings[] = $reading;
         $phTest->step2_readings = $readings;
 
@@ -172,13 +184,14 @@ class PhTestController extends Controller
                     'parameter'      => 'ph',
                     'test_number'    => $i + 1,
                     'color_hex'      => $rd['hex'],
+                    'captured_image' => $rd['image'] ?? null,
                     'r'              => $rd['r'],
                     'g'              => $rd['g'],
                     'b'              => $rd['b'],
                     'computed_value' => $rd['computed_value'],
                     'captured_at'    => now(),
                 ], ['sample_id', 'parameter', 'test_number'], [
-                    'color_hex', 'r', 'g', 'b', 'computed_value', 'captured_at',
+                    'color_hex', 'captured_image', 'r', 'g', 'b', 'computed_value', 'captured_at',
                 ]);
             }
 
@@ -235,5 +248,25 @@ class PhTestController extends Controller
         if (!$user->isAdmin() && $sample->user_id !== $user->id) {
             abort(403);
         }
+    }
+
+    /**
+     * Decode a base64 canvas data-URL and store it as a JPEG under
+     * storage/app/public/captures/{sampleId}/{param}-{testNumber}.jpg.
+     * Returns the public-disk-relative path, or null on failure.
+     */
+    private function saveSnapshot(?string $dataUrl, int $sampleId, string $param, int $testNumber): ?string
+    {
+        if (!$dataUrl || !str_contains($dataUrl, ',')) {
+            return null;
+        }
+        $base64 = substr($dataUrl, strpos($dataUrl, ',') + 1);
+        $image  = base64_decode($base64, strict: true);
+        if ($image === false) {
+            return null;
+        }
+        $path = "captures/{$sampleId}/{$param}-{$testNumber}.jpg";
+        Storage::disk('public')->put($path, $image);
+        return $path;
     }
 }
