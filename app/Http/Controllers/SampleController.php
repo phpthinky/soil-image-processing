@@ -34,12 +34,9 @@ class SampleController extends Controller
         $user    = Auth::user();
 
         // ── SAMPLE LIMIT ── comment out the block below once the modification fee is settled ──
-        if (!$user->isAdmin()) {
-            $sampleCount = $user->soilSamples()->count();
-            if ($sampleCount >= 5) {
-                return redirect()->route('samples.index')
-                    ->with('error', 'Maximum limit of 5 samples reached. Please settle the unpaid modification fee to continue using the system.');
-            }
+        if ($user->soilSamples()->count() >= 5) {
+            return redirect()->route('samples.index')
+                ->with('error', 'Maximum limit of 5 samples reached. Please settle the unpaid modification fee to continue using the system.');
         }
         // ── END SAMPLE LIMIT ──────────────────────────────────────────────────────────────────
 
@@ -54,12 +51,9 @@ class SampleController extends Controller
     public function store(Request $request)
     {
         // ── SAMPLE LIMIT ── comment out the block below once the modification fee is settled ──
-        if (!Auth::user()->isAdmin()) {
-            $sampleCount = Auth::user()->soilSamples()->count();
-            if ($sampleCount >= 5) {
-                return redirect()->route('samples.index')
-                    ->with('error', 'Maximum limit of 5 samples reached. Please settle the unpaid modification fee to continue using the system.');
-            }
+        if (Auth::user()->soilSamples()->count() >= 5) {
+            return redirect()->route('samples.index')
+                ->with('error', 'Maximum limit of 5 samples reached. Please settle the unpaid modification fee to continue using the system.');
         }
         // ── END SAMPLE LIMIT ──────────────────────────────────────────────────────────────────
 
