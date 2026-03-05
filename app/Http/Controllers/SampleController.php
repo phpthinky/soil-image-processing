@@ -32,6 +32,17 @@ class SampleController extends Controller
     public function create()
     {
         $user    = Auth::user();
+
+        // ── SAMPLE LIMIT ── comment out the block below once the modification fee is settled ──
+        if (!$user->isAdmin()) {
+            $sampleCount = $user->soilSamples()->count();
+            if ($sampleCount >= 5) {
+                return redirect()->route('samples.index')
+                    ->with('error', 'Maximum limit of 5 samples reached. Please settle the unpaid modification fee to continue using the system.');
+            }
+        }
+        // ── END SAMPLE LIMIT ──────────────────────────────────────────────────────────────────
+
         $farmers = $user->isAdmin()
             ? Farmer::orderBy('name')->get()
             : $user->farmers()->orderBy('name')->get();
@@ -42,6 +53,16 @@ class SampleController extends Controller
     // Store new sample
     public function store(Request $request)
     {
+        // ── SAMPLE LIMIT ── comment out the block below once the modification fee is settled ──
+        if (!Auth::user()->isAdmin()) {
+            $sampleCount = Auth::user()->soilSamples()->count();
+            if ($sampleCount >= 5) {
+                return redirect()->route('samples.index')
+                    ->with('error', 'Maximum limit of 5 samples reached. Please settle the unpaid modification fee to continue using the system.');
+            }
+        }
+        // ── END SAMPLE LIMIT ──────────────────────────────────────────────────────────────────
+
         $request->validate([
             'sample_name' => 'required|string|max:150',
             'farmer_id'   => 'nullable|integer|exists:farmers,id',
