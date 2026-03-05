@@ -42,6 +42,7 @@ class SampleController extends Controller
             }
         // ── END SAMPLE LIMIT ──────────────────────────────────────────────────────────────────
 
+        $user = Auth::user();
         $farmers = $user->isAdmin()
             ? Farmer::orderBy('name')->get()
             : $user->farmers()->orderBy('name')->get();
