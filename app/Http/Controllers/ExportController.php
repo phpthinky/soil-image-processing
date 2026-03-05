@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SoilSample;
+use App\Models\Farmer;
 use App\Services\FertilizerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -117,8 +118,93 @@ class ExportController extends Controller
             }
             fclose($out);
         }, $filename, [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Cache-Control'       => 'no-cache, no-store, must-revalidate',
+            'Content-Type'  => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+        ]);
+    }
+
+    // ── Phase 2 Export ────────────────────────────────────────────
+    // Columns required for Arduino/Phase 2 data matching.
+    public function exportPhase2(Request $request): StreamedResponse
+    {
+        $user    = Auth::user();
+        $samples = SoilSample::with(['farmer', 'user'])
+            ->where(function ($q) use ($user) {
+                if (!$user->isAdmin()) $q->where('user_id', $user->id);
+            })
+            ->whereNotNull('ph_level')   // analyzed only
+            ->latest()
+            ->get();
+
+        $filename = 'phase2_export_' . now()->format('Ymd_His') . '.csv';
+
+        return response()->streamDownload(function () use ($samples) {
+            echo "\xEF\xBB\xBF";
+            $out = fopen('php://output', 'w');
+
+            fputcsv($out, ['=== PHASE 2 EXPORT — Soil Fertility Analyzer / OMA ===']);
+            fputcsv($out, ['Export Date', now()->format('F j, Y g:i A')]);
+            fputcsv($out, ['Note', 'Contains analyzed samples only. farm_id matches Arduino device records.']);
+            fputcsv($out, []);
+
+            // Required phase 2 columns
+            fputcsv($out, [
+                'id',            // Arduino / Farm ID (from farmers.farm_id)
+                'user_id',       // Farmer record ID (from farmers.id)
+                'sample_name',   // Sample identifier
+                'location',      // Barangay / farm location
+                'sample_date',   // Date tested (YYYY-MM-DD)
+                'ph_level',      // pH (0–14)
+                'nitrogen_level',
+                'phosphorus_level',
+                'potassium_level',
+                'recommendations',
+                // supplementary
+                'farmer_name',
+                'address',
+                'fertility_score',
+                'recommended_crop',
+                'analyzed_at',
+            ]);
+
+            foreach ($samples as $s) {
+                $fr  = $this->fertilizer->recommend(
+                    (float)$s->ph_level,
+                    (float)$s->nitrogen_level,
+                    (float)$s->phosphorus_level,
+                    (float)$s->potassium_level
+                );
+                $rec = $this->fertilizer->summary($fr);
+
+                fputcsv($out, [
+                    $s->farmer?->farm_id ?? '',     // id — Arduino record ID
+                    $s->farmer?->id      ?? '',     // user_id — Farmer system ID
+                    $s->sample_name,
+                    $s->location ?? $s->farmer?->farm_location ?? '',
+                    $s->date_tested?->format('Y-m-d') ?? $s->sample_date->format('Y-m-d'),
+                    number_format((float)$s->ph_level, 2),
+                    number_format((float)$s->nitrogen_level, 2),
+                    number_format((float)$s->phosphorus_level, 2),
+                    number_format((float)$s->potassium_level, 2),
+                    $rec,
+                    $s->farmer_name,
+                    $s->address,
+                    $s->fertility_score ?? '',
+                    $s->recommended_crop ?? '',
+                    $s->analyzed_at?->format('Y-m-d H:i:s') ?? '',
+                ]);
+            }
+
+            fputcsv($out, []);
+            fputcsv($out, ['=== COLUMN NOTES ===']);
+            fputcsv($out, ['id',             'Arduino/Phase 2 record ID stored in the Farmer profile (farm_id field)']);
+            fputcsv($out, ['user_id',        'Internal Farmer ID — use for matching records in Phase 2 database']);
+            fputcsv($out, ['sample_date',    'Date the soil test was performed (date_tested field)']);
+            fputcsv($out, ['recommendations','Fertilizer recommendation summary (lime/urea/TSP/MOP per hectare)']);
+            fclose($out);
+        }, $filename, [
+            'Content-Type'  => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
         ]);
     }
 }

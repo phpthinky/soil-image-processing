@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Crop;
+use App\Models\Farmer;
 use App\Models\SoilSample;
 use App\Services\ColorScienceService;
 use App\Services\FertilizerService;
@@ -30,7 +31,12 @@ class SampleController extends Controller
     // Show create form
     public function create()
     {
-        return view('samples.create');
+        $user    = Auth::user();
+        $farmers = $user->isAdmin()
+            ? Farmer::orderBy('name')->get()
+            : $user->farmers()->orderBy('name')->get();
+
+        return view('samples.create', compact('farmers'));
     }
 
     // Store new sample
@@ -38,14 +44,16 @@ class SampleController extends Controller
     {
         $request->validate([
             'sample_name' => 'required|string|max:150',
+            'farmer_id'   => 'nullable|integer|exists:farmers,id',
             'farmer_name' => 'required|string|max:150',
             'address'     => 'required|string|max:255',
-            'sample_date' => 'required|date',
-            'date_tested' => 'required|date',
+            'sample_date' => 'required|date|before_or_equal:today',
+            'date_tested' => 'required|date|before_or_equal:today|after_or_equal:sample_date',
             'location'    => 'nullable|string|max:200',
         ]);
 
         $sample = Auth::user()->soilSamples()->create([
+            'farmer_id'   => $request->farmer_id ?: null,
             'sample_name' => $request->sample_name,
             'farmer_name' => $request->farmer_name,
             'address'     => $request->address,
@@ -107,7 +115,23 @@ class SampleController extends Controller
             );
         }
 
-        return view('samples.show', compact('sample', 'readings', 'recommendations', 'fertRec'));
+        $aiEnabled = !empty(env('ANTHROPIC_API_KEY'));
+        $allCrops  = Crop::orderBy('name')->get();
+
+        return view('samples.show', compact('sample', 'readings', 'recommendations', 'fertRec', 'aiEnabled', 'allCrops'));
+    }
+
+    // Show individual test readings report
+    public function report(SoilSample $sample)
+    {
+        $user = Auth::user();
+        if (!$user->isAdmin() && $sample->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $readings = $sample->getReadingsByParameter();
+
+        return view('samples.report', compact('sample', 'readings'));
     }
 
     // Reset all readings for re-capture

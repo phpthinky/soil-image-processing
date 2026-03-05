@@ -71,11 +71,14 @@
                             @endif
                         </td>
                         <td>
-                            <a href="{{ route('samples.show', $s) }}" class="btn btn-sm btn-outline-primary me-1">
+                            <a href="{{ route('samples.show', $s) }}" class="btn btn-sm btn-outline-primary me-1" title="View Sample">
                                 <i class="fas fa-eye"></i>
                             </a>
                             @if($s->analyzed_at)
-                            <a href="{{ route('export', ['sample_id' => $s->id]) }}" class="btn btn-sm btn-outline-success">
+                            <a href="{{ route('samples.report', $s) }}" class="btn btn-sm btn-outline-info me-1" title="Test Report">
+                                <i class="fas fa-microscope"></i>
+                            </a>
+                            <a href="{{ route('export', ['sample_id' => $s->id]) }}" class="btn btn-sm btn-outline-success" title="Export CSV">
                                 <i class="fas fa-file-excel"></i>
                             </a>
                             @endif
