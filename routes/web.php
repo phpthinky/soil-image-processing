@@ -12,6 +12,7 @@ use App\Http\Controllers\FarmerController;
 use App\Http\Controllers\PhTestController;
 use App\Http\Controllers\ParameterTestController;
 use App\Http\Controllers\HelpController;
+use App\Http\Controllers\WhiteCalibrationController;
 use Illuminate\Support\Facades\Route;
 
 // Redirect root to login or dashboard
@@ -56,9 +57,10 @@ Route::middleware('auth')->group(function () {
         ->where('parameter', 'nitrogen|phosphorus|potassium');
 
     // API endpoints (called by JavaScript)
-    Route::post('/api/color-readings',      [ColorReadingController::class,    'store'])->name('color-readings.store');
-    Route::post('/api/ph-test/capture',     [PhTestController::class,          'capture'])->name('ph-test.capture');
-    Route::post('/api/ai-recommendation',   [AiRecommendationController::class,'generate'])->name('ai-recommendation.generate');
+    Route::post('/api/color-readings',                          [ColorReadingController::class,     'store'])->name('color-readings.store');
+    Route::post('/api/ph-test/capture',                         [PhTestController::class,           'capture'])->name('ph-test.capture');
+    Route::post('/api/ai-recommendation',                       [AiRecommendationController::class, 'generate'])->name('ai-recommendation.generate');
+    Route::post('/api/samples/{sample}/white-calibration',      [WhiteCalibrationController::class, 'store'])->name('white-calibration.store');
 
     // Farmers (CRUD + CSV import + JSON for autocomplete)
     Route::get('/farmers',                [FarmerController::class, 'index'])->name('farmers.index');

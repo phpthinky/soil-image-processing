@@ -16,6 +16,7 @@ class SoilSample extends Model
         'ph_level', 'nitrogen_level', 'phosphorus_level', 'potassium_level',
         'fertility_score', 'ai_recommendation', 'recommended_crop',
         'tests_completed', 'analyzed_at',
+        'white_ref_r', 'white_ref_g', 'white_ref_b',
     ];
 
     protected function casts(): array

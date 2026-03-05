@@ -38,6 +38,38 @@
     </div>
 </div>
 
+{{-- ── White Balance Calibration ──────────────────────────────────── --}}
+<div class="card border-secondary mb-4" id="calibrationCard">
+    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center py-2">
+        <h6 class="mb-0">
+            <i class="fas fa-sliders-h me-2"></i>White Balance Calibration
+        </h6>
+        <span id="calStatus">
+            @if($sample->white_ref_r)
+                <span class="badge bg-success">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Calibrated — RGB({{ $sample->white_ref_r }}, {{ $sample->white_ref_g }}, {{ $sample->white_ref_b }})
+                </span>
+            @else
+                <span class="badge bg-warning text-dark">
+                    <i class="fas fa-exclamation-triangle me-1"></i>Not calibrated
+                </span>
+            @endif
+        </span>
+    </div>
+    <div class="card-body py-2">
+        <p class="small text-muted mb-2">
+            Place a <strong>plain white card</strong> inside the capture box under your usual lighting,
+            then click the button below. The system will record how the camera sees "white" and
+            automatically correct all colour readings for this sample.
+        </p>
+        <button onclick="captureWhiteReference()" class="btn btn-sm btn-outline-secondary" id="calBtn">
+            <i class="fas fa-eye-dropper me-1"></i> Capture White Reference
+        </button>
+        <span id="calFeedback" class="ms-2 small"></span>
+    </div>
+</div>
+
 {{-- ── Progress wizard indicator ─────────────────────────────── --}}
 @php
 $steps = [
@@ -583,6 +615,66 @@ const csrf      = document.querySelector('meta[name="csrf-token"]').content;
 let   videoStream = null;
 let   timerInterval = null;
 
+// White balance reference — loaded from DB if already calibrated for this sample
+let whiteReference = @json($sample->white_ref_r
+    ? ['r' => $sample->white_ref_r, 'g' => $sample->white_ref_g, 'b' => $sample->white_ref_b]
+    : null);
+
+// ── White balance correction ───────────────────────────────────────
+// Applies per-channel gain so the camera's lighting bias is removed.
+// Formula: corrected = min(255, raw * (255 / white_ref))
+function whiteBalance(pixel, whiteRef) {
+    if (!whiteRef || !whiteRef.r || !whiteRef.g || !whiteRef.b) return pixel;
+    return {
+        r: Math.min(255, Math.round(pixel.r * (255 / whiteRef.r))),
+        g: Math.min(255, Math.round(pixel.g * (255 / whiteRef.g))),
+        b: Math.min(255, Math.round(pixel.b * (255 / whiteRef.b))),
+    };
+}
+
+// ── Capture white reference ────────────────────────────────────────
+function captureWhiteReference() {
+    if (!videoStream) { alert('Start the camera first, then capture the white reference.'); return; }
+
+    const video  = document.querySelector('video#webcam');
+    const canvas = document.getElementById('snapshot');
+    const ctx    = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const cx = Math.floor(canvas.width  / 2) - 35;
+    const cy = Math.floor(canvas.height / 2) - 35;
+    const data = ctx.getImageData(cx, cy, 70, 70).data;
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let i = 0; i < data.length; i += 4) { r += data[i]; g += data[i+1]; b += data[i+2]; n++; }
+    r = Math.round(r/n); g = Math.round(g/n); b = Math.round(b/n);
+
+    const btn      = document.getElementById('calBtn');
+    const feedback = document.getElementById('calFeedback');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving…';
+
+    fetch('{{ route("white-calibration.store", $sample) }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+        body: JSON.stringify({ r, g, b })
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-eye-dropper me-1"></i> Re-capture White Reference';
+        if (!data.success) { feedback.textContent = 'Failed to save.'; return; }
+        whiteReference = { r, g, b };
+        document.getElementById('calStatus').innerHTML =
+            `<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Calibrated — RGB(${r}, ${g}, ${b})</span>`;
+        feedback.innerHTML = `<span class="text-success"><i class="fas fa-check me-1"></i>White reference set.</span>`;
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-eye-dropper me-1"></i> Capture White Reference';
+        feedback.textContent = 'Network error — please try again.';
+    });
+}
+
 // ── Camera ────────────────────────────────────────────────────────
 function startCamera() {
     navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 }, audio: false })
@@ -640,6 +732,11 @@ function captureStep(step, captureNumber) {
     let r = 0, g = 0, b = 0, n = 0;
     for (let i = 0; i < data.length; i += 4) { r += data[i]; g += data[i+1]; b += data[i+2]; n++; }
     r = Math.round(r/n); g = Math.round(g/n); b = Math.round(b/n);
+
+    // Apply white balance correction to remove camera/lighting colour bias
+    const corrected = whiteBalance({ r, g, b }, whiteReference);
+    r = corrected.r; g = corrected.g; b = corrected.b;
+
     const hex = '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('').toUpperCase();
 
     const btn = document.getElementById('capture' + step + '-' + captureNumber);
