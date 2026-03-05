@@ -126,10 +126,16 @@ $current     = $statusOrder[$phTest->status] ?? 0;
                 {{-- Webcam --}}
                 <div style="position:relative;display:inline-block;">
                     <video id="webcam" width="320" height="240" autoplay playsinline
-                           style="border:2px solid #0d6efd;border-radius:8px;"></video>
+                           style="border:2px solid #0d6efd;border-radius:8px;display:block;"></video>
+                    {{-- Capture-zone crosshair: 70×70 px box matching the JS getImageData crop --}}
                     <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-                                width:70px;height:70px;border:3px dashed rgba(255,255,255,.85);
-                                border-radius:50%;pointer-events:none;"></div>
+                                width:70px;height:70px;border:2px solid #fff;box-shadow:0 0 0 1px #0d6efd,inset 0 0 0 1px #0d6efd;
+                                pointer-events:none;"></div>
+                    <div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+                                background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:1px 6px;
+                                border-radius:3px;pointer-events:none;white-space:nowrap;">
+                        Place liquid here
+                    </div>
                 </div>
                 <canvas id="snapshot" width="320" height="240" style="display:none;"></canvas>
                 <br>
@@ -326,10 +332,16 @@ $timerSec = str_pad($timer % 60, 2, '0', STR_PAD_LEFT);
 
                 <div style="position:relative;display:inline-block;">
                     <video id="webcam" width="320" height="240" autoplay playsinline
-                           style="border:2px solid #388e3c;border-radius:8px;"></video>
+                           style="border:2px solid #388e3c;border-radius:8px;display:block;"></video>
+                    {{-- Capture-zone crosshair: 70×70 px box matching the JS getImageData crop --}}
                     <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-                                width:70px;height:70px;border:3px dashed rgba(255,255,255,.85);
-                                border-radius:50%;pointer-events:none;"></div>
+                                width:70px;height:70px;border:2px solid #fff;box-shadow:0 0 0 1px #388e3c,inset 0 0 0 1px #388e3c;
+                                pointer-events:none;"></div>
+                    <div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+                                background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:1px 6px;
+                                border-radius:3px;pointer-events:none;white-space:nowrap;">
+                        Place liquid here
+                    </div>
                 </div>
                 <canvas id="snapshot" width="320" height="240" style="display:none;"></canvas>
                 <br>
@@ -619,6 +631,9 @@ function captureStep(step, captureNumber) {
     const ctx    = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+    // Save the full frame as a JPEG snapshot for the report
+    const snapshot = canvas.toDataURL('image/jpeg', 0.80);
+
     const cx   = Math.floor(canvas.width / 2) - 35;
     const cy   = Math.floor(canvas.height / 2) - 35;
     const data = ctx.getImageData(cx, cy, 70, 70).data;
@@ -633,7 +648,7 @@ function captureStep(step, captureNumber) {
     fetch('{{ route("ph-test.capture") }}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-        body: JSON.stringify({ sample_id: sampleId, step, color_hex: hex, r, g, b })
+        body: JSON.stringify({ sample_id: sampleId, step, color_hex: hex, r, g, b, snapshot })
     })
     .then(res => res.json())
     .then(data => {
