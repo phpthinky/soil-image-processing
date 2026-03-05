@@ -488,7 +488,7 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                     </thead>
                     <tbody>
                         @foreach($cropsByTolerance as $i => $crop)
-                        @php $s = $crop->match_score; $mc = $s==4?'success':($s>=3?'warning':($s>=2?'info':'secondary'); @endphp
+                        @php $s = $crop->match_score; $mc = $s==4?'success':($s>=3?'warning':($s>=2?'info':'secondary')); @endphp
                         <tr>
                             <td>{{ $i+1 }}</td>
                             <td>
