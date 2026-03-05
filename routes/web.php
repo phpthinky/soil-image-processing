@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\FarmerController;
 use App\Http\Controllers\PhTestController;
 use App\Http\Controllers\ParameterTestController;
+use App\Http\Controllers\HelpController;
 use Illuminate\Support\Facades\Route;
 
 // Redirect root to login or dashboard
@@ -72,6 +73,9 @@ Route::middleware('auth')->group(function () {
     // Export
     Route::get('/export',         [ExportController::class, 'export'])->name('export');
     Route::get('/export/phase2',  [ExportController::class, 'exportPhase2'])->name('export.phase2');
+
+    // Help & Guidelines
+    Route::get('/help', [HelpController::class, 'index'])->name('help.index');
 
     // ── Admin-only ────────────────────────────────────────────────────────────
     Route::middleware('can:admin')->prefix('admin')->name('admin.')->group(function () {

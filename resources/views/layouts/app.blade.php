@@ -301,6 +301,15 @@
                     </a>
                 </li>
 
+                <li><div class="sidebar-divider"></div></li>
+                <li><span class="sidebar-section">Support</span></li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('help.index') ? 'active' : '' }}"
+                       href="{{ route('help.index') }}">
+                        <i class="fa fa-circle-question"></i> Help &amp; Guidelines
+                    </a>
+                </li>
+
             </ul>
         </nav>
         @endauth
