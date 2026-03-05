@@ -476,7 +476,7 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
             <p class="text-muted small mb-2">
                 <i class="fas fa-info-circle me-1"></i>
                 Crops where the soil <strong>pH is within range</strong> and scored by how many
-                of the 4 parameters (pH + N + P + K) match. Top 20. <strong>Can be planted with current soil as-is.</strong>
+                of the 4 parameters (pH + N + P + K) match.. <strong>Can be planted with current soil as-is.</strong>
             </p>
             @if(count($cropsByTolerance) === 0)
                 <div class="alert alert-warning mb-0">No crops match this soil's pH. Consider a lime or sulfur amendment.</div>
@@ -514,7 +514,7 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                 <i class="fas fa-info-circle me-1"></i>
                 Crops ranked by <strong>NPK compatibility only</strong> — pH is not filtered.
                 Includes crops whose pH requirement differs slightly; a
-                <strong>lime or sulfur amendment</strong> can fix the pH. Top 20.
+                <strong>lime or sulfur amendment</strong> can fix the pH..
             </p>
             @if(count($cropsByFertility) === 0)
                 <div class="alert alert-warning mb-0">No NPK data available yet.</div>
@@ -563,7 +563,7 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                 <i class="fas fa-info-circle me-1"></i>
                 All crops whose <strong>pH tolerance covers pH {{ number_format($sample->ph_level,1) }}</strong>,
                 sorted by NPK score. Shows every species that can survive this soil's acidity level.
-                Nutrient amendments may still be needed. Top 20.
+                Nutrient amendments may still be needed..
             </p>
             @if(count($cropsByPh) === 0)
                 <div class="alert alert-warning mb-0">No crops tolerate this pH level. Consider soil pH amendment.</div>

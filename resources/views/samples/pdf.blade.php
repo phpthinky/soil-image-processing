@@ -277,7 +277,7 @@
 <h2>&#127807; Crop Recommendations</h2>
 
 {{-- Group 1: Tolerance Match --}}
-<h3>Group 1 — Tolerance Match (pH + NPK compatible | Top 20)</h3>
+<h3>Group 1 — Tolerance Match (pH + NPK compatible)</h3>
 <p style="font-size:9.5pt;color:#555;margin-bottom:6px;">
     Crops where soil pH is within range, ranked by overall score. Can be planted with current soil.
 </p>
@@ -304,7 +304,7 @@
 @endif
 
 {{-- Group 2: Fertility Score --}}
-<h3>Group 2 — Fertility Score (NPK-based, no pH filter | Top 20)</h3>
+<h3>Group 2 — Fertility Score (NPK-based, no pH filter)</h3>
 <p style="font-size:9.5pt;color:#555;margin-bottom:6px;">
     Ranked by NPK compatibility. May need pH amendment. A lime or sulfur application can correct the pH.
 </p>
@@ -341,7 +341,7 @@
 @endif
 
 {{-- Group 3: pH Threshold --}}
-<h3>Group 3 — pH Threshold (All pH-compatible crops | Top 20)</h3>
+<h3>Group 3 — pH Threshold (All pH-compatible crops)</h3>
 <p style="font-size:9.5pt;color:#555;margin-bottom:6px;">
     Every species whose pH tolerance covers {{ $sample->ph_level ? 'pH '.number_format($sample->ph_level,1) : 'current soil pH' }}.
     Ranked by NPK score. Nutrient amendment may still be needed.
