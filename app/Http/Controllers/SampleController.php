@@ -31,13 +31,15 @@ class SampleController extends Controller
     // Show create form
     public function create()
     {
-        $user    = Auth::user();
-
-        // ── SAMPLE LIMIT ── comment out the block below once the modification fee is settled ──
-        if ($user->soilSamples()->count() >= 5) {
-            return redirect()->route('samples.index')
-                ->with('error', 'Maximum limit of 5 samples reached. Please settle the unpaid modification fee to continue using the system.');
-        }
+         if (!Auth::user()->isAdmin())
+            {
+                $limit = 5;
+                $samples = Auth::user()->soilSamples()->count();
+                if($samples >= $limit) {
+                    return redirect()->route('samples.index')
+                ->with('error', 'Maximum limit of '.$limit.' samples reached. Please settle the unpaid modification fee to continue using the system.');
+                }
+            }
         // ── END SAMPLE LIMIT ──────────────────────────────────────────────────────────────────
 
         $farmers = $user->isAdmin()
@@ -51,10 +53,15 @@ class SampleController extends Controller
     public function store(Request $request)
     {
         // ── SAMPLE LIMIT ── comment out the block below once the modification fee is settled ──
-        if (Auth::user()->soilSamples()->count() >= 5) {
-            return redirect()->route('samples.index')
-                ->with('error', 'Maximum limit of 5 samples reached. Please settle the unpaid modification fee to continue using the system.');
-        }
+        if (!Auth::user()->isAdmin())
+            {
+                $limit = 5;
+                $samples = Auth::user()->soilSamples()->count();
+                if($samples >= $limit) {
+                    return redirect()->route('samples.index')
+                ->with('error', 'Maximum limit of '.$limit.' samples reached. Please settle the unpaid modification fee to continue using the system.');
+                }
+            }
         // ── END SAMPLE LIMIT ──────────────────────────────────────────────────────────────────
 
         $request->validate([
