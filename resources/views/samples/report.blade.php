@@ -98,7 +98,8 @@
                         <th class="text-center" style="width:130px;">Captured Photo</th>
                         <th class="text-center" style="width:80px;">System Color</th>
                         <th class="text-center" style="width:100px;">Hex Value</th>
-                        <th class="text-center">Computed pH</th>
+                        <th class="text-center">Raw pH</th>
+                        <th class="text-center">Chart pH</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -149,7 +150,13 @@
                         </td>
                         <td class="text-center">
                             @if($rd)
-                                <strong class="text-primary">{{ number_format($rd['computed_value'], 2) }}</strong>
+                                <span class="text-muted" style="font-size:12px;">{{ number_format($rd['computed_value'], 2) }}</span>
+                            @else <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            @if($rd)
+                                <strong class="text-primary">{{ number_format($rd['chart_ph'] ?? \App\Services\PhTestService::snapToChartPh($rd['computed_value'], 'CPR'), 1) }}</strong>
                             @else <span class="text-muted">—</span>
                             @endif
                         </td>
@@ -161,9 +168,11 @@
 
         {{-- Stage 1 summary --}}
         <div class="col-md-3 text-center">
-            <p class="text-muted small fw-semibold mb-1">CPR Average pH</p>
+            <p class="text-muted small fw-semibold mb-1">CPR Result</p>
             @if($phTest->step1_ph)
-                <div class="fw-bold fs-4 text-primary mb-1">{{ number_format($phTest->step1_ph, 2) }}</div>
+                <div class="fw-bold fs-2 text-primary lh-1">{{ number_format($phTest->step1_chart_ph ?? \App\Services\PhTestService::snapToChartPh($phTest->step1_ph, 'CPR'), 1) }}</div>
+                <div class="text-muted mb-1" style="font-size:11px;">Chart Value</div>
+                <div class="text-muted mb-2" style="font-size:10px;">Scientific: {{ number_format($phTest->step1_ph, 2) }}</div>
                 <div class="mb-2">
                     <span class="badge bg-{{ $phTest->step1_confidence === 'High' ? 'success' : 'warning text-dark' }}">
                         {{ $phTest->step1_confidence }} Confidence
@@ -205,7 +214,8 @@
                         <th class="text-center" style="width:130px;">Captured Photo</th>
                         <th class="text-center" style="width:80px;">System Color</th>
                         <th class="text-center" style="width:100px;">Hex Value</th>
-                        <th class="text-center">Computed pH</th>
+                        <th class="text-center">Raw pH</th>
+                        <th class="text-center">Chart pH</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -256,7 +266,13 @@
                         </td>
                         <td class="text-center">
                             @if($rd)
-                                <strong class="text-success">{{ number_format($rd['computed_value'], 2) }}</strong>
+                                <span class="text-muted" style="font-size:12px;">{{ number_format($rd['computed_value'], 2) }}</span>
+                            @else <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            @if($rd)
+                                <strong class="text-success">{{ number_format($rd['chart_ph'] ?? \App\Services\PhTestService::snapToChartPh($rd['computed_value'], $sol), 1) }}</strong>
                             @else <span class="text-muted">—</span>
                             @endif
                         </td>
@@ -268,38 +284,44 @@
 
         {{-- Stage 2 summary + final pH --}}
         <div class="col-md-3 text-center">
-            <p class="text-muted small fw-semibold mb-1">{{ $sol }} Average pH</p>
+            <p class="text-muted small fw-semibold mb-1">{{ $sol }} Result</p>
             @if($phTest->step2_ph)
-                <div class="fw-bold fs-4 text-success mb-1">{{ number_format($phTest->step2_ph, 2) }}</div>
+                <div class="fw-bold fs-2 text-success lh-1">{{ number_format($phTest->step2_chart_ph ?? \App\Services\PhTestService::snapToChartPh($phTest->step2_ph, $sol), 1) }}</div>
+                <div class="text-muted mb-1" style="font-size:11px;">Chart Value</div>
+                <div class="text-muted mb-2" style="font-size:10px;">Scientific: {{ number_format($phTest->step2_ph, 2) }}</div>
                 <div class="mb-2">
                     <span class="badge bg-{{ $phTest->step2_confidence === 'High' ? 'success' : 'warning text-dark' }}">
                         {{ $phTest->step2_confidence }} Confidence
                     </span>
                 </div>
             @endif
-            @if($phTest->final_ph)
-                <hr class="my-2">
-                <p class="text-muted small mb-0">Final pH Result</p>
-                <div class="fw-bold fs-3 text-primary">{{ number_format($phTest->final_ph, 2) }}</div>
-            @endif
         </div>
     </div>
     @elseif($phTest->next_solution === 'CPR' && $phTest->final_ph)
     {{-- CPR was final (pH 5.4–5.8 range) — no stage 2 needed --}}
+    @php $cprChart = $phTest->step1_chart_ph ?? \App\Services\PhTestService::snapToChartPh($phTest->final_ph, 'CPR'); @endphp
     <div class="alert alert-success mt-2 mb-0 py-2">
         <i class="fas fa-check-circle me-1"></i>
         CPR result is final for this pH range (5.4–5.8).
-        <strong>Final pH = {{ number_format($phTest->final_ph, 2) }}</strong>
+        <strong>Chart pH = {{ number_format($cprChart, 1) }}</strong>
+        <span class="text-muted small">(Scientific: {{ number_format($phTest->final_ph, 2) }})</span>
     </div>
     @endif
 
     {{-- ── Final pH result banner ──────────────────────────────────── --}}
     @if($phTest && $phTest->final_ph)
+    @php
+        $rptFinalSol   = $phTest->step2_solution ?? 'CPR';
+        $rptChartPh    = $phTest->step2_chart_ph
+            ?? $phTest->step1_chart_ph
+            ?? \App\Services\PhTestService::snapToChartPh($phTest->final_ph, $rptFinalSol);
+        $rptInterp     = \App\Services\PhTestService::phInterpretation($rptChartPh);
+    @endphp
     <hr class="my-3">
     <div class="d-flex align-items-center justify-content-between bg-primary bg-opacity-10
                 border border-primary rounded px-4 py-3">
         <div>
-            <span class="fw-semibold text-primary fs-6">Final pH Result</span><br>
+            <span class="fw-semibold text-primary fs-6">Final Soil pH Result</span><br>
             <small class="text-muted">
                 Based on
                 @if($phTest->next_solution === 'CPR') CPR (transitional range 5.4–5.8)
@@ -307,15 +329,18 @@
                 @elseif($phTest->step2_solution === 'BTB') BTB — Stage 2 (near-neutral range > 5.8)
                 @else BSWM protocol
                 @endif
-            </small>
+            </small><br>
+            <small class="text-muted fst-italic">{{ $rptInterp }}</small>
         </div>
         <div class="text-center">
             @if($sample->ph_color_hex)
             <div style="width:56px;height:36px;background:{{ $sample->ph_color_hex }};border:2px solid #999;
                         border-radius:6px;margin:0 auto 4px;" title="{{ $sample->ph_color_hex }}"></div>
             @endif
-            <span class="fw-bold fs-2 text-primary">{{ number_format($phTest->final_ph, 2) }}</span>
-            <span class="text-muted"> pH</span>
+            {{-- Big chart value --}}
+            <span class="fw-bold text-primary" style="font-size:2.8rem;line-height:1;">{{ number_format($rptChartPh, 1) }}</span><br>
+            <span class="text-muted small fw-semibold">Chart Value</span><br>
+            <span class="text-muted" style="font-size:11px;">Scientific: {{ number_format($phTest->final_ph, 2) }}</span>
         </div>
     </div>
     @endif
