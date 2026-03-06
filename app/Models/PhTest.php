@@ -9,10 +9,10 @@ class PhTest extends Model
 {
     protected $fillable = [
         'sample_id',
-        'step1_readings', 'step1_ph', 'step1_variance', 'step1_confidence',
+        'step1_readings', 'step1_ph', 'step1_chart_ph', 'step1_variance', 'step1_confidence',
         'step1_outcome', 'step1_remarks',
         'next_solution',
-        'step2_solution', 'step2_readings', 'step2_ph', 'step2_variance', 'step2_confidence',
+        'step2_solution', 'step2_readings', 'step2_ph', 'step2_chart_ph', 'step2_variance', 'step2_confidence',
         'step2_outcome', 'step2_remarks',
         'technician_notes',
         'final_ph',
@@ -25,7 +25,9 @@ class PhTest extends Model
             'step1_readings' => 'array',
             'step2_readings' => 'array',
             'step1_ph'       => 'float',
+            'step1_chart_ph' => 'float',
             'step2_ph'       => 'float',
+            'step2_chart_ph' => 'float',
             'final_ph'       => 'float',
             'step1_variance' => 'float',
             'step2_variance' => 'float',

@@ -45,6 +45,19 @@ class ColorScienceService
         return round(min(14.0, max(0.0, $this->matchColorToValue($hex, self::PH_COLOR_CHART))), 1);
     }
 
+    /**
+     * Like colorToPhLevel() but also returns the color match confidence percentage
+     * derived from the minimum CIEDE2000 distance to any reference color.
+     * Returns ['ph' => float, 'confidence_pct' => int (0–100)].
+     */
+    public function colorToPhLevelWithConfidence(string $hex): array
+    {
+        [$value, $minDeltaE] = $this->matchColorToValueWithDeltaE($hex, self::PH_COLOR_CHART);
+        $ph            = round(min(14.0, max(0.0, $value)), 1);
+        $confidencePct = max(0, min(100, (int) round(100 - $minDeltaE * 3)));
+        return ['ph' => $ph, 'confidence_pct' => $confidencePct];
+    }
+
     public function colorToNitrogenLevel(string $hex): float
     {
         return round(min(100.0, max(0.0, $this->matchColorToValue($hex, self::NITROGEN_COLOR_CHART))), 2);
@@ -171,6 +184,15 @@ class ColorScienceService
 
     public function matchColorToValue(string $capturedHex, array $chart): float
     {
+        return $this->matchColorToValueWithDeltaE($capturedHex, $chart)[0];
+    }
+
+    /**
+     * Same as matchColorToValue() but also returns the minimum CIEDE2000 distance
+     * to any reference color as the second element: [float $value, float $minDeltaE].
+     */
+    private function matchColorToValueWithDeltaE(string $capturedHex, array $chart): array
+    {
         $rgb = $this->hexToRgb($capturedHex);
         $lab = $this->rgbToLab($rgb['r'], $rgb['g'], $rgb['b']);
 
@@ -182,8 +204,10 @@ class ColorScienceService
         }
         usort($distances, fn($a, $b) => $a['de'] <=> $b['de']);
 
-        if ($distances[0]['de'] < 0.5) {
-            return (float) $distances[0]['value'];
+        $minDeltaE = $distances[0]['de'];
+
+        if ($minDeltaE < 0.5) {
+            return [(float) $distances[0]['value'], $minDeltaE];
         }
 
         $top = array_slice($distances, 0, 3);
@@ -193,6 +217,6 @@ class ColorScienceService
             $num  += $w * $t['value'];
             $denom += $w;
         }
-        return round($num / $denom, 2);
+        return [round($num / $denom, 2), $minDeltaE];
     }
 }

@@ -149,8 +149,11 @@ $current     = $statusOrder[$phTest->status] ?? 0;
                     <thead class="table-primary">
                         <tr>
                             <th>Capture</th>
-                            <th class="text-center">Color</th>
-                            <th class="text-center">pH Reading</th>
+                            <th class="text-center">Photo</th>
+                            <th class="text-center">System Color</th>
+                            <th class="text-center">Hex Value</th>
+                            <th class="text-center">Raw pH</th>
+                            <th class="text-center">Chart pH</th>
                             <th class="text-center">Action</th>
                         </tr>
                     </thead>
@@ -158,26 +161,48 @@ $current     = $statusOrder[$phTest->status] ?? 0;
                         @for($i = 1; $i <= 3; $i++)
                         @php $rd = $phTest->step1_readings[$i-1] ?? null; @endphp
                         <tr>
-                            <td class="fw-bold">Capture {{ $i }}</td>
+                            <td class="fw-bold">{{ $i }}</td>
                             <td class="text-center">
-                                @if($rd)
-                                    <div style="width:38px;height:20px;background:{{ $rd['hex'] }};
-                                                border:1px solid #ccc;border-radius:3px;margin:0 auto 2px;"></div>
-                                    <small class="text-muted" style="font-size:10px;">{{ $rd['hex'] }}</small>
+                                @if($rd && !empty($rd['image']))
+                                    <img src="{{ asset($rd['image']) }}" width="48" height="36"
+                                         style="border-radius:3px;border:1px solid #ccc;object-fit:cover;"
+                                         title="Capture {{ $i }}">
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
                             <td class="text-center">
                                 @if($rd)
-                                    <strong class="text-primary">{{ number_format($rd['computed_value'], 2) }}</strong>
+                                    <div style="width:38px;height:22px;background:{{ $rd['hex'] }};
+                                                border:1px solid #ccc;border-radius:3px;margin:0 auto;"></div>
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
                             <td class="text-center">
                                 @if($rd)
-                                    <span class="text-success small"><i class="fas fa-check me-1"></i>Done</span>
+                                    <code style="font-size:10px;">{{ $rd['hex'] }}</code>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($rd)
+                                    <span class="text-muted" style="font-size:11px;">{{ number_format($rd['computed_value'], 2) }}</span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($rd)
+                                    <strong class="text-primary fs-6">{{ number_format($rd['chart_ph'] ?? \App\Services\PhTestService::snapToChartPh($rd['computed_value'], 'CPR'), 1) }}</strong>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($rd)
+                                    <span class="text-success small"><i class="fas fa-check"></i></span>
                                 @elseif($s1count === $i - 1)
                                     <button class="btn btn-primary btn-sm"
                                             onclick="captureStep(1, {{ $i }})"
@@ -201,8 +226,9 @@ $current     = $statusOrder[$phTest->status] ?? 0;
                     @else
                         <i class="fas fa-check-circle text-success me-1"></i>
                         All 3 captures complete.
-                        <strong>pH1 = {{ number_format($phTest->step1_ph, 2) }}</strong>
-                        ({{ $phTest->step1_confidence }} confidence, variance {{ number_format($phTest->step1_variance, 4) }})
+                        <strong>Chart pH = {{ number_format($phTest->step1_chart_ph ?? \App\Services\PhTestService::snapToChartPh($phTest->step1_ph, 'CPR'), 1) }}</strong>
+                        &nbsp;<span class="text-muted">(Scientific: {{ number_format($phTest->step1_ph, 2) }},
+                        {{ $phTest->step1_confidence }} confidence, variance {{ number_format($phTest->step1_variance, 4) }})</span>
                     @endif
                 </div>
                 @endif
@@ -355,8 +381,11 @@ $timerSec = str_pad($timer % 60, 2, '0', STR_PAD_LEFT);
                     <thead class="table-success">
                         <tr>
                             <th>Capture</th>
-                            <th class="text-center">Color</th>
-                            <th class="text-center">pH Reading</th>
+                            <th class="text-center">Photo</th>
+                            <th class="text-center">System Color</th>
+                            <th class="text-center">Hex Value</th>
+                            <th class="text-center">Raw pH</th>
+                            <th class="text-center">Chart pH</th>
                             <th class="text-center">Action</th>
                         </tr>
                     </thead>
@@ -364,26 +393,48 @@ $timerSec = str_pad($timer % 60, 2, '0', STR_PAD_LEFT);
                         @for($i = 1; $i <= 3; $i++)
                         @php $rd = $phTest->step2_readings[$i-1] ?? null; @endphp
                         <tr>
-                            <td class="fw-bold">Capture {{ $i }}</td>
+                            <td class="fw-bold">{{ $i }}</td>
                             <td class="text-center">
-                                @if($rd)
-                                    <div style="width:38px;height:20px;background:{{ $rd['hex'] }};
-                                                border:1px solid #ccc;border-radius:3px;margin:0 auto 2px;"></div>
-                                    <small class="text-muted" style="font-size:10px;">{{ $rd['hex'] }}</small>
+                                @if($rd && !empty($rd['image']))
+                                    <img src="{{ asset($rd['image']) }}" width="48" height="36"
+                                         style="border-radius:3px;border:1px solid #ccc;object-fit:cover;"
+                                         title="Capture {{ $i }}">
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
                             <td class="text-center">
                                 @if($rd)
-                                    <strong class="text-success">{{ number_format($rd['computed_value'], 2) }}</strong>
+                                    <div style="width:38px;height:22px;background:{{ $rd['hex'] }};
+                                                border:1px solid #ccc;border-radius:3px;margin:0 auto;"></div>
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
                             <td class="text-center">
                                 @if($rd)
-                                    <span class="text-success small"><i class="fas fa-check me-1"></i>Done</span>
+                                    <code style="font-size:10px;">{{ $rd['hex'] }}</code>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($rd)
+                                    <span class="text-muted" style="font-size:11px;">{{ number_format($rd['computed_value'], 2) }}</span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($rd)
+                                    <strong class="text-success fs-6">{{ number_format($rd['chart_ph'] ?? \App\Services\PhTestService::snapToChartPh($rd['computed_value'], $phTest->step2_solution ?? 'CPR'), 1) }}</strong>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($rd)
+                                    <span class="text-success small"><i class="fas fa-check"></i></span>
                                 @elseif($s2count === $i - 1)
                                     <button class="btn btn-success btn-sm"
                                             onclick="captureStep(2, {{ $i }})"
@@ -407,8 +458,9 @@ $timerSec = str_pad($timer % 60, 2, '0', STR_PAD_LEFT);
                     @else
                         <i class="fas fa-check-circle text-success me-1"></i>
                         All 3 captures complete.
-                        <strong>pH2 = {{ number_format($phTest->step2_ph, 2) }}</strong>
-                        ({{ $phTest->step2_confidence }} confidence, variance {{ number_format($phTest->step2_variance, 4) }})
+                        <strong>Chart pH = {{ number_format($phTest->step2_chart_ph ?? \App\Services\PhTestService::snapToChartPh($phTest->step2_ph, $phTest->step2_solution ?? 'CPR'), 1) }}</strong>
+                        &nbsp;<span class="text-muted">(Scientific: {{ number_format($phTest->step2_ph, 2) }},
+                        {{ $phTest->step2_confidence }} confidence, variance {{ number_format($phTest->step2_variance, 4) }})</span>
                     @endif
                 </div>
                 @endif
@@ -447,8 +499,20 @@ $timerSec = str_pad($timer % 60, 2, '0', STR_PAD_LEFT);
 ═════════════════════════════════════════════════════════════════ --}}
 @if($phTest->status === 'complete')
 @php
-$s2readings = $phTest->step2_readings ?? [];
-$avgHex     = $sample->ph_color_hex;
+$s1readings  = $phTest->step1_readings ?? [];
+$s2readings  = $phTest->step2_readings ?? [];
+$avgHex      = $sample->ph_color_hex;
+$finalSol    = $phTest->step2_solution ?? 'CPR';
+// Chart pH: use step2 if available, otherwise step1 (CPR-final path)
+$finalChart  = $phTest->step2_chart_ph
+    ?? $phTest->step1_chart_ph
+    ?? \App\Services\PhTestService::snapToChartPh($phTest->final_ph, $finalSol);
+$finalSci    = $phTest->final_ph;
+$interpretation = \App\Services\PhTestService::phInterpretation($finalChart);
+// Average confidence_pct across the final step readings
+$finalReadings = !empty($s2readings) ? $s2readings : $s1readings;
+$confPcts = array_filter(array_column($finalReadings, 'confidence_pct'));
+$avgConfPct = !empty($confPcts) ? (int) round(array_sum($confPcts) / count($confPcts)) : null;
 @endphp
 
 <div class="card border-success mb-4">
@@ -456,61 +520,140 @@ $avgHex     = $sample->ph_color_hex;
         <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>pH Test Complete</h5>
     </div>
     <div class="card-body">
-        <div class="row text-center g-3">
+
+        {{-- Summary row: Step1 | Solution | Step2 | Final (big panel) --}}
+        <div class="row text-center g-3 align-items-stretch">
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small mb-1">Step 1 (CPR)</div>
-                    <div class="fs-2 fw-bold text-primary">{{ number_format($phTest->step1_ph, 2) }}</div>
+                    <div class="fs-4 fw-bold text-primary">
+                        {{ number_format($phTest->step1_chart_ph ?? \App\Services\PhTestService::snapToChartPh($phTest->step1_ph, 'CPR'), 1) }}
+                    </div>
+                    <div class="text-muted" style="font-size:11px;">Scientific: {{ number_format($phTest->step1_ph, 2) }}</div>
                     <span class="badge bg-{{ $phTest->step1_confidence === 'High' ? 'success' : 'warning' }} mt-1">
                         {{ $phTest->step1_confidence }} confidence
                     </span>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small mb-1">Solution Used</div>
-                    <div class="fs-3 fw-bold text-warning">{{ $phTest->step2_solution }}</div>
-                    <span class="badge bg-secondary mt-1">{{ $phTest->step2_solution === 'BCG' ? 'Bromocresol Green' : 'Bromothymol Blue' }}</span>
+                    <div class="fs-4 fw-bold text-warning">{{ $finalSol }}</div>
+                    <span class="badge bg-secondary mt-1" style="font-size:9px;">
+                        {{ $finalSol === 'BCG' ? 'Bromocresol Green' : ($finalSol === 'BTB' ? 'Bromothymol Blue' : 'Cresol Red Purple') }}
+                    </span>
                 </div>
             </div>
-            <div class="col-md-3">
+            @if($phTest->step2_ph)
+            <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
-                    <div class="text-muted small mb-1">Step 2 ({{ $phTest->step2_solution }})</div>
-                    <div class="fs-2 fw-bold text-success">{{ number_format($phTest->step2_ph, 2) }}</div>
+                    <div class="text-muted small mb-1">Step 2 ({{ $finalSol }})</div>
+                    <div class="fs-4 fw-bold text-success">
+                        {{ number_format($phTest->step2_chart_ph ?? \App\Services\PhTestService::snapToChartPh($phTest->step2_ph, $finalSol), 1) }}
+                    </div>
+                    <div class="text-muted" style="font-size:11px;">Scientific: {{ number_format($phTest->step2_ph, 2) }}</div>
                     <span class="badge bg-{{ $phTest->step2_confidence === 'High' ? 'success' : 'warning' }} mt-1">
                         {{ $phTest->step2_confidence }} confidence
                     </span>
-                    <div class="text-muted" style="font-size:10px;">Variance: {{ number_format($phTest->step2_variance, 4) }}</div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="border-2 border-success rounded p-3 h-100 bg-light">
-                    <div class="text-muted small mb-1">Final pH</div>
-                    <div class="display-4 fw-bold text-success">{{ number_format($phTest->final_ph, 1) }}</div>
-                    @if($avgHex)
-                    <div style="width:50px;height:28px;background:{{ $avgHex }};border:2px solid #999;
-                                border-radius:4px;margin:4px auto 2px;"></div>
-                    <small class="text-muted" style="font-size:10px;">{{ $avgHex }}</small>
+            @endif
+
+            {{-- ── FINAL pH RESULT PANEL ─────────────────────────── --}}
+            <div class="{{ $phTest->step2_ph ? 'col-md-5' : 'col-md-7' }}">
+                <div class="border-3 border-success rounded p-3 h-100 bg-light text-center">
+                    <div class="text-muted small fw-semibold mb-1 text-uppercase letter-spacing-1">Soil pH Result</div>
+
+                    {{-- Big chart value --}}
+                    <div class="display-3 fw-bold text-success lh-1">{{ number_format($finalChart, 1) }}</div>
+                    <div class="text-muted small fw-semibold mb-2">Chart Value
+                        @if($avgHex)
+                        <div style="width:44px;height:22px;background:{{ $avgHex }};border:1px solid #aaa;
+                                    border-radius:3px;display:inline-block;vertical-align:middle;margin-left:6px;"></div>
+                        @endif
+                    </div>
+
+                    {{-- Scientific raw value --}}
+                    <div class="text-muted mb-1" style="font-size:12px;">
+                        <i class="fas fa-microscope me-1"></i>
+                        Scientific Reading: <strong>{{ number_format($finalSci, 2) }}</strong>
+                    </div>
+
+                    {{-- Color match confidence --}}
+                    @if($avgConfPct !== null)
+                    <div class="mb-2" style="font-size:12px;">
+                        <i class="fas fa-palette me-1 text-info"></i>
+                        Color Match Confidence:
+                        <strong class="text-{{ $avgConfPct >= 75 ? 'success' : ($avgConfPct >= 50 ? 'warning' : 'danger') }}">
+                            {{ $avgConfPct }}%
+                        </strong>
+                    </div>
                     @endif
+
+                    {{-- Interpretation --}}
+                    <div class="mt-1 px-2 py-1 rounded"
+                         style="background:rgba(0,0,0,.05);font-size:12px;">
+                        <i class="fas fa-leaf me-1 text-success"></i>
+                        <em>Interpretation:</em><br>
+                        <strong>{{ $interpretation }}</strong>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- Individual step 2 readings --}}
+        {{-- Individual captures: Step 1 + Step 2 in table format --}}
+        @foreach([['label' => 'Step 1 (CPR)', 'readings' => $s1readings, 'sol' => 'CPR', 'color' => 'primary'],
+                  ['label' => 'Step 2 (' . $finalSol . ')', 'readings' => $s2readings, 'sol' => $finalSol, 'color' => 'success']]
+                 as $step)
+        @if(count($step['readings']) > 0)
         <div class="mt-4">
-            <h6 class="text-muted">Step 2 ({{ $phTest->step2_solution }}) — Individual Captures</h6>
-            <div class="d-flex gap-3">
-                @foreach($s2readings as $i => $rd)
-                <div class="border rounded p-2 text-center small flex-fill">
-                    <div class="fw-bold">Capture {{ $i + 1 }}</div>
-                    <div style="width:40px;height:22px;background:{{ $rd['hex'] }};border:1px solid #ccc;
-                                border-radius:3px;margin:4px auto;"></div>
-                    <code style="font-size:10px;">{{ $rd['hex'] }}</code>
-                    <div class="fw-bold text-success">pH {{ number_format($rd['computed_value'], 2) }}</div>
-                </div>
-                @endforeach
+            <h6 class="text-muted fw-semibold">{{ $step['label'] }} — Individual Captures</h6>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm align-middle mb-0">
+                    <thead class="table-{{ $step['color'] }}">
+                        <tr>
+                            <th>Capture</th>
+                            <th class="text-center">Captured Photo</th>
+                            <th class="text-center">System Color</th>
+                            <th class="text-center">Hex Value</th>
+                            <th class="text-center">Computed Raw pH</th>
+                            <th class="text-center">Paper Test Fix pH</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($step['readings'] as $i => $rd)
+                        <tr>
+                            <td class="fw-bold">Capture {{ $i + 1 }}</td>
+                            <td class="text-center">
+                                @if(!empty($rd['image']))
+                                    <img src="{{ asset($rd['image']) }}" width="64" height="48"
+                                         style="border-radius:4px;border:1px solid #ccc;object-fit:cover;">
+                                @else
+                                    <span class="text-muted small">No photo</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <div style="width:44px;height:26px;background:{{ $rd['hex'] }};border:1px solid #ccc;
+                                            border-radius:3px;margin:0 auto;"></div>
+                            </td>
+                            <td class="text-center"><code style="font-size:10px;">{{ $rd['hex'] }}</code></td>
+                            <td class="text-center text-muted" style="font-size:12px;">{{ number_format($rd['computed_value'], 2) }}</td>
+                            <td class="text-center">
+                                <strong class="text-{{ $step['color'] }} fs-6">
+                                    {{ number_format($rd['chart_ph'] ?? \App\Services\PhTestService::snapToChartPh($rd['computed_value'], $step['sol']), 1) }}
+                                </strong>
+                                @if(!empty($rd['confidence_pct']))
+                                <div style="font-size:10px;" class="text-muted">{{ $rd['confidence_pct'] }}% match</div>
+                                @endif
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
         </div>
+        @endif
+        @endforeach
 
         {{-- Outcome summary panel --}}
         @if($phTest->step1_remarks || $phTest->step2_remarks)
@@ -561,8 +704,9 @@ $avgHex     = $sample->ph_color_hex;
 
         <div class="alert alert-success mt-4 mb-0">
             <i class="fas fa-check-circle me-1"></i>
-            <strong>pH = {{ number_format($phTest->final_ph, 1) }}</strong> has been saved.
-            The value will be included in the full soil analysis when all parameters (N, P, K) are also captured.
+            <strong>Chart pH = {{ number_format($finalChart, 1) }}</strong>
+            <span class="text-muted">(Scientific: {{ number_format($finalSci, 2) }})</span>
+            has been saved and will be used in soil fertility and crop recommendation calculations.
         </div>
     </div>
 </div>

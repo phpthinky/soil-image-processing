@@ -45,9 +45,11 @@ class PhTestController extends Controller
         $sample = SoilSample::findOrFail($validated['sample_id']);
         $this->authorizeAccess($sample);
 
-        $colorHex     = strtoupper($validated['color_hex']);
-        $step         = (int) $validated['step'];
-        $computedPh   = $this->colorScience->colorToPhLevel($colorHex);
+        $colorHex      = strtoupper($validated['color_hex']);
+        $step          = (int) $validated['step'];
+        $phResult      = $this->colorScience->colorToPhLevelWithConfidence($colorHex);
+        $computedPh    = $phResult['ph'];
+        $confidencePct = $phResult['confidence_pct'];
 
         $phTest = $sample->phTest ?? PhTest::create([
             'sample_id' => $sample->id,
@@ -60,6 +62,7 @@ class PhTestController extends Controller
             'g'              => $validated['g'],
             'b'              => $validated['b'],
             'computed_value' => $computedPh,
+            'confidence_pct' => $confidencePct,
             'image'          => null,  // filled in below once we know the test number
         ];
 
@@ -75,6 +78,7 @@ class PhTestController extends Controller
             $reading['image'] = $this->saveSnapshot(
                 $validated['snapshot'] ?? null, $sample->id, 'ph-step1', $testNumber
             );
+            $reading['chart_ph'] = PhTestService::snapToChartPh($computedPh, 'CPR');
             $readings[] = $reading;
             $phTest->step1_readings = $readings;
 
@@ -87,6 +91,7 @@ class PhTestController extends Controller
                 );
 
                 $phTest->step1_ph         = $stats['average'];
+                $phTest->step1_chart_ph   = PhTestService::snapToChartPh($stats['average'], 'CPR');
                 $phTest->step1_variance   = $stats['variance'];
                 $phTest->step1_confidence = $stats['confidence'];
                 $phTest->step1_outcome    = $remark['outcome'];
@@ -151,9 +156,10 @@ class PhTestController extends Controller
             return response()->json(['success' => false, 'message' => 'Step 2 already has 3 captures.'], 422);
         }
         $testNumber = count($readings) + 1;
-        $reading['image'] = $this->saveSnapshot(
+        $reading['image']    = $this->saveSnapshot(
             $validated['snapshot'] ?? null, $sample->id, 'ph-step2', $testNumber
         );
+        $reading['chart_ph'] = PhTestService::snapToChartPh($computedPh, $phTest->step2_solution);
         $readings[] = $reading;
         $phTest->step2_readings = $readings;
 
@@ -169,6 +175,7 @@ class PhTestController extends Controller
             );
 
             $phTest->step2_ph         = $stats['average'];
+            $phTest->step2_chart_ph   = PhTestService::snapToChartPh($stats['average'], $phTest->step2_solution);
             $phTest->step2_variance   = $stats['variance'];
             $phTest->step2_confidence = $stats['confidence'];
             $phTest->step2_outcome    = $remark['outcome'];

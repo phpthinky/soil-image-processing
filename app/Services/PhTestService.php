@@ -8,6 +8,57 @@ class PhTestService
     private const VARIANCE_THRESHOLD = 0.09; // (0.3)^2
 
     /**
+     * Fixed paper chart pH values per indicator solution.
+     * These match the discrete color reference points printed on BSWM soil test kit cards.
+     */
+    public const CHART_POINTS = [
+        'CPR' => [4.8, 5.0, 5.2, 5.4, 5.6, 5.8, 6.0],
+        'BCG' => [4.0, 4.2, 4.4, 4.6, 4.8, 5.0, 5.2, 5.4],
+        'BTB' => [6.0, 6.4, 6.8, 7.2, 7.6],
+    ];
+
+    /**
+     * Snap a continuous scientific pH value to the nearest fixed chart point
+     * for the given indicator solution. On a tie (equidistant), rounds up
+     * to the higher chart value — matching how a technician reads the paper card.
+     */
+    public static function snapToChartPh(float $ph, string $solution): float
+    {
+        $points  = self::CHART_POINTS[strtoupper($solution)] ?? self::CHART_POINTS['CPR'];
+        $nearest = $points[0];
+        $minDiff = PHP_FLOAT_MAX;
+
+        foreach ($points as $point) {
+            $diff = abs($ph - $point);
+            // Prefer this point if strictly closer, or equal distance but higher value (round-up on tie)
+            if ($diff < $minDiff - 0.00001 || (abs($diff - $minDiff) < 0.00001 && $point > $nearest)) {
+                $minDiff = $diff;
+                $nearest = $point;
+            }
+        }
+
+        return $nearest;
+    }
+
+    /**
+     * Human-readable soil pH interpretation used in the result panel.
+     */
+    public static function phInterpretation(float $ph): string
+    {
+        return match(true) {
+            $ph < 4.5 => 'Extremely Acidic',
+            $ph < 5.0 => 'Strongly Acidic',
+            $ph < 5.5 => 'Moderately Acidic',
+            $ph < 6.0 => 'Slightly Acidic',
+            $ph < 6.5 => 'Near Neutral (Slightly Acidic)',
+            $ph < 7.0 => 'Near Neutral',
+            $ph < 7.5 => 'Neutral to Slightly Alkaline',
+            $ph < 8.0 => 'Moderately Alkaline',
+            default   => 'Strongly Alkaline',
+        };
+    }
+
+    /**
      * Determine the next solution based on CPR pH reading.
      * Per BSWM protocol:
      *   pH ≤ 5.4  → BCG (Bromocresol Green)
