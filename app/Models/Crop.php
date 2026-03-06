@@ -64,6 +64,7 @@ class Crop extends Model
             CASE WHEN ? BETWEEN min_phosphorus AND max_phosphorus THEN 1 ELSE 0 END +
             CASE WHEN ? BETWEEN min_potassium AND max_potassium THEN 1 ELSE 0 END
         ) AS npk_score", [$n, $p, $k])
+            ->havingRaw('npk_score > 0')
             ->orderByDesc('npk_score')
             ->orderBy('name')
             ->get();

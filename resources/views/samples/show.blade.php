@@ -528,7 +528,8 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                         @foreach($cropsByFertility as $i => $crop)
                         @php
                             $ns = $crop->npk_score;
-                            $nc = $ns==3?'success':($ns>=2?'warning':($ns>=1?'info':'secondary'));
+                            $pct = round($ns / 3 * 100);
+                            $nc = $ns==3?'success':($ns>=2?'warning':'info');
                             $phOk = $sample->ph_level >= $crop->min_ph && $sample->ph_level <= $crop->max_ph;
                         @endphp
                         <tr>
@@ -541,7 +542,7 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                             <td><small>{{ $crop->min_nitrogen }}–{{ $crop->max_nitrogen }}</small></td>
                             <td><small>{{ $crop->min_phosphorus }}–{{ $crop->max_phosphorus }}</small></td>
                             <td><small>{{ $crop->min_potassium }}–{{ $crop->max_potassium }}</small></td>
-                            <td><span class="badge bg-{{ $nc }}">{{ $ns }}/3</span></td>
+                            <td><span class="badge bg-{{ $nc }}">{{ $pct }}%</span></td>
                             <td>
                                 @if($phOk)
                                     <span class="badge bg-success"><i class="fas fa-check me-1"></i>Yes</span>
