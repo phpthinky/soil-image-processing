@@ -152,8 +152,8 @@ $current     = $statusOrder[$phTest->status] ?? 0;
                             <th class="text-center">Photo</th>
                             <th class="text-center">System Color</th>
                             <th class="text-center">Hex Value</th>
-                            <th class="text-center">Raw pH</th>
-                            <th class="text-center">Chart pH</th>
+                        <th class="text-center">Scientific Raw pH</th>
+                        <th class="text-center">Nearest Chart pH</th>
                             <th class="text-center">Action</th>
                         </tr>
                     </thead>
@@ -384,8 +384,9 @@ $timerSec = str_pad($timer % 60, 2, '0', STR_PAD_LEFT);
                             <th class="text-center">Photo</th>
                             <th class="text-center">System Color</th>
                             <th class="text-center">Hex Value</th>
-                            <th class="text-center">Raw pH</th>
-                            <th class="text-center">Chart pH</th>
+
+                        <th class="text-center">Scientific Raw pH</th>
+                        <th class="text-center">Nearest Chart pH</th>
                             <th class="text-center">Action</th>
                         </tr>
                     </thead>
@@ -616,8 +617,9 @@ $avgConfPct = !empty($confPcts) ? (int) round(array_sum($confPcts) / count($conf
                             <th class="text-center">Captured Photo</th>
                             <th class="text-center">System Color</th>
                             <th class="text-center">Hex Value</th>
-                            <th class="text-center">Computed Raw pH</th>
-                            <th class="text-center">Paper Test Fix pH</th>
+                            
+                        <th class="text-center">Scientific Raw pH</th>
+                        <th class="text-center">Nearest Chart pH</th>
                         </tr>
                     </thead>
                     <tbody>

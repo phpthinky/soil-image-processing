@@ -114,7 +114,7 @@
                 @if(file_exists(public_path('logo.jpg')))
                     <img src="{{ asset('logo.jpg') }}" alt="Logo">
                 @endif
-                {{ config('app.name', 'Soil Fertility Analyzer') }}
+                {{ config('app.name', 'Soil Fertility Analyzer 2.0') }}
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">

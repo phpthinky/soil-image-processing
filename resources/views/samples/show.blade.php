@@ -602,6 +602,7 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
 </div>
 
 {{-- AI RECOMMENDATION --}}
+<!--
 <div class="card mb-4" id="aiSection">
     <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-robot me-2"></i>AI Agronomic Advisor</h5>
@@ -664,7 +665,7 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
 
     </div>
 </div>
-
+-->
 {{-- ── GEMINI AI CROP RECOMMENDATIONS ─────────────────────────────────── --}}
 <div class="card mb-4" id="geminiSection">
     <div class="card-header d-flex justify-content-between align-items-center"

@@ -93,13 +93,13 @@
         <div class="col-md-9">
             <table class="table table-bordered table-sm align-middle mb-0">
                 <thead class="table-primary">
-                    <tr>
+                      <tr>
                         <th style="width:90px;">Capture</th>
                         <th class="text-center" style="width:130px;">Captured Photo</th>
                         <th class="text-center" style="width:80px;">System Color</th>
                         <th class="text-center" style="width:100px;">Hex Value</th>
-                        <th class="text-center">Raw pH</th>
-                        <th class="text-center">Chart pH</th>
+                        <th class="text-center">Scientific Raw pH</th>
+                        <th class="text-center">Nearest Chart pH</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -209,13 +209,13 @@
         <div class="col-md-9">
             <table class="table table-bordered table-sm align-middle mb-0">
                 <thead class="table-success">
-                    <tr>
+                   <tr>
                         <th style="width:90px;">Capture</th>
                         <th class="text-center" style="width:130px;">Captured Photo</th>
                         <th class="text-center" style="width:80px;">System Color</th>
                         <th class="text-center" style="width:100px;">Hex Value</th>
-                        <th class="text-center">Raw pH</th>
-                        <th class="text-center">Chart pH</th>
+                        <th class="text-center">Scientific Raw pH</th>
+                        <th class="text-center">Nearest Chart pH</th>
                     </tr>
                 </thead>
                 <tbody>
