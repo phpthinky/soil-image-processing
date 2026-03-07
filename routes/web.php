@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\FarmerController;
 use App\Http\Controllers\PhTestController;
 use App\Http\Controllers\ParameterTestController;
+use App\Http\Controllers\GeminiCropRecommendationController;
 use App\Http\Controllers\HelpController;
 use Illuminate\Support\Facades\Route;
 
@@ -58,7 +59,8 @@ Route::middleware('auth')->group(function () {
     // API endpoints (called by JavaScript)
     Route::post('/api/color-readings',      [ColorReadingController::class,    'store'])->name('color-readings.store');
     Route::post('/api/ph-test/capture',     [PhTestController::class,          'capture'])->name('ph-test.capture');
-    Route::post('/api/ai-recommendation',   [AiRecommendationController::class,'generate'])->name('ai-recommendation.generate');
+    Route::post('/api/ai-recommendation',         [AiRecommendationController::class,       'generate'])->name('ai-recommendation.generate');
+    Route::post('/api/gemini-crop-recommendations',[GeminiCropRecommendationController::class, 'generate'])->name('gemini-crop-recommendations.generate');
 
     // Farmers (CRUD + CSV import + JSON for autocomplete)
     Route::get('/farmers',                [FarmerController::class, 'index'])->name('farmers.index');

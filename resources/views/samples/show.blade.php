@@ -665,6 +665,124 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
     </div>
 </div>
 
+{{-- ── GEMINI AI CROP RECOMMENDATIONS ─────────────────────────────────── --}}
+<div class="card mb-4" id="geminiSection">
+    <div class="card-header d-flex justify-content-between align-items-center"
+         style="background:linear-gradient(135deg,#1a73e8 0%,#34a853 60%,#fbbc04 100%);color:#fff;">
+        <h5 class="mb-0">
+            <i class="fas fa-robot me-2"></i>
+            Gemini AI — Philippine Crop Recommendations
+        </h5>
+        @if($geminiEnabled)
+            <span class="badge bg-light text-dark">
+                <i class="fas fa-circle text-success me-1" style="font-size:.6rem;"></i>Gemini Ready
+            </span>
+        @else
+            <span class="badge bg-secondary">
+                <i class="fas fa-circle me-1" style="font-size:.6rem;"></i>API Not Configured
+            </span>
+        @endif
+    </div>
+
+    <div class="card-body">
+        @if(!$sample->isAnalyzed())
+            <p class="text-muted mb-0">Complete all 4 soil tests first to enable Gemini crop recommendations.</p>
+
+        @elseif(!$geminiEnabled)
+            {{-- API key not configured --}}
+            <div class="alert alert-warning mb-3">
+                <h6 class="alert-heading mb-2"><i class="fas fa-key me-2"></i>Gemini API Key Required</h6>
+                <p class="mb-2">
+                    This feature uses <strong>Google Gemini AI</strong> to recommend up to 10 suitable Philippine
+                    crops grouped by season and crop type, with per-crop fertilizer calculations.
+                </p>
+                <ol class="mb-2 small">
+                    <li>Create an account at <strong>aistudio.google.com</strong></li>
+                    <li>Generate an API key from Google AI Studio</li>
+                    <li>Add <code>GEMINI_API_KEY=your-key-here</code> to the server's <code>.env</code> file</li>
+                    <li>Restart the application server</li>
+                </ol>
+                <hr class="my-2">
+                <p class="mb-0 small text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    The API key is stored server-side only and is <strong>never sent to the browser</strong>.
+                </p>
+            </div>
+            <button class="btn btn-secondary" disabled>
+                <i class="fas fa-seedling me-1"></i> Get Gemini Crop Recommendations
+                <span class="ms-2 badge bg-light text-dark" style="font-size:.7rem;">Not Available</span>
+            </button>
+
+        @else
+            {{-- API ready --}}
+            <p class="text-muted mb-3">
+                Gemini AI will recommend up to <strong>10 Philippine crops</strong> suited to your soil,
+                grouped by <em>season</em> (Wet / Dry / Year-round) and <em>crop type</em>
+                (Grain, Vegetable, Root Crop, Legume, Fruit, Cash Crop) — each with a
+                tailored fertilizer plan.
+            </p>
+
+            {{-- Optional preferred-crop selector --}}
+            <div class="card border-0 bg-light p-3 mb-3">
+                <label class="form-label fw-semibold mb-1">
+                    <i class="fas fa-hand-pointer me-1 text-success"></i>
+                    Farmer's Preferred Crop <span class="text-muted fw-normal">(optional)</span>
+                </label>
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-5">
+                        <select class="form-select" id="geminiPreferredCrop">
+                            <option value="">— No preference, recommend best crops —</option>
+                            @foreach($allCrops as $crop)
+                                <option value="{{ $crop->name }}">{{ $crop->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-7 text-muted small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Select a crop if the farmer has a specific one in mind. Gemini will assess its
+                        soil compatibility and suggest amendments if needed.
+                    </div>
+                </div>
+            </div>
+
+            {{-- Stored recommendation display --}}
+            @if(!empty($sample->gemini_crop_recommendation))
+            <div id="geminiStoredResult" class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-semibold text-success">
+                        <i class="fas fa-check-circle me-1"></i> Gemini Recommendation (saved)
+                    </span>
+                    <button class="btn btn-sm btn-outline-primary" onclick="generateGemini()" id="geminiRegenerateBtn">
+                        <i class="fas fa-sync me-1"></i> Regenerate
+                    </button>
+                </div>
+                <div id="geminiRecommendationText"
+                     class="p-3 rounded border bg-white"
+                     style="white-space:pre-wrap;font-size:.92rem;line-height:1.6;">{{ $sample->gemini_crop_recommendation }}</div>
+            </div>
+            @endif
+
+            {{-- Generate button --}}
+            <div id="geminiGenerateArea" class="{{ !empty($sample->gemini_crop_recommendation) ? 'd-none' : '' }}">
+                <button class="btn btn-lg"
+                        style="background:linear-gradient(135deg,#1a73e8,#34a853);color:#fff;"
+                        onclick="generateGemini()" id="geminiBtn">
+                    <i class="fas fa-seedling me-2"></i>Get Gemini Crop Recommendations
+                </button>
+            </div>
+
+            {{-- Loading / result / error --}}
+            <div id="geminiLoading" class="d-none mt-3">
+                <div class="spinner-border spinner-border-sm me-2" style="color:#1a73e8;"></div>
+                Consulting Gemini AI — analyzing soil profile and matching Philippine crops...
+            </div>
+            <div id="geminiResult" class="mt-3 p-3 rounded border bg-white d-none"
+                 style="white-space:pre-wrap;font-size:.92rem;line-height:1.6;"></div>
+            <div id="geminiError" class="alert alert-danger mt-3 d-none"></div>
+        @endif
+    </div>
+</div>
+
 <div class="row mb-4">
     <div class="col text-end">
         <a href="{{ route('samples.report', $sample) }}" class="btn btn-outline-info">
@@ -905,6 +1023,73 @@ function generateAI() {
         if (loading) loading.classList.add('d-none');
         if (errDiv) { errDiv.textContent = 'Network error contacting AI service.'; errDiv.classList.remove('d-none'); }
         if (btn) btn.disabled = false;
+    });
+}
+
+// ── Gemini AI Crop Recommendations ────────────────────────────────────────
+function generateGemini() {
+    const btn          = document.getElementById('geminiBtn');
+    const regenBtn     = document.getElementById('geminiRegenerateBtn');
+    const loading      = document.getElementById('geminiLoading');
+    const result       = document.getElementById('geminiResult');
+    const errDiv       = document.getElementById('geminiError');
+    const storedDiv    = document.getElementById('geminiStoredResult');
+    const generateArea = document.getElementById('geminiGenerateArea');
+    const cropSelect   = document.getElementById('geminiPreferredCrop');
+
+    if (btn)     btn.disabled = true;
+    if (regenBtn) regenBtn.disabled = true;
+    if (loading) loading.classList.remove('d-none');
+    if (result)  result.classList.add('d-none');
+    if (errDiv)  errDiv.classList.add('d-none');
+
+    const preferredCrop = cropSelect ? cropSelect.value.trim() : '';
+
+    fetch('{{ route("gemini-crop-recommendations.generate") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            sample_id:      {{ $sample->id }},
+            preferred_crop: preferredCrop || null
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (loading) loading.classList.add('d-none');
+        if (data.success) {
+            // Show in new result panel
+            if (result) {
+                result.textContent = data.recommendation;
+                result.classList.remove('d-none');
+            }
+            // Also update stored result panel if it exists
+            const storedText = document.getElementById('geminiRecommendationText');
+            if (storedText) {
+                storedText.textContent = data.recommendation;
+                if (storedDiv) storedDiv.classList.remove('d-none');
+            }
+            // Hide the primary generate button after first successful call
+            if (generateArea) generateArea.classList.add('d-none');
+        } else {
+            if (errDiv) {
+                errDiv.textContent = 'Gemini Error: ' + data.message;
+                errDiv.classList.remove('d-none');
+            }
+        }
+        if (btn)     btn.disabled = false;
+        if (regenBtn) regenBtn.disabled = false;
+    })
+    .catch(() => {
+        if (loading) loading.classList.add('d-none');
+        if (errDiv) {
+            errDiv.textContent = 'Network error contacting Gemini AI service.';
+            errDiv.classList.remove('d-none');
+        }
+        if (btn)     btn.disabled = false;
+        if (regenBtn) regenBtn.disabled = false;
     });
 }
 </script>

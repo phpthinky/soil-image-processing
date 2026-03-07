@@ -14,7 +14,7 @@ class SoilSample extends Model
         'farmer_name', 'address', 'date_tested', 'color_hex',
         'ph_color_hex', 'nitrogen_color_hex', 'phosphorus_color_hex', 'potassium_color_hex',
         'ph_level', 'nitrogen_level', 'phosphorus_level', 'potassium_level',
-        'fertility_score', 'ai_recommendation', 'recommended_crop',
+        'fertility_score', 'ai_recommendation', 'gemini_crop_recommendation', 'recommended_crop',
         'tests_completed', 'analyzed_at',
     ];
 

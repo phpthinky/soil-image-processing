@@ -137,13 +137,14 @@ class SampleController extends Controller
             $fertRec          = $this->fertilizer->recommend($ph, $n, $p, $k);
         }
 
-        $aiEnabled = !empty(env('ANTHROPIC_API_KEY'));
-        $allCrops  = Crop::orderBy('name')->get();
+        $aiEnabled     = !empty(env('ANTHROPIC_API_KEY'));
+        $geminiEnabled = !empty(config('services.gemini.api_key'));
+        $allCrops      = Crop::orderBy('name')->get();
 
         return view('samples.show', compact(
             'sample', 'readings',
             'cropsByTolerance', 'cropsByFertility', 'cropsByPh',
-            'fertRec', 'aiEnabled', 'allCrops'
+            'fertRec', 'aiEnabled', 'geminiEnabled', 'allCrops'
         ));
     }
 
