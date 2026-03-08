@@ -77,10 +77,12 @@ class ColorScienceService
      */
     public const BTB_COLOR_CHART = [
         '#DDDD00' => 6.0,
+        '#DCDC00' => 6.0,
         '#88BB00' => 6.4,
         '#33AA44' => 6.8,
         '#009977' => 7.2,
         '#0066CC' => 7.6,
+        '#0055BB' => 7.6,
     ];
 
     public const NITROGEN_COLOR_CHART = [
