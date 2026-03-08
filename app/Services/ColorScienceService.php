@@ -24,33 +24,45 @@ class ColorScienceService
      * CPR produces amber-yellow hues in this range, distinctly different from
      * the universal-indicator colors in PH_COLOR_CHART.
      *
-     * NOTE: If readings remain off after updating, calibrate these hex values by
-     * capturing each reference strip color from the physical BSWM kit card under
-     * the same box+lighting conditions used for live captures.
+     * Hex values manually measured from the physical BSWM kit card under
+     * calibrated box-lighting conditions. Multiple entries per pH point
+     * improve CIEDE2000 nearest-match accuracy.
      */
     public const CPR_COLOR_CHART = [
         '#FF8800' => 4.8,
-        '#FFB200' => 5.0,
+        '#D2A65A' => 5.0,
         '#FFC800' => 5.2,
-        '#FFDD00' => 5.4,
+        '#B0622D' => 5.4,
+        '#B0612C' => 5.4,
         '#EDE800' => 5.6,
-        '#CCDD00' => 5.8,
-        '#99BB00' => 6.0,
+        '#9D2529' => 5.8,
+        '#A12D31' => 5.8,
+        '#7E2938' => 6.0,
+        '#7E2939' => 6.0,
     ];
 
     /**
      * BCG (Bromocresol Green) indicator — BSWM Step 2, acidic soils.
      * Range: pH 4.0–5.4  (8 discrete points).
      * BCG transitions from yellow at low pH to teal/blue at pH 5.4.
+     *
+     * Hex values manually measured from the physical BSWM kit card under
+     * calibrated box-lighting conditions. Multiple entries per pH point
+     * improve CIEDE2000 nearest-match accuracy.
      */
     public const BCG_COLOR_CHART = [
-        '#F5C800' => 4.0,
+        '#798136' => 4.0,
+        '#7C843A' => 4.0,
         '#CCCC00' => 4.2,
-        '#77BB00' => 4.4,
+        '#47806C' => 4.4,
+        '#417C67' => 4.4,
         '#22AA33' => 4.6,
-        '#009944' => 4.8,
+        '#548976' => 4.8,
+        '#457F6C' => 4.8,
+        '#46806C' => 4.8,
         '#009966' => 5.0,
-        '#007799' => 5.2,
+        '#596394' => 5.2,
+        '#576292' => 5.2,
         '#0066BB' => 5.4,
     ];
 
@@ -58,6 +70,10 @@ class ColorScienceService
      * BTB (Bromothymol Blue) indicator — BSWM Step 2, near-neutral soils.
      * Range: pH 6.0–7.6  (5 discrete points).
      * BTB transitions from yellow at pH 6.0 to blue at pH 7.6.
+     *
+     * NOTE: Approximate reference values — no physical BTB card calibration
+     * performed yet. Recalibrate by measuring BTB card strips under the same
+     * box+lighting conditions used for CPR/BCG captures.
      */
     public const BTB_COLOR_CHART = [
         '#DDDD00' => 6.0,
