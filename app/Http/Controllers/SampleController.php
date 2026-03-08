@@ -100,7 +100,14 @@ class SampleController extends Controller
 
         // Auto-compute when all 4 averaged colors are present and not yet analyzed
         if ($sample->allAveraged() && !$sample->isAnalyzed()) {
-            $ph = $this->colorScience->colorToPhLevel($sample->ph_color_hex);
+            // Prefer the 2-step pH test result (CPR/BCG/BTB) when it is complete.
+            // Falling back to colorToPhLevel() on the averaged hex gives a ~0.6
+            // overestimate because the generic PH_COLOR_CHART uses different indicator
+            // colors than the BSWM CPR/BCG/BTB reagents.
+            $phTest = $sample->phTest;
+            $ph = ($phTest && $phTest->status === 'complete' && $phTest->final_ph)
+                ? (float) $phTest->final_ph
+                : $this->colorScience->colorToPhLevel($sample->ph_color_hex);
             $n  = $this->colorScience->colorToNitrogenLevel($sample->nitrogen_color_hex);
             $p  = $this->colorScience->colorToPhosphorusLevel($sample->phosphorus_color_hex);
             $k  = $this->colorScience->colorToPotassiumLevel($sample->potassium_color_hex);

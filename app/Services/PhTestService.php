@@ -71,8 +71,8 @@ class PhTestService
         if ($ph1 < 4.0 || $ph1 > 7.6) return 'RETEST';
         if ($ph1 <= 5.4) return 'BCG';
         if ($ph1 > 5.8)  return 'BTB';
-        // 5.4 < pH ≤ 5.8: borderline — CPR result is used as final
-        return 'RETEST';
+        // 5.4 < pH ≤ 5.8: per BSWM protocol the CPR reading is accepted as final
+        return 'CPR';
     }
 
     /**

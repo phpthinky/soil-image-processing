@@ -18,6 +18,55 @@ class ColorScienceService
         '#0044AA' => 8.3, '#003388' => 8.5,
     ];
 
+    /**
+     * CPR (Cresol Red + Phenolphthalein) indicator — BSWM Step 1.
+     * Range: pH 4.8–6.0  (7 discrete points matching the BSWM CPR color card).
+     * CPR produces amber-yellow hues in this range, distinctly different from
+     * the universal-indicator colors in PH_COLOR_CHART.
+     *
+     * NOTE: If readings remain off after updating, calibrate these hex values by
+     * capturing each reference strip color from the physical BSWM kit card under
+     * the same box+lighting conditions used for live captures.
+     */
+    public const CPR_COLOR_CHART = [
+        '#FF8800' => 4.8,
+        '#FFB200' => 5.0,
+        '#FFC800' => 5.2,
+        '#FFDD00' => 5.4,
+        '#EDE800' => 5.6,
+        '#CCDD00' => 5.8,
+        '#99BB00' => 6.0,
+    ];
+
+    /**
+     * BCG (Bromocresol Green) indicator — BSWM Step 2, acidic soils.
+     * Range: pH 4.0–5.4  (8 discrete points).
+     * BCG transitions from yellow at low pH to teal/blue at pH 5.4.
+     */
+    public const BCG_COLOR_CHART = [
+        '#F5C800' => 4.0,
+        '#CCCC00' => 4.2,
+        '#77BB00' => 4.4,
+        '#22AA33' => 4.6,
+        '#009944' => 4.8,
+        '#009966' => 5.0,
+        '#007799' => 5.2,
+        '#0066BB' => 5.4,
+    ];
+
+    /**
+     * BTB (Bromothymol Blue) indicator — BSWM Step 2, near-neutral soils.
+     * Range: pH 6.0–7.6  (5 discrete points).
+     * BTB transitions from yellow at pH 6.0 to blue at pH 7.6.
+     */
+    public const BTB_COLOR_CHART = [
+        '#DDDD00' => 6.0,
+        '#88BB00' => 6.4,
+        '#33AA44' => 6.8,
+        '#009977' => 7.2,
+        '#0066CC' => 7.6,
+    ];
+
     public const NITROGEN_COLOR_CHART = [
         '#FFF5F5' =>  2.0, '#FFE0E8' =>  8.0, '#FFB3C6' => 15.0,
         '#FF80A0' => 22.0, '#FF4D80' => 30.0, '#E6006B' => 40.0,
@@ -55,6 +104,41 @@ class ColorScienceService
         [$value, $minDeltaE] = $this->matchColorToValueWithDeltaE($hex, self::PH_COLOR_CHART);
         $ph            = round(min(14.0, max(0.0, $value)), 1);
         $confidencePct = max(0, min(100, (int) round(100 - $minDeltaE * 3)));
+        return ['ph' => $ph, 'confidence_pct' => $confidencePct];
+    }
+
+    /**
+     * Compute pH from a CPR/BCG/BTB indicator color using the indicator-specific
+     * reference chart instead of the general PH_COLOR_CHART.
+     *
+     * Using the general chart for pH-test captures produces a systematic ~0.6 pH
+     * overestimate because universal-indicator orange (pH 5.0 in PH_COLOR_CHART)
+     * does not match the amber-yellow hue that CPR produces at pH 5.0.
+     *
+     * @param  string $hex       Captured color hex (e.g. '#FFB200')
+     * @param  string $solution  'CPR', 'BCG', or 'BTB'
+     * @return array{ph: float, confidence_pct: int}
+     */
+    public function phTestColorToPhLevel(string $hex, string $solution): array
+    {
+        $solution = strtoupper($solution);
+        $chart = match ($solution) {
+            'BCG'   => self::BCG_COLOR_CHART,
+            'BTB'   => self::BTB_COLOR_CHART,
+            default => self::CPR_COLOR_CHART,
+        };
+
+        [$value, $minDeltaE] = $this->matchColorToValueWithDeltaE($hex, $chart);
+
+        // Clamp to the valid measurable range for each indicator
+        $ph = match ($solution) {
+            'BCG'   => round(min(5.5, max(3.9, $value)), 1),
+            'BTB'   => round(min(7.7, max(5.9, $value)), 1),
+            default => round(min(6.1, max(4.7, $value)), 1),  // CPR
+        };
+
+        $confidencePct = max(0, min(100, (int) round(100 - $minDeltaE * 3)));
+
         return ['ph' => $ph, 'confidence_pct' => $confidencePct];
     }
 

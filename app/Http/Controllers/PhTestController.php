@@ -45,9 +45,19 @@ class PhTestController extends Controller
         $sample = SoilSample::findOrFail($validated['sample_id']);
         $this->authorizeAccess($sample);
 
-        $colorHex      = strtoupper($validated['color_hex']);
-        $step          = (int) $validated['step'];
-        $phResult      = $this->colorScience->colorToPhLevelWithConfidence($colorHex);
+        $colorHex = strtoupper($validated['color_hex']);
+        $step     = (int) $validated['step'];
+
+        // Determine which indicator is in use so we apply its specific color chart.
+        // CPR is always used in Step 1; BCG or BTB is assigned after Step 1 completes.
+        $indicatorSolution = $step === 1
+            ? 'CPR'
+            : (($phTest->step2_solution ?? null) ?: 'CPR');
+
+        // Use the indicator-specific chart (CPR/BCG/BTB) instead of the generic
+        // PH_COLOR_CHART to avoid the systematic ~0.6 pH overestimate caused by
+        // each reagent producing different hues at the same pH value.
+        $phResult      = $this->colorScience->phTestColorToPhLevel($colorHex, $indicatorSolution);
         $computedPh    = $phResult['ph'];
         $confidencePct = $phResult['confidence_pct'];
 
@@ -83,7 +93,10 @@ class PhTestController extends Controller
             $phTest->step1_readings = $readings;
 
             if (count($readings) === 3) {
-                $values = array_column($readings, 'computed_value');
+                // Use chart_ph (already snapped to discrete CPR card values) for the
+                // average so step1_ph reflects what the physical test card shows,
+                // not the raw interpolated value which can carry a calibration offset.
+                $values = array_column($readings, 'chart_ph');
                 $stats  = $this->phTestService->computeStats($values);
                 $next   = $this->phTestService->decideSolution($stats['average']);
                 $remark = $this->phTestService->generateStep1Remarks(
@@ -164,7 +177,8 @@ class PhTestController extends Controller
         $phTest->step2_readings = $readings;
 
         if (count($readings) === 3) {
-            $values = array_column($readings, 'computed_value');
+            // Use chart_ph (snapped to BCG/BTB card values) for consistency with Step 1.
+            $values = array_column($readings, 'chart_ph');
             $stats  = $this->phTestService->computeStats($values);
             $avgHex = $this->phTestService->averageHex($readings);
             $remark = $this->phTestService->generateStep2Remarks(
