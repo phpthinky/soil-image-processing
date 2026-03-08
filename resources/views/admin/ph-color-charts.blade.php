@@ -2,18 +2,17 @@
 @section('title', 'pH Color Chart Manager')
 
 @section('styles')
-<style>
     .color-swatch {
         display: inline-block;
-        width: 32px;
-        height: 22px;
+        width: 36px;
+        height: 24px;
         border-radius: 4px;
-        border: 1px solid rgba(0,0,0,.2);
+        border: 1px solid rgba(0,0,0,.25);
         vertical-align: middle;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,.15);
     }
     .indicator-tab.active { font-weight: 700; }
     .entry-row.inactive td { opacity: .45; }
-</style>
 @endsection
 
 @section('content')
