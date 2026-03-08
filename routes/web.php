@@ -8,6 +8,7 @@ use App\Http\Controllers\ColorReadingController;
 use App\Http\Controllers\AiRecommendationController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\PhColorChartController;
 use App\Http\Controllers\FarmerController;
 use App\Http\Controllers\PhTestController;
 use App\Http\Controllers\ParameterTestController;
@@ -87,5 +88,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/users',           [UserController::class, 'store'])->name('users.store');
         Route::put('/users/{user}',     [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}',  [UserController::class, 'destroy'])->name('users.destroy');
+
+        // pH Color Chart management
+        Route::get('/ph-color-charts',                      [PhColorChartController::class, 'index'])->name('ph-color-charts');
+        Route::post('/ph-color-charts',                     [PhColorChartController::class, 'store'])->name('ph-color-charts.store');
+        Route::patch('/ph-color-charts/{phColorChart}',    [PhColorChartController::class, 'toggle'])->name('ph-color-charts.toggle');
+        Route::delete('/ph-color-charts/{phColorChart}',   [PhColorChartController::class, 'destroy'])->name('ph-color-charts.destroy');
     });
 });

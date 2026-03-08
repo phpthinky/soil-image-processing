@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\PhColorChart;
+
 /**
  * Color science: CIE L*a*b* conversion + CIEDE2000 color distance.
  * Ported directly from old-app/config.php.
@@ -140,11 +142,17 @@ class ColorScienceService
     public function phTestColorToPhLevel(string $hex, string $solution): array
     {
         $solution = strtoupper($solution);
-        $chart = match ($solution) {
-            'BCG'   => self::BCG_COLOR_CHART,
-            'BTB'   => self::BTB_COLOR_CHART,
-            default => self::CPR_COLOR_CHART,
-        };
+
+        // Load active reference colors from DB; fall back to hardcoded constants
+        // if the table is empty (e.g. before seeding or during testing).
+        $chart = PhColorChart::chartForIndicator($solution);
+        if (empty($chart)) {
+            $chart = match ($solution) {
+                'BCG'   => self::BCG_COLOR_CHART,
+                'BTB'   => self::BTB_COLOR_CHART,
+                default => self::CPR_COLOR_CHART,
+            };
+        }
 
         [$value, $minDeltaE] = $this->matchColorToValueWithDeltaE($hex, $chart);
 

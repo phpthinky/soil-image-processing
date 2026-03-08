@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\PhColorChart;
+
 class PhTestService
 {
     // Variance threshold: readings within 0.3 pH units = High confidence
@@ -21,10 +23,13 @@ class PhTestService
      * Snap a continuous scientific pH value to the nearest fixed chart point
      * for the given indicator solution. On a tie (equidistant), rounds up
      * to the higher chart value — matching how a technician reads the paper card.
+     * Chart points are loaded from the ph_color_charts DB table (active entries only);
+     * falls back to the hardcoded CHART_POINTS constant if the table is empty.
      */
     public static function snapToChartPh(float $ph, string $solution): float
     {
-        $points  = self::CHART_POINTS[strtoupper($solution)] ?? self::CHART_POINTS['CPR'];
+        $dbPoints = PhColorChart::chartPointsForIndicator($solution);
+        $points   = !empty($dbPoints) ? $dbPoints : (self::CHART_POINTS[strtoupper($solution)] ?? self::CHART_POINTS['CPR']);
         $nearest = $points[0];
         $minDiff = PHP_FLOAT_MAX;
 
