@@ -15,7 +15,7 @@ class PhTestService
      */
     public const CHART_POINTS = [
         'CPR' => [4.8, 5.0, 5.2, 5.4, 5.6, 5.8, 6.0],
-        'BCG' => [4.0, 4.2, 4.4, 4.6, 4.8, 5.0, 5.2, 5.4],
+        'BCG' => [4.0, 4.2, 4.4, 4.6, 4.8, 5.0, 5.2],
         'BTB' => [6.0, 6.2, 6.4, 6.8, 7.2, 7.8],
     ];
 
@@ -131,7 +131,7 @@ class PhTestService
     public function solutionDescription(string $solution): string
     {
         return match($solution) {
-            'BCG'    => 'BCG (Bromocresol Green) — Confirms pH in the acidic range (4.0–5.4)',
+            'BCG'    => 'BCG (Bromocresol Green) — Confirms pH in the acidic range (4.0–5.2)',
             'BTB'    => 'BTB (Bromothymol Blue) — Confirms pH in the near-neutral range (5.8–7.6)',
             'CPR'    => 'CPR Result is Final — pH in transitional range (5.4–5.8); no second test needed',
             'RETEST' => 'Retest Required — pH is outside the measurable chart range (4.0–7.8)',

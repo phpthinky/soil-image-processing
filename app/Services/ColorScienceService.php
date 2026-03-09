@@ -45,11 +45,11 @@ class ColorScienceService
 
     /**
      * BCG (Bromocresol Green) indicator — BSWM Step 2, acidic soils.
-     * Range: pH 4.0–5.4  (8 discrete points).
-     * BCG transitions from yellow-green at low pH to teal-blue at pH 5.4.
+     * Range: pH 4.0–5.2  (7 discrete points).
+     * BCG transitions from yellow-green at low pH to teal-green at pH 5.2.
      *
      * Calibrated from physical BSWM BCG card under calibrated box-lighting.
-     * One entry per card point — clean monotonic yellow-green → green → teal-green → teal-blue.
+     * One entry per card point — clean monotonic yellow-green → green → teal-green.
      */
     public const BCG_COLOR_CHART = [
         '#CABB05' => 4.0,
@@ -59,7 +59,6 @@ class ColorScienceService
         '#3C9B32' => 4.8,
         '#1A8D54' => 5.0,
         '#008071' => 5.2,
-        '#007382' => 5.4,
     ];
 
     /**
@@ -140,7 +139,7 @@ class ColorScienceService
 
     /**
      * Match a BCG capture color to a pH value.
-     * BCG range: pH 4.0–5.4 (yellow-green → teal-blue, BSWM Step 2 acidic).
+     * BCG range: pH 4.0–5.2 (yellow-green → teal-green, BSWM Step 2 acidic).
      * Loads active entries from DB; falls back to BCG_COLOR_CHART constant.
      *
      * @return array{ph: float, confidence_pct: int}
@@ -153,7 +152,7 @@ class ColorScienceService
         }
 
         [$value, $minDeltaE] = $this->matchColorToValueWithDeltaE($hex, $chart);
-        $ph            = round(min(5.4, max(4.0, $value)), 1);
+        $ph            = round(min(5.2, max(4.0, $value)), 1);
         $confidencePct = max(0, min(100, (int) round(100 - $minDeltaE * 3)));
 
         return ['ph' => $ph, 'confidence_pct' => $confidencePct];
