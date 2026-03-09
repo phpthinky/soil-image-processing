@@ -11,7 +11,7 @@ The soil pH analyzer matches a captured strip color against a set of reference h
 | Indicator | Full Name                           | pH Range | Card Points               | BSWM Step |
 |-----------|-------------------------------------|----------|---------------------------|-----------|
 | **CPR**   | Cresol Red + Phenolphthalein        | 4.8–6.0  | 4.8, 5.0, 5.2, 5.4, 5.6, 5.8, 6.0 | Step 1 (always) |
-| **BCG**   | Bromocresol Green                   | 4.0–5.4  | 4.0, 4.2, 4.4, 4.6, 4.8, 5.0, 5.2, 5.4 | Step 2 (acidic soils, CPR ≤ 5.4) |
+| **BCG**   | Bromocresol Green                   | 4.0–5.2  | 4.0, 4.2, 4.4, 4.6, 4.8, 5.0, 5.2 | Step 2 (acidic soils, CPR ≤ 5.4) |
 | **BTB**   | Bromothymol Blue                    | 6.0–7.8  | 6.0, 6.2, 6.4, 6.8, 7.2, 7.8 | Step 2 (near-neutral, CPR > 5.8) |
 
 ---
@@ -29,7 +29,7 @@ pH 5.8  →  Dark red            (#9D2529)
 pH 6.0  →  Deep burgundy       (#7E2938)
 ```
 
-### BCG (Step 2, Acidic) — Yellow-Green to Teal-Blue
+### BCG (Step 2, Acidic) — Yellow-Green to Teal-Green
 ```
 pH 4.0  →  Yellow-green        (#CABB05)
 pH 4.2  →  Yellow-green        (#C1BE07)
@@ -38,7 +38,6 @@ pH 4.6  →  Olive-green         (#80B21B)
 pH 4.8  →  Green               (#3C9B32)
 pH 5.0  →  Teal-green          (#1A8D54)
 pH 5.2  →  Teal                (#008071)
-pH 5.4  →  Teal-blue           (#007382)
 ```
 > **Calibration status:** ✅ Measured from physical BSWM BCG card.
 
@@ -80,7 +79,7 @@ Follow this procedure each time you remeasure a card, or when adding a new indic
    - Record the hex value next to its pH label.
    - Repeat 3 times and take the mode (most common) or average if readings are consistent.
 
-5. **Verify the color progression** — The hex values must form a monotonic visual gradient. For BCG: yellow-green → green → teal-green → teal-blue with no sudden hue reversals. If a point looks out of order, recapture it.
+5. **Verify the color progression** — The hex values must form a monotonic visual gradient. For BCG: yellow-green → green → teal-green with no sudden hue reversals. If a point looks out of order, recapture it.
 
 6. **Update the database** — In Admin → pH Color Charts:
    - Select the indicator tab (CPR / BCG / BTB).
@@ -102,7 +101,7 @@ After the CIEDE2000 delta-E algorithm produces a continuous scientific pH (e.g.,
 ```
 Scientific = 4.05  →  Chart point = 4.2  (first BCG point >= 4.05)
 Scientific = 4.80  →  Chart point = 4.8  (exact match)
-Scientific = 5.41  →  Chart point = 5.4  (clamped to BCG max)
+Scientific = 5.21  →  Chart point = 5.2  (clamped to BCG max)
 Scientific = 7.82  →  Chart point = 7.8  (clamped to BTB max)
 ```
 
@@ -145,9 +144,9 @@ The CIEDE2000 algorithm considers all active entries and picks the globally clos
 - Check the DB entries for that indicator — old or incorrect entries may be active.
 - Deactivate any entries that don't belong to the correct color progression.
 
-### BCG always returns pH 4.0 or 5.4 (stuck at extremes)
+### BCG always returns pH 4.0 or 5.2 (stuck at extremes)
 - The reference colors at the intermediate points may be too far in CIEDE2000 space from the actual strip colors.
-- Recalibrate the intermediate BCG points (4.2–5.2) under the production lighting box.
+- Recalibrate the intermediate BCG points (4.2–5.0) under the production lighting box.
 
 ---
 
