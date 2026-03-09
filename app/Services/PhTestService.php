@@ -20,29 +20,31 @@ class PhTestService
     ];
 
     /**
-     * Snap a continuous scientific pH value to the nearest fixed chart point
-     * for the given indicator solution. On a tie (equidistant), rounds up
-     * to the higher chart value — matching how a technician reads the paper card.
-     * Chart points are loaded from the ph_color_charts DB table (active entries only);
-     * falls back to the hardcoded CHART_POINTS constant if the table is empty.
+     * Snap a continuous scientific pH value to the nearest card point that is
+     * >= the scientific value (ceiling-snap).
+     *
+     * This guarantees chart_ph >= scientific_ph so that the technician always
+     * sees the card reading at or above the spectrophotometric value — never below it.
+     * Round-up on tie is no longer needed; the ceiling rule covers it naturally.
+     *
+     * If scientific pH exceeds every chart point (out-of-range high), the highest
+     * chart point is returned (clamped). Chart points are loaded from the
+     * ph_color_charts DB table; falls back to CHART_POINTS constant if DB is empty.
      */
     public static function snapToChartPh(float $ph, string $solution): float
     {
         $dbPoints = PhColorChart::chartPointsForIndicator($solution);
         $points   = !empty($dbPoints) ? $dbPoints : (self::CHART_POINTS[strtoupper($solution)] ?? self::CHART_POINTS['CPR']);
-        $nearest = $points[0];
-        $minDiff = PHP_FLOAT_MAX;
 
+        // Points are sorted ascending. Return the first point >= scientific pH.
         foreach ($points as $point) {
-            $diff = abs($ph - $point);
-            // Prefer this point if strictly closer, or equal distance but higher value (round-up on tie)
-            if ($diff < $minDiff - 0.00001 || (abs($diff - $minDiff) < 0.00001 && $point > $nearest)) {
-                $minDiff = $diff;
-                $nearest = $point;
+            if ($point >= $ph - 0.00001) {
+                return $point;
             }
         }
 
-        return $nearest;
+        // Scientific pH exceeds all chart points → clamp to highest card value.
+        return end($points);
     }
 
     /**

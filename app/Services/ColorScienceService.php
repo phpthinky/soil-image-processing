@@ -46,26 +46,20 @@ class ColorScienceService
     /**
      * BCG (Bromocresol Green) indicator — BSWM Step 2, acidic soils.
      * Range: pH 4.0–5.4  (8 discrete points).
-     * BCG transitions from yellow at low pH to teal/blue at pH 5.4.
+     * BCG transitions from yellow-green at low pH to teal-blue at pH 5.4.
      *
-     * Hex values manually measured from the physical BSWM kit card under
-     * calibrated box-lighting conditions. Multiple entries per pH point
-     * improve CIEDE2000 nearest-match accuracy.
+     * Calibrated from physical BSWM BCG card under calibrated box-lighting.
+     * One entry per card point — clean monotonic yellow-green → green → teal-green → teal-blue.
      */
     public const BCG_COLOR_CHART = [
-        '#798136' => 4.0,
-        '#7C843A' => 4.0,
-        '#CCCC00' => 4.2,
-        '#47806C' => 4.4,
-        '#417C67' => 4.4,
-        '#22AA33' => 4.6,
-        '#548976' => 4.8,
-        '#457F6C' => 4.8,
-        '#46806C' => 4.8,
-        '#009966' => 5.0,
-        '#596394' => 5.2,
-        '#576292' => 5.2,
-        '#0066BB' => 5.4,
+        '#CABB05' => 4.0,
+        '#C1BE07' => 4.2,
+        '#B6C209' => 4.4,
+        '#80B21B' => 4.6,
+        '#3C9B32' => 4.8,
+        '#1A8D54' => 5.0,
+        '#008071' => 5.2,
+        '#007382' => 5.4,
     ];
 
     /**
