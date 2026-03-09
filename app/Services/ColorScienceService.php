@@ -72,13 +72,12 @@ class ColorScienceService
      * box+lighting conditions used for CPR/BCG captures.
      */
     public const BTB_COLOR_CHART = [
-        '#DDDD00' => 6.0,
-        '#DCDC00' => 6.0,
-        '#88BB00' => 6.4,
-        '#33AA44' => 6.8,
-        '#009977' => 7.2,
-        '#0066CC' => 7.6,
-        '#0055BB' => 7.6,
+        '#C9D900' => 6.0,
+        '#0FCA02' => 6.2,
+        '#027419' => 6.4,
+        '#022706' => 6.8,
+        '#013251' => 7.2,
+        '#1F0F99' => 7.8,
     ];
 
     public const NITROGEN_COLOR_CHART = [

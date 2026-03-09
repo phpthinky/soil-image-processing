@@ -177,7 +177,6 @@
     </div>
 
 </div>
-
 {{-- ── Delete Danger Modal ──────────────────────────────────────── --}}
 <div class="modal fade" id="deleteModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
@@ -199,19 +198,13 @@
                 </div>
                 <form id="deleteForm" method="POST">
                     @csrf @method('DELETE')
-                    <label class="form-label fw-semibold">
-                        Re-enter your password to confirm:
-                    </label>
-                    <input type="password" class="form-control" name="confirm_password"
-                           id="deletePasswordInput" placeholder="Your admin password" required>
-                    <div class="form-text text-danger mt-1" id="delete-hint"></div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fa fa-times me-1"></i> Cancel
                 </button>
-                <button type="button" class="btn btn-danger" onclick="submitDelete()">
+                <button type="button" class="btn btn-danger" onclick="document.getElementById('deleteForm').submit()">
                     <i class="fa fa-trash me-1"></i> Delete Permanently
                 </button>
             </div>
@@ -230,15 +223,11 @@ function syncPicker(hexVal) {
 }
 
 function openDeleteModal(id, hex, indicator, ph) {
-    const actionUrl = `/admin/ph-color-charts/${id}`;
-    document.getElementById('deleteForm').action = actionUrl;
+    document.getElementById('deleteForm').action = `/admin/ph-color-charts/${id}`;
     document.getElementById('modal-swatch').style.background = hex;
     document.getElementById('modal-label').textContent = `${hex}  —  ${indicator}  pH ${ph.toFixed(1)}`;
-    document.getElementById('deletePasswordInput').value = '';
-    document.getElementById('delete-hint').textContent = '';
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
-
 function submitDelete() {
     const pw = document.getElementById('deletePasswordInput').value.trim();
     if (!pw) {

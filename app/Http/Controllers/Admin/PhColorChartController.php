@@ -59,14 +59,16 @@ class PhColorChartController extends Controller
 
     public function destroy(PhColorChart $phColorChart, Request $request)
     {
-        $request->validate([
+       /* $request->validate([
             'confirm_password' => 'required|string',
         ]);
+        
 
         if (!Hash::check($request->confirm_password, $request->user()->password)) {
             return redirect()->route('admin.ph-color-charts')
                 ->with('error', 'Incorrect password. Entry was NOT deleted.');
         }
+        */
 
         $label = "{$phColorChart->hex_value} / {$phColorChart->indicator} pH {$phColorChart->ph_value}";
         $phColorChart->delete();
