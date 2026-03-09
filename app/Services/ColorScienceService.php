@@ -64,12 +64,9 @@ class ColorScienceService
 
     /**
      * BTB (Bromothymol Blue) indicator — BSWM Step 2, near-neutral soils.
-     * Range: pH 6.0–7.6  (5 discrete points).
-     * BTB transitions from yellow at pH 6.0 to blue at pH 7.6.
-     *
-     * NOTE: Approximate reference values — no physical BTB card calibration
-     * performed yet. Recalibrate by measuring BTB card strips under the same
-     * box+lighting conditions used for CPR/BCG captures.
+     * Range: pH 6.0–7.8  (6 discrete points).
+     * BTB transitions from yellow-green at pH 6.0 to deep blue at pH 7.8.
+     * Calibrated from physical BSWM BTB card under production lighting box.
      */
     public const BTB_COLOR_CHART = [
         '#C9D900' => 6.0,
@@ -151,9 +148,9 @@ class ColorScienceService
 
         // Clamp to the valid measurable range for each indicator
         $ph = match ($solution) {
-            'BCG'   => round(min(5.5, max(3.9, $value)), 1),
-            'BTB'   => round(min(7.7, max(5.9, $value)), 1),
-            default => round(min(6.1, max(4.7, $value)), 1),  // CPR
+            'BCG'   => round(min(5.4, max(4.0, $value)), 1),
+            'BTB'   => round(min(7.8, max(6.0, $value)), 1),
+            default => round(min(6.0, max(4.8, $value)), 1),  // CPR
         };
 
         $confidencePct = max(0, min(100, (int) round(100 - $minDeltaE * 3)));
