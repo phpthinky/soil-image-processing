@@ -238,6 +238,53 @@ class PhTestController extends Controller
         ]);
     }
 
+    // ── Recapture (remove one reading so it can be retaken) ───────
+
+    public function recapture(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'sample_id'      => 'required|integer|exists:soil_samples,id',
+            'step'           => 'required|integer|in:1,2',
+            'capture_number' => 'required|integer|min:1|max:3',
+        ]);
+
+        $sample = SoilSample::findOrFail($validated['sample_id']);
+        $this->authorizeAccess($sample);
+
+        $phTest = $sample->phTest;
+        if (!$phTest) {
+            return response()->json(['success' => false, 'message' => 'No pH test record found.'], 404);
+        }
+
+        $index = (int) $validated['capture_number'] - 1;
+
+        if ((int) $validated['step'] === 1) {
+            if (!in_array($phTest->status, ['step1', 'retest'])) {
+                return response()->json(['success' => false, 'message' => 'Step 1 is already locked — reset the full test to redo captures.'], 422);
+            }
+            $readings = $phTest->step1_readings ?? [];
+            if (!isset($readings[$index])) {
+                return response()->json(['success' => false, 'message' => 'Capture not found.'], 404);
+            }
+            array_splice($readings, $index, 1);
+            $phTest->step1_readings = array_values($readings);
+        } else {
+            if ($phTest->status !== 'step2') {
+                return response()->json(['success' => false, 'message' => 'Step 2 is not in progress.'], 422);
+            }
+            $readings = $phTest->step2_readings ?? [];
+            if (!isset($readings[$index])) {
+                return response()->json(['success' => false, 'message' => 'Capture not found.'], 404);
+            }
+            array_splice($readings, $index, 1);
+            $phTest->step2_readings = array_values($readings);
+        }
+
+        $phTest->save();
+
+        return response()->json(['success' => true, 'reload' => true]);
+    }
+
     // ── Reset ─────────────────────────────────────────────────────
 
     public function reset(SoilSample $sample)

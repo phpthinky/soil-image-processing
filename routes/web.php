@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
     // API endpoints (called by JavaScript)
     Route::post('/api/color-readings',      [ColorReadingController::class,    'store'])->name('color-readings.store');
     Route::post('/api/ph-test/capture',     [PhTestController::class,          'capture'])->name('ph-test.capture');
+    Route::post('/api/ph-test/recapture',   [PhTestController::class,          'recapture'])->name('ph-test.recapture');
     Route::post('/api/ai-recommendation',         [AiRecommendationController::class,       'generate'])->name('ai-recommendation.generate');
     Route::post('/api/gemini-crop-recommendations',[GeminiCropRecommendationController::class, 'generate'])->name('gemini-crop-recommendations.generate');
 

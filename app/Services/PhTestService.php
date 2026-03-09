@@ -16,7 +16,7 @@ class PhTestService
     public const CHART_POINTS = [
         'CPR' => [4.8, 5.0, 5.2, 5.4, 5.6, 5.8, 6.0],
         'BCG' => [4.0, 4.2, 4.4, 4.6, 4.8, 5.0, 5.2, 5.4],
-        'BTB' => [6.0, 6.4, 6.8, 7.2, 7.6],
+        'BTB' => [6.0, 6.2, 6.4, 6.8, 7.2, 7.8],
     ];
 
     /**
@@ -75,7 +75,7 @@ class PhTestService
      */
     public function decideSolution(float $ph1): string
     {
-        if ($ph1 < 4.0 || $ph1 > 7.6) return 'RETEST';
+        if ($ph1 < 4.0 || $ph1 > 7.8) return 'RETEST';
         if ($ph1 <= 5.4) return 'BCG';
         if ($ph1 > 5.8)  return 'BTB';
         // 5.4 < pH ≤ 5.8: per BSWM protocol the CPR reading is accepted as final
@@ -134,7 +134,7 @@ class PhTestService
             'BCG'    => 'BCG (Bromocresol Green) — Confirms pH in the acidic range (4.0–5.4)',
             'BTB'    => 'BTB (Bromothymol Blue) — Confirms pH in the near-neutral range (5.8–7.6)',
             'CPR'    => 'CPR Result is Final — pH in transitional range (5.4–5.8); no second test needed',
-            'RETEST' => 'Retest Required — pH is outside the measurable chart range (4.0–7.6)',
+            'RETEST' => 'Retest Required — pH is outside the measurable chart range (4.0–7.8)',
             default  => 'Unknown',
         };
     }
@@ -208,7 +208,7 @@ class PhTestService
 
         return [
             'outcome' => 'alkaline',
-            'remarks' => "⚠ Retest Required — CPR pH reading ({$ph1}) exceeds the BTB chart maximum (7.6), "
+            'remarks' => "⚠ Retest Required — CPR pH reading ({$ph1}) exceeds the BTB chart maximum (7.8), "
                        . "which is outside the measurable range. "
                        . "Verify soil strip placement and repeat with a fresh sample.",
         ];

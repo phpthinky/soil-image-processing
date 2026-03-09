@@ -12,7 +12,7 @@ The soil pH analyzer matches a captured strip color against a set of reference h
 |-----------|-------------------------------------|----------|---------------------------|-----------|
 | **CPR**   | Cresol Red + Phenolphthalein        | 4.8–6.0  | 4.8, 5.0, 5.2, 5.4, 5.6, 5.8, 6.0 | Step 1 (always) |
 | **BCG**   | Bromocresol Green                   | 4.0–5.4  | 4.0, 4.2, 4.4, 4.6, 4.8, 5.0, 5.2, 5.4 | Step 2 (acidic soils, CPR ≤ 5.4) |
-| **BTB**   | Bromothymol Blue                    | 6.0–7.6  | 6.0, 6.4, 6.8, 7.2, 7.6  | Step 2 (near-neutral, CPR > 5.8) |
+| **BTB**   | Bromothymol Blue                    | 6.0–7.8  | 6.0, 6.2, 6.4, 6.8, 7.2, 7.8 | Step 2 (near-neutral, CPR > 5.8) |
 
 ---
 
@@ -42,16 +42,17 @@ pH 5.4  →  Teal-blue           (#007382)
 ```
 > **Calibration status:** ✅ Measured from physical BSWM BCG card.
 
-### BTB (Step 2, Near-Neutral) — Yellow to Blue
+### BTB (Step 2, Near-Neutral) — Yellow-Green to Deep Blue
 ```
-pH 6.0  →  Bright yellow       (#DDDD00)
-pH 6.4  →  Yellow-green        (#88BB00)
-pH 6.8  →  Green               (#33AA44)
-pH 7.2  →  Teal                (#009977)
-pH 7.6  →  Blue                (#0066CC)
+pH 6.0  →  Yellow-green        (#C9D900)
+pH 6.2  →  Bright green        (#0FCA02)
+pH 6.4  →  Dark green          (#027419)
+pH 6.8  →  Very dark green     (#022706)
+pH 7.2  →  Dark teal-blue      (#013251)
+pH 7.8  →  Deep blue           (#1F0F99)
 ```
-> **Calibration status:** ⚠️ Approximate values only — physical BTB card not yet measured.
-> Recalibrate following the procedure below before relying on BTB readings in production.
+> **Calibration status:** ✅ Measured from physical BSWM BTB card.
+> Range extended to pH 7.8 (was 7.6) with a new intermediate point at pH 6.2.
 
 ---
 
@@ -102,6 +103,7 @@ After the CIEDE2000 delta-E algorithm produces a continuous scientific pH (e.g.,
 Scientific = 4.05  →  Chart point = 4.2  (first BCG point >= 4.05)
 Scientific = 4.80  →  Chart point = 4.8  (exact match)
 Scientific = 5.41  →  Chart point = 5.4  (clamped to BCG max)
+Scientific = 7.82  →  Chart point = 7.8  (clamped to BTB max)
 ```
 
 ---

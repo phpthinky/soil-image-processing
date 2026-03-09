@@ -139,8 +139,11 @@ $current     = $statusOrder[$phTest->status] ?? 0;
                 </div>
                 <canvas id="snapshot" width="320" height="240" style="display:none;"></canvas>
                 <br>
-                <button id="startCameraBtn" class="btn btn-outline-secondary btn-sm mt-2" onclick="startCamera()">
+                <button id="startCameraBtn" class="btn btn-outline-secondary btn-sm mt-2 me-1" onclick="startCamera()">
                     <i class="fas fa-video"></i> Start Camera
+                </button>
+                <button id="stopCameraBtn" class="btn btn-outline-danger btn-sm mt-2 d-none" onclick="stopCamera()">
+                    <i class="fas fa-stop-circle"></i> Stop Camera
                 </button>
             </div>
 
@@ -202,7 +205,16 @@ $current     = $statusOrder[$phTest->status] ?? 0;
                             </td>
                             <td class="text-center">
                                 @if($rd)
-                                    <span class="text-success small"><i class="fas fa-check"></i></span>
+                                    <div class="d-flex align-items-center justify-content-center gap-1">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                        @if(in_array($phTest->status, ['step1', 'retest']))
+                                        <button class="btn btn-outline-warning btn-sm py-0 px-1"
+                                                onclick="recapture(1, {{ $i }})"
+                                                title="Remove and recapture #{{ $i }}">
+                                            <i class="fas fa-redo" style="font-size:10px;"></i>
+                                        </button>
+                                        @endif
+                                    </div>
                                 @elseif($s1count === $i - 1)
                                     <button class="btn btn-primary btn-sm"
                                             onclick="captureStep(1, {{ $i }})"
@@ -371,8 +383,11 @@ $timerSec = str_pad($timer % 60, 2, '0', STR_PAD_LEFT);
                 </div>
                 <canvas id="snapshot" width="320" height="240" style="display:none;"></canvas>
                 <br>
-                <button id="startCameraBtn" class="btn btn-outline-secondary btn-sm mt-2" onclick="startCamera()">
+                <button id="startCameraBtn" class="btn btn-outline-secondary btn-sm mt-2 me-1" onclick="startCamera()">
                     <i class="fas fa-video"></i> Start Camera
+                </button>
+                <button id="stopCameraBtn" class="btn btn-outline-danger btn-sm mt-2 d-none" onclick="stopCamera()">
+                    <i class="fas fa-stop-circle"></i> Stop Camera
                 </button>
             </div>
 
@@ -435,7 +450,16 @@ $timerSec = str_pad($timer % 60, 2, '0', STR_PAD_LEFT);
                             </td>
                             <td class="text-center">
                                 @if($rd)
-                                    <span class="text-success small"><i class="fas fa-check"></i></span>
+                                    <div class="d-flex align-items-center justify-content-center gap-1">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                        @if($phTest->status === 'step2')
+                                        <button class="btn btn-outline-warning btn-sm py-0 px-1"
+                                                onclick="recapture(2, {{ $i }})"
+                                                title="Remove and recapture #{{ $i }}">
+                                            <i class="fas fa-redo" style="font-size:10px;"></i>
+                                        </button>
+                                        @endif
+                                    </div>
                                 @elseif($s2count === $i - 1)
                                     <button class="btn btn-success btn-sm"
                                             onclick="captureStep(2, {{ $i }})"
@@ -735,14 +759,28 @@ function startCamera() {
         .then(stream => {
             videoStream = stream;
             document.querySelectorAll('video#webcam').forEach(v => v.srcObject = stream);
-            const btn = document.getElementById('startCameraBtn');
-            if (btn) {
+            document.querySelectorAll('#startCameraBtn').forEach(btn => {
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-check-circle"></i> Camera Active';
                 btn.classList.replace('btn-outline-secondary', 'btn-success');
-            }
+            });
+            document.querySelectorAll('#stopCameraBtn').forEach(btn => btn.classList.remove('d-none'));
         })
         .catch(err => alert('Camera error: ' + err.message));
+}
+
+function stopCamera() {
+    if (videoStream) {
+        videoStream.getTracks().forEach(t => t.stop());
+        videoStream = null;
+        document.querySelectorAll('video#webcam').forEach(v => v.srcObject = null);
+    }
+    document.querySelectorAll('#startCameraBtn').forEach(btn => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-video"></i> Start Camera';
+        btn.classList.replace('btn-success', 'btn-outline-secondary');
+    });
+    document.querySelectorAll('#stopCameraBtn').forEach(btn => btn.classList.add('d-none'));
 }
 
 // ── Countdown timer ───────────────────────────────────────────────
@@ -805,6 +843,23 @@ function captureStep(step, captureNumber) {
         alert('Network error — please try again.');
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-camera"></i> Capture ' + captureNumber; }
     });
+}
+
+// ── Recapture (remove a reading so it can be redone) ──────────────
+function recapture(step, captureNumber) {
+    if (!confirm('Remove Capture #' + captureNumber + ' and retake it?\n\nThe current reading will be deleted and you can capture again.')) return;
+
+    fetch('{{ route("ph-test.recapture") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+        body: JSON.stringify({ sample_id: sampleId, step, capture_number: captureNumber })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) { alert('Error: ' + data.message); return; }
+        if (data.reload) location.reload();
+    })
+    .catch(() => alert('Network error — please try again.'));
 }
 </script>
 @endsection

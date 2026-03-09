@@ -228,14 +228,5 @@ function openDeleteModal(id, hex, indicator, ph) {
     document.getElementById('modal-label').textContent = `${hex}  —  ${indicator}  pH ${ph.toFixed(1)}`;
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
-function submitDelete() {
-    const pw = document.getElementById('deletePasswordInput').value.trim();
-    if (!pw) {
-        document.getElementById('delete-hint').textContent = 'Password is required.';
-        document.getElementById('deletePasswordInput').focus();
-        return;
-    }
-    document.getElementById('deleteForm').submit();
-}
 </script>
 @endsection

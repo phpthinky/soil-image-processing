@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PhColorChart;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 class PhColorChartController extends Controller
 {
@@ -28,7 +27,6 @@ class PhColorChartController extends Controller
             'hex_value' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
         ]);
 
-        // Normalise hex to uppercase
         $hex = strtoupper($request->hex_value);
 
         if (PhColorChart::where('indicator', $request->indicator)->where('hex_value', $hex)->exists()) {
@@ -57,19 +55,8 @@ class PhColorChartController extends Controller
             ->with('success', "Entry {$phColorChart->hex_value} ({$phColorChart->indicator}) {$state}.");
     }
 
-    public function destroy(PhColorChart $phColorChart, Request $request)
+    public function destroy(PhColorChart $phColorChart)
     {
-       /* $request->validate([
-            'confirm_password' => 'required|string',
-        ]);
-        
-
-        if (!Hash::check($request->confirm_password, $request->user()->password)) {
-            return redirect()->route('admin.ph-color-charts')
-                ->with('error', 'Incorrect password. Entry was NOT deleted.');
-        }
-        */
-
         $label = "{$phColorChart->hex_value} / {$phColorChart->indicator} pH {$phColorChart->ph_value}";
         $phColorChart->delete();
 
