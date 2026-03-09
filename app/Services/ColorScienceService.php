@@ -118,44 +118,82 @@ class ColorScienceService
     }
 
     /**
-     * Compute pH from a CPR/BCG/BTB indicator color using the indicator-specific
-     * reference chart instead of the general PH_COLOR_CHART.
+     * Match a CPR capture color to a pH value.
+     * CPR range: pH 4.8–6.0 (amber-yellow hues, BSWM Step 1).
+     * Loads active entries from DB; falls back to CPR_COLOR_CHART constant.
      *
-     * Using the general chart for pH-test captures produces a systematic ~0.6 pH
-     * overestimate because universal-indicator orange (pH 5.0 in PH_COLOR_CHART)
-     * does not match the amber-yellow hue that CPR produces at pH 5.0.
+     * @return array{ph: float, confidence_pct: int}
+     */
+    public function colorToCprPhLevel(string $hex): array
+    {
+        $chart = PhColorChart::chartForIndicator('CPR');
+        if (empty($chart)) {
+            $chart = self::CPR_COLOR_CHART;
+        }
+
+        [$value, $minDeltaE] = $this->matchColorToValueWithDeltaE($hex, $chart);
+        $ph            = round(min(6.0, max(4.8, $value)), 1);
+        $confidencePct = max(0, min(100, (int) round(100 - $minDeltaE * 3)));
+
+        return ['ph' => $ph, 'confidence_pct' => $confidencePct];
+    }
+
+    /**
+     * Match a BCG capture color to a pH value.
+     * BCG range: pH 4.0–5.4 (yellow-green → teal-blue, BSWM Step 2 acidic).
+     * Loads active entries from DB; falls back to BCG_COLOR_CHART constant.
      *
-     * @param  string $hex       Captured color hex (e.g. '#FFB200')
+     * @return array{ph: float, confidence_pct: int}
+     */
+    public function colorToBcgPhLevel(string $hex): array
+    {
+        $chart = PhColorChart::chartForIndicator('BCG');
+        if (empty($chart)) {
+            $chart = self::BCG_COLOR_CHART;
+        }
+
+        [$value, $minDeltaE] = $this->matchColorToValueWithDeltaE($hex, $chart);
+        $ph            = round(min(5.4, max(4.0, $value)), 1);
+        $confidencePct = max(0, min(100, (int) round(100 - $minDeltaE * 3)));
+
+        return ['ph' => $ph, 'confidence_pct' => $confidencePct];
+    }
+
+    /**
+     * Match a BTB capture color to a pH value.
+     * BTB range: pH 6.0–7.8 (yellow-green → deep blue, BSWM Step 2 near-neutral).
+     * Loads active entries from DB; falls back to BTB_COLOR_CHART constant.
+     *
+     * @return array{ph: float, confidence_pct: int}
+     */
+    public function colorToBtbPhLevel(string $hex): array
+    {
+        $chart = PhColorChart::chartForIndicator('BTB');
+        if (empty($chart)) {
+            $chart = self::BTB_COLOR_CHART;
+        }
+
+        [$value, $minDeltaE] = $this->matchColorToValueWithDeltaE($hex, $chart);
+        $ph            = round(min(7.8, max(6.0, $value)), 1);
+        $confidencePct = max(0, min(100, (int) round(100 - $minDeltaE * 3)));
+
+        return ['ph' => $ph, 'confidence_pct' => $confidencePct];
+    }
+
+    /**
+     * Dispatch to the correct indicator function based on solution type.
+     * Prefer calling colorToCprPhLevel / colorToBcgPhLevel / colorToBtbPhLevel directly.
+     *
      * @param  string $solution  'CPR', 'BCG', or 'BTB'
      * @return array{ph: float, confidence_pct: int}
      */
     public function phTestColorToPhLevel(string $hex, string $solution): array
     {
-        $solution = strtoupper($solution);
-
-        // Load active reference colors from DB; fall back to hardcoded constants
-        // if the table is empty (e.g. before seeding or during testing).
-        $chart = PhColorChart::chartForIndicator($solution);
-        if (empty($chart)) {
-            $chart = match ($solution) {
-                'BCG'   => self::BCG_COLOR_CHART,
-                'BTB'   => self::BTB_COLOR_CHART,
-                default => self::CPR_COLOR_CHART,
-            };
-        }
-
-        [$value, $minDeltaE] = $this->matchColorToValueWithDeltaE($hex, $chart);
-
-        // Clamp to the valid measurable range for each indicator
-        $ph = match ($solution) {
-            'BCG'   => round(min(5.4, max(4.0, $value)), 1),
-            'BTB'   => round(min(7.8, max(6.0, $value)), 1),
-            default => round(min(6.0, max(4.8, $value)), 1),  // CPR
+        return match (strtoupper($solution)) {
+            'BCG'   => $this->colorToBcgPhLevel($hex),
+            'BTB'   => $this->colorToBtbPhLevel($hex),
+            default => $this->colorToCprPhLevel($hex),
         };
-
-        $confidencePct = max(0, min(100, (int) round(100 - $minDeltaE * 3)));
-
-        return ['ph' => $ph, 'confidence_pct' => $confidencePct];
     }
 
     public function colorToNitrogenLevel(string $hex): float
