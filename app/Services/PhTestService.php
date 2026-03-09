@@ -232,8 +232,8 @@ class PhTestService
 
         // Check if pH2 is within the expected range for the solution
         $inRange = match($solution) {
-            'BCG' => $ph2 >= 4.5 && $ph2 <= 5.4,
-            'BTB' => $ph2 >= 5.8 && $ph2 <= 7.0,
+            'BCG' => $ph2 >= 4.0 && $ph2 <= 5.2,
+            'BTB' => $ph2 >= 6.0 && $ph2 <= 7.8,
             default => true,
         };
 
@@ -241,7 +241,7 @@ class PhTestService
             return [
                 'outcome' => 'inconsistent',
                 'remarks' => "⚠ Inconsistent — {$solution} pH reading ({$ph2}) is outside the expected range for "
-                           . ($solution === 'BCG' ? 'BCG (4.5–5.4)' : 'BTB (5.8–7.0)') . ". "
+                           . ($solution === 'BCG' ? 'BCG (4.0–5.2)' : 'BTB (6.0–7.8)') . ". "
                            . "The CPR reading was {$ph1}. Consider retesting. " . $confNote,
             ];
         }
