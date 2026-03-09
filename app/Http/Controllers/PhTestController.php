@@ -48,6 +48,13 @@ class PhTestController extends Controller
         $colorHex = strtoupper($validated['color_hex']);
         $step     = (int) $validated['step'];
 
+        // Load (or create) the PhTest record BEFORE reading step2_solution,
+        // so $indicatorSolution is correctly set for BCG/BTB step-2 captures.
+        $phTest = $sample->phTest ?? PhTest::create([
+            'sample_id' => $sample->id,
+            'status'    => 'step1',
+        ]);
+
         // Determine which indicator is in use so we apply its specific color chart.
         // CPR is always used in Step 1; BCG or BTB is assigned after Step 1 completes.
         $indicatorSolution = $step === 1
@@ -60,11 +67,6 @@ class PhTestController extends Controller
         $phResult      = $this->colorScience->phTestColorToPhLevel($colorHex, $indicatorSolution);
         $computedPh    = $phResult['ph'];
         $confidencePct = $phResult['confidence_pct'];
-
-        $phTest = $sample->phTest ?? PhTest::create([
-            'sample_id' => $sample->id,
-            'status'    => 'step1',
-        ]);
 
         $reading = [
             'hex'            => $colorHex,
