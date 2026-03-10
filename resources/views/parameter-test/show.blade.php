@@ -154,12 +154,21 @@ $paramDone  = [
                             <th>Capture</th>
                             <th class="text-center">Color</th>
                             <th class="text-center">{{ $meta['label'] }} Reading</th>
+                            <th class="text-center">Category</th>
                             <th class="text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @for($i = 1; $i <= 3; $i++)
-                        @php $rd = $readings[$i] ?? null; @endphp
+                        @php
+                            $rd = $readings[$i] ?? null;
+                            if ($rd) {
+                                $v = $rd->computed_value;
+                                if ($v < $meta['low_max'])        { $catLabel = 'LOW';    $catBg = '#c0642a'; }
+                                elseif ($v >= $meta['high_min'])  { $catLabel = 'HIGH';   $catBg = '#1565c0'; }
+                                else                               { $catLabel = 'MEDIUM'; $catBg = '#2e7d32'; }
+                            }
+                        @endphp
                         <tr>
                             <td class="fw-bold">Capture {{ $i }}</td>
                             <td class="text-center">
@@ -176,6 +185,16 @@ $paramDone  = [
                                     <strong class="text-{{ $meta['color'] }}">
                                         {{ number_format($rd->computed_value, 2) }} {{ $meta['unit'] }}
                                     </strong>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($rd)
+                                    <span class="badge text-white"
+                                          style="background:{{ $catBg }};font-size:.75rem;letter-spacing:.04em;">
+                                        {{ $catLabel }}
+                                    </span>
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif

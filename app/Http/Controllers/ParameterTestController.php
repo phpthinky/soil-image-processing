@@ -17,6 +17,8 @@ class ParameterTestController extends Controller
             'reagent'  => 'Nitrogen Reagent (N-Reagent)',
             'next'     => 'phosphorus',
             'prev'     => null,
+            'low_max'  => 45.0,
+            'high_min' => 160.0,
         ],
         'phosphorus' => [
             'label'    => 'Phosphorus (P)',
@@ -26,6 +28,8 @@ class ParameterTestController extends Controller
             'reagent'  => 'Phosphorus Reagent (P-Reagent)',
             'next'     => 'potassium',
             'prev'     => 'nitrogen',
+            'low_max'  => 15.0,
+            'high_min' => 30.0,
         ],
         'potassium' => [
             'label'    => 'Potassium (K)',
@@ -35,6 +39,8 @@ class ParameterTestController extends Controller
             'reagent'  => 'Potassium Reagent (K-Reagent)',
             'next'     => null,
             'prev'     => 'phosphorus',
+            'low_max'  => 20.0,
+            'high_min' => 40.0,
         ],
     ];
 
