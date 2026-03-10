@@ -294,9 +294,22 @@ class PhTestController extends Controller
     public function reset(SoilSample $sample)
     {
         $this->authorizeAccess($sample);
-        $sample->phTest?->delete();
 
-        // Clear pH readings from soil_color_readings
+        // Delete snapshot files stored in the ph_tests JSON before removing the record.
+        if ($phTest = $sample->phTest) {
+            foreach (array_merge($phTest->step1_readings ?? [], $phTest->step2_readings ?? []) as $rd) {
+                $this->deleteSnapshot($rd['image'] ?? null);
+            }
+            $phTest->delete();
+        }
+
+        // Delete snapshot files stored in soil_color_readings (CPR-complete path).
+        DB::table('soil_color_readings')
+            ->where('sample_id', $sample->id)
+            ->where('parameter', 'ph')
+            ->pluck('captured_image')
+            ->each(fn($path) => $this->deleteSnapshot($path));
+
         DB::table('soil_color_readings')
             ->where('sample_id', $sample->id)
             ->where('parameter', 'ph')

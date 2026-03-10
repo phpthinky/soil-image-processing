@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\File;
 
 class SoilSample extends Model
 {
@@ -29,6 +30,15 @@ class SoilSample extends Model
             'phosphorus_level' => 'float',
             'potassium_level'  => 'float',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // When a sample is permanently deleted, remove all its captured images
+        // so public/captures/{id}/ does not accumulate orphan files.
+        static::deleting(function (SoilSample $sample) {
+            File::deleteDirectory(public_path("captures/{$sample->id}"));
+        });
     }
 
     public function user(): BelongsTo
