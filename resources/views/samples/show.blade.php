@@ -1132,6 +1132,13 @@ function generateGemini() {
             }
             // Hide the primary generate button after first successful call
             if (generateArea) generateArea.classList.add('d-none');
+            // Scroll to the result after the DOM updates
+            setTimeout(() => {
+                const target = result && !result.classList.contains('d-none') ? result
+                             : storedDiv && !storedDiv.classList.contains('d-none') ? storedDiv
+                             : null;
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 50);
         } else {
             if (errDiv) {
                 errDiv.textContent = 'Gemini Error: ' + data.message;
