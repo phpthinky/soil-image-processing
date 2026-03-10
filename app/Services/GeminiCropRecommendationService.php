@@ -57,7 +57,9 @@ class GeminiCropRecommendationService
             : '';
 
         $prompt = <<<PROMPT
-You are a senior Filipino agronomist advising the Office of the Municipal Agriculturist (OMA).
+IMPORTANT: You must respond entirely in English. Do not use Filipino, Tagalog, or any other language.
+
+You are a senior agronomist advising the Office of the Municipal Agriculturist (OMA) in the Philippines.
 Based on the soil analysis below, recommend suitable Philippine crops and their fertilizer requirements.
 
 SOIL TEST RESULTS:
@@ -95,7 +97,7 @@ Application Tip: [sentence]
 
 After the crop list, add a brief SUMMARY (3–4 sentences) with overall planting advice for this soil profile in the Philippine context.
 
-Use plain English. Do not repeat the raw soil numbers. Focus on practical guidance for smallholder farmers.
+Do not repeat the raw soil numbers. Focus on practical guidance for smallholder farmers. Respond in English only.
 PROMPT;
 
         try {
