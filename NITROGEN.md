@@ -94,7 +94,25 @@ The current chart tops out at **80 ppm**. The physical card HIGH range goes up t
 
 ---
 
-### Bug 3 — Wrong Classification Thresholds in `FertilizerService.php`
+### Bug 3 — Output Hard-Clamped to 100 ppm in `ColorScienceService.php`
+
+**File:** `app/Services/ColorScienceService.php`, line 200
+
+```php
+// CURRENT (WRONG) — clamps output to 100, but HIGH nitrogen goes up to 240
+return round(min(100.0, max(0.0, $this->matchColorToValue($hex, self::NITROGEN_COLOR_CHART))), 2);
+```
+
+**Effect:** Even if the reference chart is correctly calibrated with hex values mapped to 160–240 ppm, this line will crush every HIGH reading to 100 and classify it as MEDIUM. The clamp must be raised to 240.
+
+**Fix required:**
+```php
+return round(min(240.0, max(0.0, $this->matchColorToValue($hex, self::NITROGEN_COLOR_CHART))), 2);
+```
+
+---
+
+### Bug 4 — Wrong Classification Thresholds in `FertilizerService.php`
 
 **File:** `app/Services/FertilizerService.php`, line 79
 
@@ -108,7 +126,7 @@ Correct thresholds per BSWM card:
 'nitrogen' => ['low_max' => 45.0, 'high_min' => 160.0],
 ```
 
-**Effect:** Any reading above 40 ppm is currently classified as HIGH. A correct MEDIUM reading of 80–150 ppm will always show as HIGH. This compounds Bug 1 and Bug 2.
+**Effect:** Any reading above 40 ppm is currently classified as HIGH. A correct MEDIUM reading of 80–150 ppm will always show as HIGH. This compounds Bugs 1, 2, and 3.
 
 ---
 
@@ -185,6 +203,7 @@ Scientific = 245  →  Chart point = 240  (clamped to HIGH max)
 | Using current pink/magenta reference colors without recalibrating | Every nitrogen reading will be wrong | Recalibrate from physical card |
 | Capturing nitrogen card under room light | Systematic color shift — orange looks tan, green looks yellow | Always use the calibration box |
 | Not extending ppm scale beyond 80 | All MEDIUM and HIGH readings are compressed into a tiny range | Update chart to 240 ppm max |
+| Leaving `min(100.0, ...)` clamp in `colorToNitrogenLevel()` | Output is capped at 100 — no HIGH result is ever possible | Change clamp to `min(240.0, ...)` |
 | Leaving old wrong entries active during recalibration | CIEDE2000 picks wrong reference | Remove all old entries before adding new ones |
 
 ---
