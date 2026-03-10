@@ -113,7 +113,7 @@ PROMPT;
                 ],
                 'generationConfig' => [
                     'temperature'     => 0.4,
-                    'maxOutputTokens' => 2048,
+                    'maxOutputTokens' => 8192,
                 ],
             ]);
 
@@ -123,12 +123,18 @@ PROMPT;
                 return ['success' => false, 'message' => "Gemini API error: {$err}"];
             }
 
-            $text = trim(
-                $response->json('candidates.0.content.parts.0.text') ?? ''
-            );
+            $text       = trim($response->json('candidates.0.content.parts.0.text') ?? '');
+            $finishReason = $response->json('candidates.0.finishReason') ?? 'UNKNOWN';
 
             if (empty($text)) {
-                return ['success' => false, 'message' => 'Empty response from Gemini AI service.'];
+                Log::warning("Gemini returned empty text. finishReason={$finishReason}", [
+                    'raw' => $response->json(),
+                ]);
+                return ['success' => false, 'message' => "Gemini returned no content (finishReason: {$finishReason})."];
+            }
+
+            if ($finishReason === 'MAX_TOKENS') {
+                Log::warning('Gemini response was cut off (MAX_TOKENS). Increase maxOutputTokens.');
             }
 
             $sample->update(['gemini_crop_recommendation' => $text]);
