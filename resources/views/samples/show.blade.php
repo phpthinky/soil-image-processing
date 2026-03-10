@@ -1086,7 +1086,12 @@ function generateAI() {
 }
 
 // ── Gemini AI Crop Recommendations ────────────────────────────────────────
+let geminiInFlight = false;
+
 function generateGemini() {
+    if (geminiInFlight) return;
+    geminiInFlight = true;
+
     const btn          = document.getElementById('geminiBtn');
     const regenBtn     = document.getElementById('geminiRegenerateBtn');
     const loading      = document.getElementById('geminiLoading');
@@ -1147,6 +1152,7 @@ function generateGemini() {
         }
         if (btn)     btn.disabled = false;
         if (regenBtn) regenBtn.disabled = false;
+        geminiInFlight = false;
     })
     .catch(() => {
         if (loading) loading.classList.add('d-none');
@@ -1156,6 +1162,7 @@ function generateGemini() {
         }
         if (btn)     btn.disabled = false;
         if (regenBtn) regenBtn.disabled = false;
+        geminiInFlight = false;
     });
 }
 </script>
