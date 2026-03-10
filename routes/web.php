@@ -8,6 +8,7 @@ use App\Http\Controllers\ColorReadingController;
 use App\Http\Controllers\AiRecommendationController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\NpkColorChartController;
 use App\Http\Controllers\Admin\PhColorChartController;
 use App\Http\Controllers\FarmerController;
 use App\Http\Controllers\PhTestController;
@@ -95,5 +96,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/ph-color-charts',                     [PhColorChartController::class, 'store'])->name('ph-color-charts.store');
         Route::patch('/ph-color-charts/{phColorChart}',    [PhColorChartController::class, 'toggle'])->name('ph-color-charts.toggle');
         Route::delete('/ph-color-charts/{phColorChart}',   [PhColorChartController::class, 'destroy'])->name('ph-color-charts.destroy');
+
+        // NPK Color Chart management
+        Route::get('/npk-color-charts',                     [NpkColorChartController::class, 'index'])->name('npk-color-charts');
+        Route::post('/npk-color-charts',                    [NpkColorChartController::class, 'store'])->name('npk-color-charts.store');
+        Route::patch('/npk-color-charts/{npkColorChart}',  [NpkColorChartController::class, 'toggle'])->name('npk-color-charts.toggle');
+        Route::delete('/npk-color-charts/{npkColorChart}', [NpkColorChartController::class, 'destroy'])->name('npk-color-charts.destroy');
     });
 });

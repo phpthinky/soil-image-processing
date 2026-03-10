@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             PhilippineCropSeeder::class,
             PhColorChartSeeder::class,
+            NpkColorChartSeeder::class,
         ]);
     }
 }

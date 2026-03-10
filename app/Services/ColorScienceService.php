@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\NpkColorChart;
 use App\Models\PhColorChart;
 
 /**
@@ -195,19 +196,44 @@ class ColorScienceService
         };
     }
 
+    /**
+     * Match a captured nitrogen strip color to a ppm value.
+     * Range: 0–240 ppm (LOW 15–45 · MEDIUM 60–150 · HIGH 160–240).
+     * Loads active entries from DB; falls back to NITROGEN_COLOR_CHART constant.
+     */
     public function colorToNitrogenLevel(string $hex): float
     {
-        return round(min(100.0, max(0.0, $this->matchColorToValue($hex, self::NITROGEN_COLOR_CHART))), 2);
+        $chart = NpkColorChart::chartForNutrient('N');
+        if (empty($chart)) {
+            $chart = self::NITROGEN_COLOR_CHART;
+        }
+        return round(min(240.0, max(0.0, $this->matchColorToValue($hex, $chart))), 2);
     }
 
+    /**
+     * Match a captured phosphorus strip color to a ppm value.
+     * Loads active entries from DB; falls back to PHOSPHORUS_COLOR_CHART constant.
+     */
     public function colorToPhosphorusLevel(string $hex): float
     {
-        return round(min(100.0, max(0.0, $this->matchColorToValue($hex, self::PHOSPHORUS_COLOR_CHART))), 2);
+        $chart = NpkColorChart::chartForNutrient('P');
+        if (empty($chart)) {
+            $chart = self::PHOSPHORUS_COLOR_CHART;
+        }
+        return round(min(9999.0, max(0.0, $this->matchColorToValue($hex, $chart))), 2);
     }
 
+    /**
+     * Match a captured potassium strip color to a ppm value.
+     * Loads active entries from DB; falls back to POTASSIUM_COLOR_CHART constant.
+     */
     public function colorToPotassiumLevel(string $hex): float
     {
-        return round(min(100.0, max(0.0, $this->matchColorToValue($hex, self::POTASSIUM_COLOR_CHART))), 2);
+        $chart = NpkColorChart::chartForNutrient('K');
+        if (empty($chart)) {
+            $chart = self::POTASSIUM_COLOR_CHART;
+        }
+        return round(min(9999.0, max(0.0, $this->matchColorToValue($hex, $chart))), 2);
     }
 
     public function computeForParameter(string $parameter, string $hex): float

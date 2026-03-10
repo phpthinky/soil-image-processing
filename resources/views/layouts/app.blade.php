@@ -149,6 +149,11 @@
                                             <i class="fa fa-palette me-1"></i>pH Color Charts
                                         </a>
                                     </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.npk-color-charts') }}">
+                                            <i class="fa fa-seedling me-1"></i>NPK Color Charts
+                                        </a>
+                                    </li>
                                 </ul>
                             </li>
                         @else
@@ -254,6 +259,12 @@
                         <a class="nav-link {{ request()->routeIs('admin.ph-color-charts') ? 'active' : '' }}"
                            href="{{ route('admin.ph-color-charts') }}">
                             <i class="fa fa-palette"></i> pH Color Charts
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.npk-color-charts') ? 'active' : '' }}"
+                           href="{{ route('admin.npk-color-charts') }}">
+                            <i class="fa fa-seedling"></i> NPK Color Charts
                         </a>
                     </li>
                     <li><div class="sidebar-divider"></div></li>
