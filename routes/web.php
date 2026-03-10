@@ -47,7 +47,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/samples/{sample}',        [SampleController::class, 'show'])->name('samples.show');
     Route::get('/samples/{sample}/report', [SampleController::class, 'report'])->name('samples.report');
     Route::get('/samples/{sample}/pdf',    [SampleController::class, 'pdf'])->name('samples.pdf');
-    Route::post('/samples/{sample}/reset', [SampleController::class, 'reset'])->name('samples.reset');
+    Route::post('/samples/{sample}/reset',   [SampleController::class, 'reset'])->name('samples.reset');
+    Route::delete('/samples/{sample}',       [SampleController::class, 'destroy'])->name('samples.destroy');
 
     // pH test workflow (separate 2-step page)
     Route::get('/samples/{sample}/ph-test',       [PhTestController::class, 'show'])->name('ph-test.show');

@@ -9,6 +9,7 @@ use App\Services\ColorScienceService;
 use App\Services\FertilizerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class SampleController extends Controller
 {
@@ -210,6 +211,14 @@ class SampleController extends Controller
             abort(403);
         }
 
+        // Delete NPK captured image files before clearing the DB rows.
+        foreach ($sample->colorReadings()->whereIn('parameter', ['nitrogen', 'phosphorus', 'potassium'])->get() as $rd) {
+            if ($rd->captured_image) {
+                $full = public_path($rd->captured_image);
+                if (is_file($full)) @unlink($full);
+            }
+        }
+
         $sample->colorReadings()->delete();
         $sample->update([
             'ph_color_hex'         => null,
@@ -229,5 +238,28 @@ class SampleController extends Controller
 
         return redirect()->route('samples.show', $sample)
             ->with('success', 'All readings have been reset. You can re-capture now.');
+    }
+
+    // Delete a sample permanently — admin only, requires password confirmation.
+    public function destroy(Request $request, SoilSample $sample)
+    {
+        if (!Auth::user()->isAdmin()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'admin_password' => 'required|string',
+        ]);
+
+        if (!Hash::check($request->admin_password, Auth::user()->password)) {
+            return redirect()->route('samples.show', $sample)
+                ->with('error', 'Incorrect password. Sample was NOT deleted.');
+        }
+
+        // Delete the sample; SoilSample::booted() deleting observer wipes public/captures/{id}/.
+        $sample->delete();
+
+        return redirect()->route('samples.index')
+            ->with('success', "Sample \"{$sample->sample_name}\" and all its data have been permanently deleted.");
     }
 }

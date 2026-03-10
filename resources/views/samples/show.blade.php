@@ -794,12 +794,70 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
            onclick="return confirm('This will reset ALL readings for this sample. Continue?');">
             <i class="fas fa-redo me-1"></i> Re-capture All
         </a>
+        @if(Auth::user()->isAdmin())
+        <button type="button" class="btn btn-danger ms-2"
+                data-bs-toggle="modal" data-bs-target="#deleteSampleModal">
+            <i class="fas fa-trash me-1"></i> Delete Sample
+        </button>
+        @endif
         <a href="{{ route('export', ['sample_id' => $sample->id]) }}" class="btn btn-success ms-2">
             <i class="fas fa-file-excel me-1"></i> Export to Excel
         </a>
         <a href="{{ route('samples.create') }}" class="btn btn-primary ms-2">
             <i class="fas fa-plus-circle me-1"></i> New Sample
         </a>
+    </div>
+</div>
+@endif
+
+{{-- ── Delete Sample Modal (admin only) ───────────────────────── --}}
+@if(Auth::user()->isAdmin())
+<div class="modal fade" id="deleteSampleModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Sample Permanently
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ route('samples.destroy', $sample) }}">
+                @csrf
+                @method('DELETE')
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <strong>This cannot be undone.</strong> Deleting this sample will permanently remove:
+                        <ul class="mb-0 mt-1 small">
+                            <li>All soil test readings (pH, N, P, K)</li>
+                            <li>All captured webcam photos</li>
+                            <li>The analysis result and fertilizer recommendation</li>
+                        </ul>
+                    </div>
+                    <p class="mb-1">Sample to delete:</p>
+                    <div class="p-2 rounded bg-light border mb-3 fw-semibold">
+                        {{ $sample->sample_name }} — {{ $sample->farmer_name }}
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">
+                            Enter your admin password to confirm:
+                        </label>
+                        <input type="password" class="form-control" name="admin_password"
+                               placeholder="Admin password" autocomplete="current-password" required>
+                        @if(session('error'))
+                        <div class="text-danger small mt-1">{{ session('error') }}</div>
+                        @endif
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> Delete Permanently
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 @endif
