@@ -74,23 +74,17 @@ SOIL TEST RESULTS:
 BASELINE FERTILIZER (per hectare, from automated system):
 {$fertSummary}
 
-TASK: Recommend up to 10 Philippine crops only. Group them by:
-A) SEASONAL CROPS — label each as Wet Season (June–October), Dry Season (November–May), or Year-Round
-B) CROP TYPE — label each as: Grain/Cereal, Vegetable, Root Crop, Legume, Fruit Crop, or Cash Crop
+TASK: List the TOP 10 most suitable Philippine crops for this soil, ranked from best match to least. No grouping required.
 
 For EACH crop provide:
 1. Crop name (Philippine common name)
-2. Season suitability
-3. Crop type
-4. Soil compatibility note (1 sentence based on the test results)
-5. Fertilizer adjustment (per hectare): specify Urea bags, TSP bags, MOP bags, and Lime if needed — adjusted from the baseline for this specific crop's NPK demands
-6. Application tip (1 sentence: timing or method suited to Philippine conditions)
+2. Soil compatibility note (1 sentence based on the test results)
+3. Fertilizer adjustment (per hectare): Urea bags, TSP bags, MOP bags, and Lime if needed — adjusted from the baseline for this specific crop's NPK demands
+4. Application tip (1 sentence: timing or method suited to Philippine conditions)
 
-FORMAT your response as a structured list. Use this exact format for each crop:
+FORMAT your response as a numbered list. Use this exact format for each crop:
 
 CROP [number]: [Crop Name]
-Season: [season]
-Type: [crop type]
 Soil Compatibility: [sentence]
 Fertilizer (per ha): Lime [x] t/ha | Urea [x] bags | TSP [x] bags | MOP [x] bags
 Application Tip: [sentence]
