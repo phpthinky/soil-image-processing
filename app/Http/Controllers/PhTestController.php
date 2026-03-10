@@ -268,6 +268,7 @@ class PhTestController extends Controller
             if (!isset($readings[$index])) {
                 return response()->json(['success' => false, 'message' => 'Capture not found.'], 404);
             }
+            $this->deleteSnapshot($readings[$index]['image'] ?? null);
             array_splice($readings, $index, 1);
             $phTest->step1_readings = array_values($readings);
         } else {
@@ -278,6 +279,7 @@ class PhTestController extends Controller
             if (!isset($readings[$index])) {
                 return response()->json(['success' => false, 'message' => 'Capture not found.'], 404);
             }
+            $this->deleteSnapshot($readings[$index]['image'] ?? null);
             array_splice($readings, $index, 1);
             $phTest->step2_readings = array_values($readings);
         }
@@ -322,8 +324,10 @@ class PhTestController extends Controller
 
     /**
      * Decode a base64 canvas data-URL and store it as a JPEG under
-     * storage/app/public/captures/{sampleId}/{param}-{testNumber}.jpg.
-     * Returns the public-disk-relative path, or null on failure.
+     * public/captures/{sampleId}/{param}-{testNumber}-{timestamp}ms.jpg.
+     * Timestamp suffix ensures each capture gets a unique filename so
+     * recaptures never overwrite a different capture's image.
+     * Returns the public-relative path, or null on failure.
      */
     private function saveSnapshot(?string $dataUrl, int $sampleId, string $param, int $testNumber): ?string
     {
@@ -336,13 +340,29 @@ class PhTestController extends Controller
             return null;
         }
         // Write directly into public/ — works on shared hosts (e.g. Hostinger) without needing a storage symlink.
+        // Timestamp (milliseconds) appended so every capture has a unique filename;
+        // recapturing the same slot will never silently overwrite another slot's photo.
         $dir  = public_path("captures/{$sampleId}");
-        $file = "{$param}-{$testNumber}.jpg";
+        $ms   = (int) round(microtime(true) * 1000);
+        $file = "{$param}-{$testNumber}-{$ms}.jpg";
         if (!is_dir($dir)) {
             mkdir($dir, 0755, recursive: true);
         }
         file_put_contents("{$dir}/{$file}", $image);
 
         return "captures/{$sampleId}/{$file}";
+    }
+
+    /**
+     * Delete a previously saved snapshot file from public/.
+     * Silently ignores missing files.
+     */
+    private function deleteSnapshot(?string $relativePath): void
+    {
+        if (!$relativePath) return;
+        $full = public_path($relativePath);
+        if (is_file($full)) {
+            @unlink($full);
+        }
     }
 }
