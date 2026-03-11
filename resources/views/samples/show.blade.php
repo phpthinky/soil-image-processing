@@ -985,6 +985,7 @@ function calculateFertilizer() {
                 <thead class="table-light"><tr>
                     <th>Nutrient</th>
                     <th class="text-center">Crop Target (ppm)</th>
+                    <th class="text-center">Crop Target (kg/ha)</th>
                     <th class="text-center">Current Soil (ppm)</th>
                     <th class="text-center">Deficit (ppm)</th>
                     <th class="text-center">Deficit (kg/ha)</th>
@@ -993,6 +994,7 @@ function calculateFertilizer() {
                     <tr>
                         <td>Nitrogen (N)</td>
                         <td class="text-center">${req.n}</td>
+                        <td class="text-center text-secondary">${fmt(req.n * 2)}</td>
                         <td class="text-center">${fmt(soilN)}</td>
                         <td class="text-center fw-bold ${defNppm > 0 ? 'text-danger' : 'text-success'}">${fmt(defNppm)}</td>
                         <td class="text-center text-muted">${fmt(defN)}</td>
@@ -1000,6 +1002,7 @@ function calculateFertilizer() {
                     <tr>
                         <td>Phosphorus (P)</td>
                         <td class="text-center">${req.p}</td>
+                        <td class="text-center text-secondary">${fmt(req.p * 2)}</td>
                         <td class="text-center">${fmt(soilP)}</td>
                         <td class="text-center fw-bold ${defPppm > 0 ? 'text-danger' : 'text-success'}">${fmt(defPppm)}</td>
                         <td class="text-center text-muted">${fmt(defP)}</td>
@@ -1007,6 +1010,7 @@ function calculateFertilizer() {
                     <tr>
                         <td>Potassium (K)</td>
                         <td class="text-center">${req.k}</td>
+                        <td class="text-center text-secondary">${fmt(req.k * 2)}</td>
                         <td class="text-center">${fmt(soilK)}</td>
                         <td class="text-center fw-bold ${defKppm > 0 ? 'text-danger' : 'text-success'}">${fmt(defKppm)}</td>
                         <td class="text-center text-muted">${fmt(defK)}</td>
