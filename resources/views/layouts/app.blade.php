@@ -293,6 +293,13 @@
                     </a>
                 </li>
 
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('crops.requirements*') ? 'active' : '' }}"
+                       href="{{ route('crops.requirements') }}">
+                        <i class="fa fa-leaf"></i> Crop Requirements
+                    </a>
+                </li>
+
                 <li><div class="sidebar-divider"></div></li>
                 <li><span class="sidebar-section">Farmers</span></li>
                 <li class="nav-item">

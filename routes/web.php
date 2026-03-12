@@ -15,6 +15,7 @@ use App\Http\Controllers\PhTestController;
 use App\Http\Controllers\ParameterTestController;
 use App\Http\Controllers\GeminiCropRecommendationController;
 use App\Http\Controllers\HelpController;
+use App\Http\Controllers\CropRequirementsController;
 use Illuminate\Support\Facades\Route;
 
 // Redirect root to login or dashboard
@@ -83,6 +84,10 @@ Route::middleware('auth')->group(function () {
 
     // Help & Guidelines
     Route::get('/help', [HelpController::class, 'index'])->name('help.index');
+
+    // Crop pH & NPK Requirements reference
+    Route::get('/crop-requirements',         [CropRequirementsController::class, 'index'])->name('crops.requirements');
+    Route::get('/crop-requirements/export',  [CropRequirementsController::class, 'export'])->name('crops.requirements.export');
 
     // ── Admin-only ────────────────────────────────────────────────────────────
     Route::middleware('can:admin')->prefix('admin')->name('admin.')->group(function () {

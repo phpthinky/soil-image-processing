@@ -41,6 +41,9 @@
                 <li><a href="#npk-tests"><i class="fas fa-circle fa-xs me-1 text-muted"></i> N / P / K Tests</a></li>
                 <li><a href="#capture-guide"><i class="fas fa-circle fa-xs me-1 text-muted"></i> Capture Guide</a></li>
                 <li><a href="#fertilizer-calc"><i class="fas fa-circle fa-xs me-1 text-muted"></i> Fertilizer Calculator</a></li>
+                <li class="ms-3"><a href="#fert-formulas"><i class="fas fa-circle fa-xs me-1 text-muted"></i> Formulas</a></li>
+                <li class="ms-3"><a href="#fert-thresholds"><i class="fas fa-circle fa-xs me-1 text-muted"></i> BSWM Thresholds</a></li>
+                <li><a href="#crop-requirements"><i class="fas fa-circle fa-xs me-1 text-muted"></i> Crop Requirements</a></li>
                 <li><a href="#samples-workflow"><i class="fas fa-circle fa-xs me-1 text-muted"></i> Sample Workflow</a></li>
                 <li><a href="#roles"><i class="fas fa-circle fa-xs me-1 text-muted"></i> User Roles</a></li>
                 <li><a href="#reference"><i class="fas fa-circle fa-xs me-1 text-muted"></i> Quick Reference</a></li>
@@ -369,19 +372,223 @@
                     <li class="mb-1">Choose a <strong>Primary Fertilizer Type</strong> (e.g., Urea 46-0-0, Complete 14-14-14).</li>
                     <li class="mb-1">Click <strong>Calculate Fertilizer</strong> to see results.</li>
                 </ol>
+
+                {{-- ── Formulas ──────────────────────────────────────── --}}
+                <h6 id="fert-formulas" class="section-anchor fw-bold mt-4 mb-2">
+                    <i class="fas fa-superscript me-1 text-warning"></i>Calculation Formulas
+                </h6>
+
+                <div class="alert alert-secondary small mb-3">
+                    <strong>Step 1 — Convert crop NPK targets from ppm to kg/ha</strong><br>
+                    The crop's required nutrient level is stored in ppm. To convert:
+                    <div class="bg-white border rounded p-2 mt-2 font-monospace">
+                        Target<sub>kg/ha</sub> = Target<sub>ppm</sub> × 2
+                    </div>
+                    <div class="text-muted mt-1">
+                        Basis: 1 ppm ≈ 2 kg/ha at 0–15 cm sampling depth
+                        (soil bulk density ~1.33 g/cm³ × 15 cm × 10,000 m²/ha ÷ 1,000,000 ≈ 2 kg/ha per ppm).
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary small mb-3">
+                    <strong>Step 2 — Nutrient Deficit</strong><br>
+                    The deficit is the gap between what the crop needs and what the soil already has.
+                    A negative deficit means no fertilizer is needed for that nutrient.
+                    <div class="bg-white border rounded p-2 mt-2 font-monospace">
+                        Deficit<sub>ppm</sub> = max(0, &nbsp;Target<sub>ppm</sub> − Soil<sub>ppm</sub>)<br>
+                        Deficit<sub>kg/ha</sub> = Deficit<sub>ppm</sub> × 2
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary small mb-3">
+                    <strong>Step 3 — Primary Fertilizer Rate (bags/ha)</strong><br>
+                    The system calculates how many 50-kg bags of the <em>chosen fertilizer</em> are needed per hectare,
+                    computed independently for each nutrient the fertilizer can supply, then takes the
+                    <strong>maximum</strong> (the most limiting nutrient drives the rate):
+                    <div class="bg-white border rounded p-2 mt-2 font-monospace">
+                        BagsForN = Deficit<sub>N, kg/ha</sub> ÷ (50 × N_grade)<br>
+                        BagsForP = Deficit<sub>P, kg/ha</sub> ÷ (50 × P_grade)<br>
+                        BagsForK = Deficit<sub>K, kg/ha</sub> ÷ (50 × K_grade)<br>
+                        <br>
+                        Primary bags/ha = max(BagsForN, BagsForP, BagsForK)
+                    </div>
+                    <div class="text-muted mt-1">
+                        <em>N_grade, P_grade, K_grade</em> are the fractional nutrient contents of the fertilizer
+                        (e.g., Urea 46-0-0 → N_grade = 0.46, P_grade = 0, K_grade = 0).
+                        Division by zero is skipped for grades = 0.
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary small mb-3">
+                    <strong>Step 4 — Supplemental Fertilizers (TSP &amp; MOP)</strong><br>
+                    After the primary fertilizer is applied, the system checks whether the remaining P and K deficits
+                    are still unmet. If so, supplemental fertilizers are added:
+                    <div class="bg-white border rounded p-2 mt-2 font-monospace">
+                        Remaining P deficit = Deficit<sub>P, kg/ha</sub> − (Primary bags/ha × 50 × 0.46)<br>
+                        <span class="text-muted">if Remaining P &gt; 0:</span><br>
+                        &nbsp;&nbsp;TSP bags/ha = Remaining P ÷ (50 × 0.46)<br>
+                        <br>
+                        Remaining K deficit = Deficit<sub>K, kg/ha</sub> − (Primary bags/ha × 50 × 0.60)<br>
+                        <span class="text-muted">if Remaining K &gt; 0:</span><br>
+                        &nbsp;&nbsp;MOP bags/ha = Remaining K ÷ (50 × 0.60)
+                    </div>
+                    <div class="text-muted mt-1">
+                        TSP grade = 0.46 (Triple Superphosphate 0-46-0) &nbsp;|&nbsp;
+                        MOP grade = 0.60 (Muriate of Potash 0-0-60)
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary small mb-3">
+                    <strong>Step 5 — Total Fertilizer for Farm Area</strong>
+                    <div class="bg-white border rounded p-2 mt-2 font-monospace">
+                        Total kg = (bags/ha × 50 kg/bag) × Area<sub>ha</sub>
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary small mb-3">
+                    <strong>Lime for pH Correction (BSWM Thresholds)</strong><br>
+                    Applied as dolomitic lime to correct soil acidity before planting:
+                    <div class="bg-white border rounded p-2 mt-2 font-monospace">
+                        pH &lt; 5.0 → 2.0 t/ha &nbsp;(strongly acidic)<br>
+                        pH 5.0–5.5 → 1.0 t/ha &nbsp;(moderately acidic)<br>
+                        pH ≥ 5.5 → no lime needed
+                    </div>
+                    <div class="text-muted mt-1">
+                        Total lime (tonnes) = Lime rate (t/ha) × Farm area (ha)
+                    </div>
+                </div>
+
+                {{-- BSWM Thresholds ───────────────────────────── --}}
+                <h6 id="fert-thresholds" class="section-anchor fw-bold mt-4 mb-2">
+                    <i class="fas fa-table me-1 text-warning"></i>BSWM Nutrient Thresholds &amp; Fertilizer Rates
+                </h6>
+                <p class="small text-muted">
+                    These thresholds are used by the <strong>Quick Recommendation</strong> (top of the sample page)
+                    based on BSWM/PhilRice colorimetric soil test guidelines.
+                    The <em>Fertilizer Calculator</em> below it uses the crop-specific formulas above instead.
+                </p>
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered mt-2">
+                    <table class="table table-sm table-bordered">
                         <thead class="table-warning">
-                            <tr><th>Term</th><th>Description</th></tr>
+                            <tr>
+                                <th>Nutrient</th>
+                                <th>Level</th>
+                                <th>Soil Range</th>
+                                <th>Recommended Rate</th>
+                                <th>Application Timing</th>
+                            </tr>
                         </thead>
                         <tbody>
-                            <tr><td>Crop Requirement</td><td>The NPK level the selected crop needs (in ppm)</td></tr>
-                            <tr><td>Soil Level</td><td>The measured NPK from your test (in ppm)</td></tr>
-                            <tr><td>Deficit</td><td>Crop requirement minus soil level; if negative, no fertilizer needed for that nutrient</td></tr>
-                            <tr><td>kg/ha</td><td>Deficit converted: 1 ppm ≈ 2 kg/ha (at 0–15 cm depth)</td></tr>
-                            <tr><td>Bags needed</td><td>kg/ha ÷ fertilizer grade % ÷ 50 kg/bag × farm area</td></tr>
+                            <tr class="table-danger">
+                                <td rowspan="3"><strong>Nitrogen</strong><br><small class="text-muted">Urea 46-0-0</small></td>
+                                <td><span class="badge bg-danger">Low</span></td>
+                                <td>&lt; 45 ppm</td>
+                                <td>4.0 bags/ha</td>
+                                <td>½ basal + ½ at panicle initiation</td>
+                            </tr>
+                            <tr class="table-warning">
+                                <td><span class="badge bg-warning text-dark">Medium</span></td>
+                                <td>45–160 ppm</td>
+                                <td>2.5 bags/ha</td>
+                                <td>½ basal + ½ at active tillering</td>
+                            </tr>
+                            <tr class="table-success">
+                                <td><span class="badge bg-success">High</span></td>
+                                <td>≥ 160 ppm</td>
+                                <td>1.0 bag/ha</td>
+                                <td>Maintenance only</td>
+                            </tr>
+                            <tr class="table-danger">
+                                <td rowspan="3"><strong>Phosphorus</strong><br><small class="text-muted">TSP 0-46-0</small></td>
+                                <td><span class="badge bg-danger">Low</span></td>
+                                <td>&lt; 15 ppm</td>
+                                <td>2.5 bags/ha</td>
+                                <td>Basal (at planting)</td>
+                            </tr>
+                            <tr class="table-warning">
+                                <td><span class="badge bg-warning text-dark">Medium</span></td>
+                                <td>15–30 ppm</td>
+                                <td>1.5 bags/ha</td>
+                                <td>Basal</td>
+                            </tr>
+                            <tr class="table-success">
+                                <td><span class="badge bg-success">High</span></td>
+                                <td>≥ 30 ppm</td>
+                                <td>0 bags/ha</td>
+                                <td>None needed</td>
+                            </tr>
+                            <tr class="table-danger">
+                                <td rowspan="3"><strong>Potassium</strong><br><small class="text-muted">MOP 0-0-60</small></td>
+                                <td><span class="badge bg-danger">Low</span></td>
+                                <td>&lt; 20 ppm</td>
+                                <td>2.0 bags/ha</td>
+                                <td>Basal</td>
+                            </tr>
+                            <tr class="table-warning">
+                                <td><span class="badge bg-warning text-dark">Medium</span></td>
+                                <td>20–40 ppm</td>
+                                <td>1.0 bag/ha</td>
+                                <td>Basal</td>
+                            </tr>
+                            <tr class="table-success">
+                                <td><span class="badge bg-success">High</span></td>
+                                <td>≥ 40 ppm</td>
+                                <td>0 bags/ha</td>
+                                <td>None needed</td>
+                            </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <div class="alert alert-info small mt-2 mb-0">
+                    <i class="fas fa-circle-info me-1"></i>
+                    All fertilizer rates above are per hectare using 50-kg commercial bags.
+                    Source: BSWM/PhilRice Soil Fertility Management Guidelines.
+                </div>
+            </div>
+        </div>
+
+        {{-- ── CROP REQUIREMENTS REFERENCE ───────────────────────── --}}
+        <div id="crop-requirements" class="section-anchor card mb-4">
+            <div class="card-header text-white" style="background:#1b5e20;">
+                <i class="fas fa-leaf me-2"></i>Crop pH &amp; NPK Requirements Reference
+            </div>
+            <div class="card-body">
+                <p>
+                    The <a href="{{ route('crops.requirements') }}" class="text-success fw-semibold">
+                        <i class="fas fa-arrow-up-right-from-square fa-xs"></i> Crop Requirements
+                    </a> page lists all crops in the system with their acceptable pH, N, P, and K ranges.
+                    Use it to <strong>manually verify</strong> the fertilizer calculator results in Excel.
+                </p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 h-100">
+                            <h6 class="fw-bold"><i class="fas fa-file-csv text-warning me-1"></i>Export to Excel workflow</h6>
+                            <ol class="mb-0 small">
+                                <li>Open <strong>Crop Requirements</strong> from the sidebar.</li>
+                                <li>Click <strong>Export to Excel / CSV</strong> to download the reference table.</li>
+                                <li>Open the downloaded CSV in Excel or Google Sheets.</li>
+                                <li>Compare your soil test values (pH, N ppm, P ppm, K ppm) against the Min–Max columns for each crop.</li>
+                                <li>Apply the formulas in this guide to verify the calculator output.</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 h-100">
+                            <h6 class="fw-bold"><i class="fas fa-table-cells text-success me-1"></i>Manual verification in Excel</h6>
+                            <p class="small mb-2">Example Excel formulas (soil in row 2, crop requirements in reference sheet):</p>
+                            <div class="bg-light border rounded p-2 font-monospace small">
+                                <div>=MAX(0, (C2-B2)*2)</div>
+                                <div class="text-muted">Deficit kg/ha for N</div>
+                                <br>
+                                <div>=D2/(50*0.46)</div>
+                                <div class="text-muted">TSP bags/ha for P deficit</div>
+                                <br>
+                                <div>=E2/(50*0.60)</div>
+                                <div class="text-muted">MOP bags/ha for K deficit</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
