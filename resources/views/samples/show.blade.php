@@ -960,21 +960,21 @@ function calculateFertilizer() {
 
     cards += card('fa-seedling', 'success',
         fert.name,
-        `${fmt(primaryBagsTotal)} bags`,
-        `${fmt(primaryBagsHa)} bags/ha × ${fmt(area)} ha`,
+        `${fmt(primaryBagsTotal * BAG)} kg`,
+        `${fmt(primaryBagsHa * BAG)} kg/ha × ${fmt(area)} ha`,
         `Limited by: ${limitedBy || 'N/A'}`);
 
     if (suppPBagsHa > 0) {
         cards += card('fa-atom', 'primary',
             'TSP (0-46-0) — Supp. P',
-            `${fmt(suppPBagsHa * area)} bags`,
-            `${fmt(suppPBagsHa)} bags/ha × ${fmt(area)} ha`, 'Phosphorus supplement');
+            `${fmt(suppPBagsHa * area * BAG)} kg`,
+            `${fmt(suppPBagsHa * BAG)} kg/ha × ${fmt(area)} ha`, 'Phosphorus supplement');
     }
     if (suppKBagsHa > 0) {
         cards += card('fa-flask', 'info',
             'MOP (0-0-60) — Supp. K',
-            `${fmt(suppKBagsHa * area)} bags`,
-            `${fmt(suppKBagsHa)} bags/ha × ${fmt(area)} ha`, 'Potassium supplement');
+            `${fmt(suppKBagsHa * area * BAG)} kg`,
+            `${fmt(suppKBagsHa * BAG)} kg/ha × ${fmt(area)} ha`, 'Potassium supplement');
     }
 
     // Deficits row
