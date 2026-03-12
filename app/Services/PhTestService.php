@@ -2,10 +2,68 @@
 
 namespace App\Services;
 
+use App\Models\PhColorChart;
+
 class PhTestService
 {
     // Variance threshold: readings within 0.3 pH units = High confidence
     private const VARIANCE_THRESHOLD = 0.09; // (0.3)^2
+
+    /**
+     * Fixed paper chart pH values per indicator solution.
+     * These match the discrete color reference points printed on BSWM soil test kit cards.
+     */
+    public const CHART_POINTS = [
+        'CPR' => [4.8, 5.0, 5.2, 5.4, 5.6, 5.8, 6.0],
+        'BCG' => [4.0, 4.2, 4.4, 4.6, 4.8, 5.0, 5.2],
+        'BTB' => [6.0, 6.2, 6.4, 6.8, 7.2, 7.8],
+    ];
+
+    /**
+     * Snap a continuous scientific pH value to the nearest card point that is
+     * >= the scientific value (ceiling-snap).
+     *
+     * This guarantees chart_ph >= scientific_ph so that the technician always
+     * sees the card reading at or above the spectrophotometric value — never below it.
+     * Round-up on tie is no longer needed; the ceiling rule covers it naturally.
+     *
+     * If scientific pH exceeds every chart point (out-of-range high), the highest
+     * chart point is returned (clamped). Chart points are loaded from the
+     * ph_color_charts DB table; falls back to CHART_POINTS constant if DB is empty.
+     */
+    public static function snapToChartPh(float $ph, string $solution): float
+    {
+        $dbPoints = PhColorChart::chartPointsForIndicator($solution);
+        $points   = !empty($dbPoints) ? $dbPoints : (self::CHART_POINTS[strtoupper($solution)] ?? self::CHART_POINTS['CPR']);
+
+        // Points are sorted ascending. Return the first point >= scientific pH.
+        foreach ($points as $point) {
+            if ($point >= $ph - 0.00001) {
+                return $point;
+            }
+        }
+
+        // Scientific pH exceeds all chart points → clamp to highest card value.
+        return end($points);
+    }
+
+    /**
+     * Human-readable soil pH interpretation used in the result panel.
+     */
+    public static function phInterpretation(float $ph): string
+    {
+        return match(true) {
+            $ph < 4.5 => 'Extremely Acidic',
+            $ph < 5.0 => 'Strongly Acidic',
+            $ph < 5.5 => 'Moderately Acidic',
+            $ph < 6.0 => 'Slightly Acidic',
+            $ph < 6.5 => 'Near Neutral (Slightly Acidic)',
+            $ph < 7.0 => 'Near Neutral',
+            $ph < 7.5 => 'Neutral to Slightly Alkaline',
+            $ph < 8.0 => 'Moderately Alkaline',
+            default   => 'Strongly Alkaline',
+        };
+    }
 
     /**
      * Determine the next solution based on CPR pH reading.
@@ -17,11 +75,11 @@ class PhTestService
      */
     public function decideSolution(float $ph1): string
     {
-        if ($ph1 < 4.0 || $ph1 > 7.6) return 'RETEST';
+        if ($ph1 < 4.0 || $ph1 > 7.8) return 'RETEST';
         if ($ph1 <= 5.4) return 'BCG';
         if ($ph1 > 5.8)  return 'BTB';
-        // 5.4 < pH ≤ 5.8: borderline — CPR result is used as final
-        return 'RETEST';
+        // 5.4 < pH ≤ 5.8: per BSWM protocol the CPR reading is accepted as final
+        return 'CPR';
     }
 
     /**
@@ -73,10 +131,10 @@ class PhTestService
     public function solutionDescription(string $solution): string
     {
         return match($solution) {
-            'BCG'    => 'BCG (Bromocresol Green) — Confirms pH in the acidic range (4.0–5.4)',
+            'BCG'    => 'BCG (Bromocresol Green) — Confirms pH in the acidic range (4.0–5.2)',
             'BTB'    => 'BTB (Bromothymol Blue) — Confirms pH in the near-neutral range (5.8–7.6)',
             'CPR'    => 'CPR Result is Final — pH in transitional range (5.4–5.8); no second test needed',
-            'RETEST' => 'Retest Required — pH is outside the measurable chart range (4.0–7.6)',
+            'RETEST' => 'Retest Required — pH is outside the measurable chart range (4.0–7.8)',
             default  => 'Unknown',
         };
     }
@@ -150,7 +208,7 @@ class PhTestService
 
         return [
             'outcome' => 'alkaline',
-            'remarks' => "⚠ Retest Required — CPR pH reading ({$ph1}) exceeds the BTB chart maximum (7.6), "
+            'remarks' => "⚠ Retest Required — CPR pH reading ({$ph1}) exceeds the BTB chart maximum (7.8), "
                        . "which is outside the measurable range. "
                        . "Verify soil strip placement and repeat with a fresh sample.",
         ];
@@ -174,8 +232,8 @@ class PhTestService
 
         // Check if pH2 is within the expected range for the solution
         $inRange = match($solution) {
-            'BCG' => $ph2 >= 4.5 && $ph2 <= 5.4,
-            'BTB' => $ph2 >= 5.8 && $ph2 <= 7.0,
+            'BCG' => $ph2 >= 4.0 && $ph2 <= 5.2,
+            'BTB' => $ph2 >= 6.0 && $ph2 <= 7.8,
             default => true,
         };
 
@@ -183,7 +241,7 @@ class PhTestService
             return [
                 'outcome' => 'inconsistent',
                 'remarks' => "⚠ Inconsistent — {$solution} pH reading ({$ph2}) is outside the expected range for "
-                           . ($solution === 'BCG' ? 'BCG (4.5–5.4)' : 'BTB (5.8–7.0)') . ". "
+                           . ($solution === 'BCG' ? 'BCG (4.0–5.2)' : 'BTB (6.0–7.8)') . ". "
                            . "The CPR reading was {$ph1}. Consider retesting. " . $confNote,
             ];
         }

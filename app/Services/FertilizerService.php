@@ -24,10 +24,10 @@ class FertilizerService
         }
 
         // Nitrogen (Urea 46-0-0)
-        if ($n < 20) {
+        if ($n < 45) {
             $rec['urea_bags'] = 4.0;
             $rec['notes'][]   = 'Low nitrogen. Apply Urea in 2 splits: ½ basal + ½ at panicle initiation.';
-        } elseif ($n < 40) {
+        } elseif ($n < 160) {
             $rec['urea_bags'] = 2.5;
             $rec['notes'][]   = 'Medium nitrogen. Apply Urea in 2 splits: ½ basal + ½ at active tillering.';
         } else {
@@ -76,7 +76,7 @@ class FertilizerService
     {
         $thresholds = [
             'ph'         => ['low_max' => 5.5,  'high_min' => 7.0],
-            'nitrogen'   => ['low_max' => 20.0, 'high_min' => 40.0],
+            'nitrogen'   => ['low_max' => 45.0, 'high_min' => 160.0],
             'phosphorus' => ['low_max' => 15.0, 'high_min' => 30.0],
             'potassium'  => ['low_max' => 20.0, 'high_min' => 40.0],
         ];
@@ -101,10 +101,11 @@ class FertilizerService
             default => 10,
         };
         $nScore = match (true) {
-            $n >= 20 && $n <= 40  => 100,
-            $n > 40 && $n <= 60   => 80,
-            $n >= 10              => 50,
-            default               => 15,
+            $n >= 60  && $n <= 150  => 100,
+            $n >= 45  && $n < 60    => 80,
+            $n >= 160               => 80,
+            $n >= 15                => 50,
+            default                 => 15,
         };
         $pScore = match (true) {
             $p >= 15 && $p <= 30  => 100,

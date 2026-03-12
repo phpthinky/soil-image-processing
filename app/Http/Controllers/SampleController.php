@@ -9,6 +9,7 @@ use App\Services\ColorScienceService;
 use App\Services\FertilizerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class SampleController extends Controller
 {
@@ -31,7 +32,18 @@ class SampleController extends Controller
     // Show create form
     public function create()
     {
-        $user    = Auth::user();
+         if (!Auth::user()->isAdmin())
+            {
+                $limit = 5;
+                $samples = Auth::user()->soilSamples()->count();
+                if($samples >= $limit) {
+                    return redirect()->route('samples.index')
+                ->with('error', 'Maximum limit of '.$limit.' samples reached. Please settle the unpaid modification fee to continue using the system.');
+                }
+            }
+        // ── END SAMPLE LIMIT ──────────────────────────────────────────────────────────────────
+
+        $user = Auth::user();
         $farmers = $user->isAdmin()
             ? Farmer::orderBy('name')->get()
             : $user->farmers()->orderBy('name')->get();
@@ -42,6 +54,18 @@ class SampleController extends Controller
     // Store new sample
     public function store(Request $request)
     {
+        // ── SAMPLE LIMIT ── comment out the block below once the modification fee is settled ──
+        if (!Auth::user()->isAdmin())
+            {
+                $limit = 5;
+                $samples = Auth::user()->soilSamples()->count();
+                if($samples >= $limit) {
+                    return redirect()->route('samples.index')
+                ->with('error', 'Maximum limit of '.$limit.' samples reached. Please settle the unpaid modification fee to continue using the system.');
+                }
+            }
+        // ── END SAMPLE LIMIT ──────────────────────────────────────────────────────────────────
+
         $request->validate([
             'sample_name' => 'required|string|max:150',
             'farmer_id'   => 'nullable|integer|exists:farmers,id',
@@ -77,7 +101,14 @@ class SampleController extends Controller
 
         // Auto-compute when all 4 averaged colors are present and not yet analyzed
         if ($sample->allAveraged() && !$sample->isAnalyzed()) {
-            $ph = $this->colorScience->colorToPhLevel($sample->ph_color_hex);
+            // Prefer the 2-step pH test result (CPR/BCG/BTB) when it is complete.
+            // Falling back to colorToPhLevel() on the averaged hex gives a ~0.6
+            // overestimate because the generic PH_COLOR_CHART uses different indicator
+            // colors than the BSWM CPR/BCG/BTB reagents.
+            $phTest = $sample->phTest;
+            $ph = ($phTest && $phTest->status === 'complete' && $phTest->final_ph)
+                ? (float) $phTest->final_ph
+                : $this->colorScience->colorToPhLevel($sample->ph_color_hex);
             $n  = $this->colorScience->colorToNitrogenLevel($sample->nitrogen_color_hex);
             $p  = $this->colorScience->colorToPhosphorusLevel($sample->phosphorus_color_hex);
             $k  = $this->colorScience->colorToPotassiumLevel($sample->potassium_color_hex);
@@ -97,28 +128,32 @@ class SampleController extends Controller
         }
 
         $readings        = $sample->getReadingsByParameter();
-        $recommendations = [];
-        $fertRec         = [];
+        $cropsByTolerance = [];
+        $cropsByFertility = [];
+        $cropsByPh        = [];
+        $fertRec          = [];
 
         if ($sample->isAnalyzed()) {
-            $recommendations = Crop::matchingForSoil(
-                (float)$sample->ph_level,
-                (float)$sample->nitrogen_level,
-                (float)$sample->phosphorus_level,
-                (float)$sample->potassium_level
-            );
-            $fertRec = $this->fertilizer->recommend(
-                (float)$sample->ph_level,
-                (float)$sample->nitrogen_level,
-                (float)$sample->phosphorus_level,
-                (float)$sample->potassium_level
-            );
+            $ph = (float)$sample->ph_level;
+            $n  = (float)$sample->nitrogen_level;
+            $p  = (float)$sample->phosphorus_level;
+            $k  = (float)$sample->potassium_level;
+
+            $cropsByTolerance = Crop::groupByTolerance($ph, $n, $p, $k);
+            $cropsByFertility = Crop::groupByFertility($n, $p, $k);
+            $cropsByPh        = Crop::groupByPh($ph, $n, $p, $k);
+            $fertRec          = $this->fertilizer->recommend($ph, $n, $p, $k);
         }
 
-        $aiEnabled = !empty(env('ANTHROPIC_API_KEY'));
-        $allCrops  = Crop::orderBy('name')->get();
+        $aiEnabled     = !empty(env('ANTHROPIC_API_KEY'));
+        $geminiEnabled = !empty(config('services.gemini.api_key'));
+        $allCrops      = Crop::orderBy('name')->get();
 
-        return view('samples.show', compact('sample', 'readings', 'recommendations', 'fertRec', 'aiEnabled', 'allCrops'));
+        return view('samples.show', compact(
+            'sample', 'readings',
+            'cropsByTolerance', 'cropsByFertility', 'cropsByPh',
+            'fertRec', 'aiEnabled', 'geminiEnabled', 'allCrops'
+        ));
     }
 
     // Show individual test readings report
@@ -130,8 +165,42 @@ class SampleController extends Controller
         }
 
         $readings = $sample->getReadingsByParameter();
+        $phTest   = $sample->phTest;
 
-        return view('samples.report', compact('sample', 'readings'));
+        return view('samples.report', compact('sample', 'readings', 'phTest'));
+    }
+
+    // Print-friendly PDF view (browser print-to-PDF)
+    public function pdf(SoilSample $sample)
+    {
+        $user = Auth::user();
+        if (!$user->isAdmin() && $sample->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $phTest           = $sample->phTest;
+        $cropsByTolerance = [];
+        $cropsByFertility = [];
+        $cropsByPh        = [];
+        $fertRec          = [];
+
+        if ($sample->isAnalyzed()) {
+            $ph = (float)$sample->ph_level;
+            $n  = (float)$sample->nitrogen_level;
+            $p  = (float)$sample->phosphorus_level;
+            $k  = (float)$sample->potassium_level;
+
+            $cropsByTolerance = Crop::groupByTolerance($ph, $n, $p, $k);
+            $cropsByFertility = Crop::groupByFertility($n, $p, $k);
+            $cropsByPh        = Crop::groupByPh($ph, $n, $p, $k);
+            $fertRec          = $this->fertilizer->recommend($ph, $n, $p, $k);
+        }
+
+        return view('samples.pdf', compact(
+            'sample', 'phTest',
+            'cropsByTolerance', 'cropsByFertility', 'cropsByPh',
+            'fertRec'
+        ));
     }
 
     // Reset all readings for re-capture
@@ -140,6 +209,14 @@ class SampleController extends Controller
         $user = Auth::user();
         if (!$user->isAdmin() && $sample->user_id !== $user->id) {
             abort(403);
+        }
+
+        // Delete NPK captured image files before clearing the DB rows.
+        foreach ($sample->colorReadings()->whereIn('parameter', ['nitrogen', 'phosphorus', 'potassium'])->get() as $rd) {
+            if ($rd->captured_image) {
+                $full = public_path($rd->captured_image);
+                if (is_file($full)) @unlink($full);
+            }
         }
 
         $sample->colorReadings()->delete();
@@ -161,5 +238,28 @@ class SampleController extends Controller
 
         return redirect()->route('samples.show', $sample)
             ->with('success', 'All readings have been reset. You can re-capture now.');
+    }
+
+    // Delete a sample permanently — admin only, requires password confirmation.
+    public function destroy(Request $request, SoilSample $sample)
+    {
+        if (!Auth::user()->isAdmin()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'admin_password' => 'required|string',
+        ]);
+
+        if (!Hash::check($request->admin_password, Auth::user()->password)) {
+            return redirect()->route('samples.show', $sample)
+                ->with('error', 'Incorrect password. Sample was NOT deleted.');
+        }
+
+        // Delete the sample; SoilSample::booted() deleting observer wipes public/captures/{id}/.
+        $sample->delete();
+
+        return redirect()->route('samples.index')
+            ->with('success', "Sample \"{$sample->sample_name}\" and all its data have been permanently deleted.");
     }
 }

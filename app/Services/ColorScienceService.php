@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\NpkColorChart;
+use App\Models\PhColorChart;
+
 /**
  * Color science: CIE L*a*b* conversion + CIEDE2000 color distance.
  * Ported directly from old-app/config.php.
@@ -16,6 +19,62 @@ class ColorScienceService
         '#CCCC00' => 6.3, '#99CC00' => 6.5, '#66AA00' => 7.0,
         '#009944' => 7.3, '#009999' => 7.5, '#0077BB' => 8.0,
         '#0044AA' => 8.3, '#003388' => 8.5,
+    ];
+
+    /**
+     * CPR (Cresol Red + Phenolphthalein) indicator — BSWM Step 1.
+     * Range: pH 4.8–6.0  (7 discrete points matching the BSWM CPR color card).
+     * CPR produces amber-yellow hues in this range, distinctly different from
+     * the universal-indicator colors in PH_COLOR_CHART.
+     *
+     * Hex values manually measured from the physical BSWM kit card under
+     * calibrated box-lighting conditions. Multiple entries per pH point
+     * improve CIEDE2000 nearest-match accuracy.
+     */
+    public const CPR_COLOR_CHART = [
+        '#FF8800' => 4.8,
+        '#D2A65A' => 5.0,
+        '#FFC800' => 5.2,
+        '#B0622D' => 5.4,
+        '#B0612C' => 5.4,
+        '#EDE800' => 5.6,
+        '#9D2529' => 5.8,
+        '#A12D31' => 5.8,
+        '#7E2938' => 6.0,
+        '#7E2939' => 6.0,
+    ];
+
+    /**
+     * BCG (Bromocresol Green) indicator — BSWM Step 2, acidic soils.
+     * Range: pH 4.0–5.2  (7 discrete points).
+     * BCG transitions from yellow-green at low pH to teal-green at pH 5.2.
+     *
+     * Calibrated from physical BSWM BCG card under calibrated box-lighting.
+     * One entry per card point — clean monotonic yellow-green → green → teal-green.
+     */
+    public const BCG_COLOR_CHART = [
+        '#CABB05' => 4.0,
+        '#C1BE07' => 4.2,
+        '#B6C209' => 4.4,
+        '#80B21B' => 4.6,
+        '#3C9B32' => 4.8,
+        '#1A8D54' => 5.0,
+        '#008071' => 5.2,
+    ];
+
+    /**
+     * BTB (Bromothymol Blue) indicator — BSWM Step 2, near-neutral soils.
+     * Range: pH 6.0–7.8  (6 discrete points).
+     * BTB transitions from yellow-green at pH 6.0 to deep blue at pH 7.8.
+     * Calibrated from physical BSWM BTB card under production lighting box.
+     */
+    public const BTB_COLOR_CHART = [
+        '#C9D900' => 6.0,
+        '#0FCA02' => 6.2,
+        '#027419' => 6.4,
+        '#022706' => 6.8,
+        '#013251' => 7.2,
+        '#1F0F99' => 7.8,
     ];
 
     public const NITROGEN_COLOR_CHART = [
@@ -45,19 +104,136 @@ class ColorScienceService
         return round(min(14.0, max(0.0, $this->matchColorToValue($hex, self::PH_COLOR_CHART))), 1);
     }
 
+    /**
+     * Like colorToPhLevel() but also returns the color match confidence percentage
+     * derived from the minimum CIEDE2000 distance to any reference color.
+     * Returns ['ph' => float, 'confidence_pct' => int (0–100)].
+     */
+    public function colorToPhLevelWithConfidence(string $hex): array
+    {
+        [$value, $minDeltaE] = $this->matchColorToValueWithDeltaE($hex, self::PH_COLOR_CHART);
+        $ph            = round(min(14.0, max(0.0, $value)), 1);
+        $confidencePct = max(0, min(100, (int) round(100 - $minDeltaE * 3)));
+        return ['ph' => $ph, 'confidence_pct' => $confidencePct];
+    }
+
+    /**
+     * Match a CPR capture color to a pH value.
+     * CPR range: pH 4.8–6.0 (amber-yellow hues, BSWM Step 1).
+     * Loads active entries from DB; falls back to CPR_COLOR_CHART constant.
+     *
+     * @return array{ph: float, confidence_pct: int}
+     */
+    public function colorToCprPhLevel(string $hex): array
+    {
+        $chart = PhColorChart::chartForIndicator('CPR');
+        if (empty($chart)) {
+            $chart = self::CPR_COLOR_CHART;
+        }
+
+        [$value, $minDeltaE] = $this->matchColorToValueWithDeltaE($hex, $chart);
+        $ph            = round(min(6.0, max(4.8, $value)), 1);
+        $confidencePct = max(0, min(100, (int) round(100 - $minDeltaE * 3)));
+
+        return ['ph' => $ph, 'confidence_pct' => $confidencePct];
+    }
+
+    /**
+     * Match a BCG capture color to a pH value.
+     * BCG range: pH 4.0–5.2 (yellow-green → teal-green, BSWM Step 2 acidic).
+     * Loads active entries from DB; falls back to BCG_COLOR_CHART constant.
+     *
+     * @return array{ph: float, confidence_pct: int}
+     */
+    public function colorToBcgPhLevel(string $hex): array
+    {
+        $chart = PhColorChart::chartForIndicator('BCG');
+        if (empty($chart)) {
+            $chart = self::BCG_COLOR_CHART;
+        }
+
+        [$value, $minDeltaE] = $this->matchColorToValueWithDeltaE($hex, $chart);
+        $ph            = round(min(5.2, max(4.0, $value)), 1);
+        $confidencePct = max(0, min(100, (int) round(100 - $minDeltaE * 3)));
+
+        return ['ph' => $ph, 'confidence_pct' => $confidencePct];
+    }
+
+    /**
+     * Match a BTB capture color to a pH value.
+     * BTB range: pH 6.0–7.8 (yellow-green → deep blue, BSWM Step 2 near-neutral).
+     * Loads active entries from DB; falls back to BTB_COLOR_CHART constant.
+     *
+     * @return array{ph: float, confidence_pct: int}
+     */
+    public function colorToBtbPhLevel(string $hex): array
+    {
+        $chart = PhColorChart::chartForIndicator('BTB');
+        if (empty($chart)) {
+            $chart = self::BTB_COLOR_CHART;
+        }
+
+        [$value, $minDeltaE] = $this->matchColorToValueWithDeltaE($hex, $chart);
+        $ph            = round(min(7.8, max(6.0, $value)), 1);
+        $confidencePct = max(0, min(100, (int) round(100 - $minDeltaE * 3)));
+
+        return ['ph' => $ph, 'confidence_pct' => $confidencePct];
+    }
+
+    /**
+     * Dispatch to the correct indicator function based on solution type.
+     * Prefer calling colorToCprPhLevel / colorToBcgPhLevel / colorToBtbPhLevel directly.
+     *
+     * @param  string $solution  'CPR', 'BCG', or 'BTB'
+     * @return array{ph: float, confidence_pct: int}
+     */
+    public function phTestColorToPhLevel(string $hex, string $solution): array
+    {
+        return match (strtoupper($solution)) {
+            'BCG'   => $this->colorToBcgPhLevel($hex),
+            'BTB'   => $this->colorToBtbPhLevel($hex),
+            default => $this->colorToCprPhLevel($hex),
+        };
+    }
+
+    /**
+     * Match a captured nitrogen strip color to a ppm value.
+     * Range: 0–240 ppm (LOW 15–45 · MEDIUM 60–150 · HIGH 160–240).
+     * Loads active entries from DB; falls back to NITROGEN_COLOR_CHART constant.
+     */
     public function colorToNitrogenLevel(string $hex): float
     {
-        return round(min(100.0, max(0.0, $this->matchColorToValue($hex, self::NITROGEN_COLOR_CHART))), 2);
+        $chart = NpkColorChart::chartForNutrient('N');
+        if (empty($chart)) {
+            $chart = self::NITROGEN_COLOR_CHART;
+        }
+        return round(min(240.0, max(0.0, $this->matchColorToValue($hex, $chart))), 2);
     }
 
+    /**
+     * Match a captured phosphorus strip color to a ppm value.
+     * Loads active entries from DB; falls back to PHOSPHORUS_COLOR_CHART constant.
+     */
     public function colorToPhosphorusLevel(string $hex): float
     {
-        return round(min(100.0, max(0.0, $this->matchColorToValue($hex, self::PHOSPHORUS_COLOR_CHART))), 2);
+        $chart = NpkColorChart::chartForNutrient('P');
+        if (empty($chart)) {
+            $chart = self::PHOSPHORUS_COLOR_CHART;
+        }
+        return round(min(9999.0, max(0.0, $this->matchColorToValue($hex, $chart))), 2);
     }
 
+    /**
+     * Match a captured potassium strip color to a ppm value.
+     * Loads active entries from DB; falls back to POTASSIUM_COLOR_CHART constant.
+     */
     public function colorToPotassiumLevel(string $hex): float
     {
-        return round(min(100.0, max(0.0, $this->matchColorToValue($hex, self::POTASSIUM_COLOR_CHART))), 2);
+        $chart = NpkColorChart::chartForNutrient('K');
+        if (empty($chart)) {
+            $chart = self::POTASSIUM_COLOR_CHART;
+        }
+        return round(min(9999.0, max(0.0, $this->matchColorToValue($hex, $chart))), 2);
     }
 
     public function computeForParameter(string $parameter, string $hex): float
@@ -171,6 +347,15 @@ class ColorScienceService
 
     public function matchColorToValue(string $capturedHex, array $chart): float
     {
+        return $this->matchColorToValueWithDeltaE($capturedHex, $chart)[0];
+    }
+
+    /**
+     * Same as matchColorToValue() but also returns the minimum CIEDE2000 distance
+     * to any reference color as the second element: [float $value, float $minDeltaE].
+     */
+    private function matchColorToValueWithDeltaE(string $capturedHex, array $chart): array
+    {
         $rgb = $this->hexToRgb($capturedHex);
         $lab = $this->rgbToLab($rgb['r'], $rgb['g'], $rgb['b']);
 
@@ -182,8 +367,10 @@ class ColorScienceService
         }
         usort($distances, fn($a, $b) => $a['de'] <=> $b['de']);
 
-        if ($distances[0]['de'] < 0.5) {
-            return (float) $distances[0]['value'];
+        $minDeltaE = $distances[0]['de'];
+
+        if ($minDeltaE < 0.5) {
+            return [(float) $distances[0]['value'], $minDeltaE];
         }
 
         $top = array_slice($distances, 0, 3);
@@ -193,6 +380,6 @@ class ColorScienceService
             $num  += $w * $t['value'];
             $denom += $w;
         }
-        return round($num / $denom, 2);
+        return [round($num / $denom, 2), $minDeltaE];
     }
 }

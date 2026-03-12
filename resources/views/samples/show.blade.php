@@ -55,216 +55,152 @@
     </div>
 </div>
 
+
+{{-- ── TESTING PROGRESS SECTION ────────────────────────────────────────────── --}}
+@if(!$sample->isAnalyzed())
 @php
-$params = [
-    'ph'         => ['label' => 'Soil pH',       'unit' => '',    'icon' => 'fa-flask'],
-    'nitrogen'   => ['label' => 'Nitrogen (N)',   'unit' => 'ppm', 'icon' => 'fa-leaf'],
-    'phosphorus' => ['label' => 'Phosphorus (P)', 'unit' => 'ppm', 'icon' => 'fa-atom'],
-    'potassium'  => ['label' => 'Potassium (K)',  'unit' => 'ppm', 'icon' => 'fa-seedling'],
+$ph_count = count($readings['ph'] ?? []);
+$n_count  = count($readings['nitrogen'] ?? []);
+$p_count  = count($readings['phosphorus'] ?? []);
+$k_count  = count($readings['potassium'] ?? []);
+$totalDone = (int)($sample->tests_completed ?? 0);
+
+$paramCards = [
+    'ph' => [
+        'label'   => 'Soil pH',
+        'icon'    => 'fa-flask',
+        'color'   => 'primary',
+        'count'   => $ph_count,
+        'avgHex'  => $sample->ph_color_hex,
+        'route'   => route('ph-test.show', $sample),
+        'badge'   => '2-Step',
+    ],
+    'nitrogen' => [
+        'label'  => 'Nitrogen (N)',
+        'icon'   => 'fa-leaf',
+        'color'  => 'success',
+        'count'  => $n_count,
+        'avgHex' => $sample->nitrogen_color_hex,
+        'route'  => route('parameter-test.show', [$sample, 'nitrogen']),
+        'badge'  => null,
+    ],
+    'phosphorus' => [
+        'label'  => 'Phosphorus (P)',
+        'icon'   => 'fa-atom',
+        'color'  => 'primary',
+        'count'  => $p_count,
+        'avgHex' => $sample->phosphorus_color_hex,
+        'route'  => route('parameter-test.show', [$sample, 'phosphorus']),
+        'badge'  => null,
+    ],
+    'potassium' => [
+        'label'  => 'Potassium (K)',
+        'icon'   => 'fa-seedling',
+        'color'  => 'info',
+        'count'  => $k_count,
+        'avgHex' => $sample->potassium_color_hex,
+        'route'  => route('parameter-test.show', [$sample, 'potassium']),
+        'badge'  => null,
+    ],
 ];
 @endphp
 
-{{-- ── WEBCAM CAPTURE SECTION ─────────────────────────────────────────────── --}}
-@if(!$sample->isAnalyzed())
-@php
-$ph_count = count($readings['ph']);
-$n_count  = count($readings['nitrogen']);
-$p_count  = count($readings['phosphorus']);
-$k_count  = count($readings['potassium']);
-
-$tab1Complete = ($ph_count >= 1 && $n_count >= 1 && $p_count >= 1 && $k_count >= 1);
-$tab2Complete = ($ph_count >= 2 && $n_count >= 2 && $p_count >= 2 && $k_count >= 2);
-$tab3Complete = ($ph_count >= 3 && $n_count >= 3 && $p_count >= 3 && $k_count >= 3);
-$tab2Enabled  = $tab1Complete;
-$tab3Enabled  = $tab2Complete;
-
-if      (!$tab1Complete) $activeTab = 1;
-elseif  (!$tab2Complete) $activeTab = 2;
-else                     $activeTab = 3;
-@endphp
-
 <div class="card border-warning mb-4">
-    <div class="card-header bg-warning text-dark">
-        <h5 class="mb-0"><i class="fas fa-camera me-2"></i>Webcam Capture — 3-Test Accuracy System</h5>
+    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-microscope me-2"></i>Soil Parameter Testing</h5>
+        <span class="badge bg-dark">{{ $totalDone }}/12 captures</span>
     </div>
     <div class="card-body">
-        <div class="alert alert-info py-2 mb-3">
+
+        <div class="alert alert-info py-2 mb-4">
             <i class="fas fa-info-circle me-1"></i>
-            <strong>Step-by-step:</strong> Complete <strong>Test 1</strong> for all 4 parameters first, then Test 2, then Test 3.
-            Each test must be finished before the next unlocks. The system averages all three readings per parameter.
+            Each parameter has its own dedicated test page with <strong>3 captures</strong> for accuracy.
+            Complete all 4 parameters to compute the soil analysis.
         </div>
 
-        <div class="row">
-            {{-- Webcam feed --}}
-            <div class="col-md-5 text-center mb-3">
-                <div style="position:relative;display:inline-block;">
-                    <video id="webcam" width="380" height="280" autoplay playsinline
-                           style="border:2px solid #ccc;border-radius:8px;"></video>
-                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-                                width:80px;height:80px;border:3px dashed rgba(255,255,255,0.85);
-                                border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,0.3);"></div>
-                </div>
-                <canvas id="snapshot" width="380" height="280" style="display:none;"></canvas>
-                <br>
-                <button id="startCameraBtn" class="btn btn-outline-secondary mt-2" onclick="startCamera()">
-                    <i class="fas fa-video"></i> Start Camera
-                </button>
-                <div id="cameraStatus" class="mt-2 text-muted small"></div>
-            </div>
+        {{-- Parameter cards --}}
+        <div class="row g-3 mb-4">
+            @foreach($paramCards as $key => $pc)
+            @php
+                $done   = ($pc['count'] >= 3);
+                $active = !$done;
+            @endphp
+            <div class="col-md-3 col-sm-6">
+                <div class="card h-100 {{ $done ? 'border-success' : 'border-' . $pc['color'] }}">
+                    <div class="card-header text-center py-2 bg-{{ $done ? 'success' : $pc['color'] }} text-white">
+                        <i class="fas {{ $pc['icon'] }} me-1"></i>
+                        <strong>{{ $pc['label'] }}</strong>
+                        @if($pc['badge'])
+                        <span class="badge bg-white text-dark ms-1" style="font-size:.6rem;">{{ $pc['badge'] }}</span>
+                        @endif
+                    </div>
+                    <div class="card-body text-center py-3">
 
-            {{-- Tabbed capture panel --}}
-            <div class="col-md-7">
+                        {{-- Capture progress dots --}}
+                        <div class="d-flex justify-content-center gap-2 mb-2">
+                            @for($i = 1; $i <= 3; $i++)
+                            <div style="width:18px;height:18px;border-radius:50%;
+                                        background:{{ $pc['count'] >= $i ? ($done ? '#198754' : 'var(--bs-' . $pc['color'] . ')') : '#dee2e6' }};
+                                        border:2px solid {{ $pc['count'] >= $i ? ($done ? '#157347' : 'currentColor') : '#adb5bd' }};">
+                            </div>
+                            @endfor
+                        </div>
 
-                {{-- Tab navigation --}}
-                <ul class="nav nav-tabs mb-0" id="captureTab" role="tablist">
-                    @foreach([1 => 'Test 1', 2 => 'Test 2', 3 => 'Test 3'] as $t => $label)
-                    @php
-                        $isActive  = ($activeTab === $t);
-                        $isEnabled = ($t === 1) || ($t === 2 && $tab2Enabled) || ($t === 3 && $tab3Enabled);
-                        $isDone    = ($t === 1 && $tab1Complete) || ($t === 2 && $tab2Complete) || ($t === 3 && $tab3Complete);
-                    @endphp
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link {{ $isActive ? 'active' : '' }} {{ !$isEnabled ? 'disabled text-muted' : '' }}"
-                                data-bs-toggle="{{ $isEnabled ? 'tab' : '' }}"
-                                data-bs-target="#test{{ $t }}Tab"
-                                type="button" role="tab"
-                                {{ !$isEnabled ? 'disabled' : '' }}>
-                            <i class="fas {{ $isDone ? 'fa-check-circle text-success' : 'fa-circle-dot' }} me-1" style="font-size:.8rem;"></i>
-                            {{ $label }}
-                            @if(!$isEnabled)
-                                <i class="fas fa-lock ms-1 opacity-50" style="font-size:.65rem;" title="Finish previous test first"></i>
-                            @endif
-                        </button>
-                    </li>
-                    @endforeach
-                </ul>
-
-                {{-- Tab panes --}}
-                <div class="tab-content border border-top-0 rounded-bottom p-3" id="captureTabContent">
-                    @for($testNum = 1; $testNum <= 3; $testNum++)
-                    @php
-                        $tabEnabled = ($testNum === 1) ||
-                                      ($testNum === 2 && $tab2Enabled) ||
-                                      ($testNum === 3 && $tab3Enabled);
-                        $tabDoneCount = collect(array_keys($params))->filter(fn($k) => isset($readings[$k][$testNum]))->count();
-                    @endphp
-                    <div class="tab-pane fade {{ $activeTab === $testNum ? 'show active' : '' }}"
-                         id="test{{ $testNum }}Tab" role="tabpanel">
-
-                        @if($tabEnabled)
-                        <table class="table table-bordered align-middle table-sm mb-2">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th class="text-center" style="width:110px;">Captured Color</th>
-                                    <th class="text-center" style="width:150px;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($params as $key => $meta)
-                                @php $rd = $readings[$key][$testNum] ?? null; @endphp
-                                <tr>
-                                    <td>
-                                        <i class="fas {{ $meta['icon'] }} me-1 text-success"></i>
-                                        <strong>{{ $meta['label'] }}</strong>
-                                        @if($key === 'ph')<span class="badge bg-info ms-1" style="font-size:.6rem;">2-Step Test</span>@endif
-                                    </td>
-                                    <td class="text-center">
-                                        @if($rd)
-                                            <div style="width:38px;height:20px;background:{{ $rd->color_hex }};
-                                                        border:1px solid #ccc;border-radius:3px;margin:0 auto 2px;"></div>
-                                            <small class="text-muted" style="font-size:10px;">{{ $rd->color_hex }}</small>
-                                        @else
-                                            <span class="text-muted small">—</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        @if($key === 'ph')
-                                            {{-- pH uses the dedicated 2-step test page --}}
-                                            @php $phDone = ($ph_count >= $testNum); @endphp
-                                            @if($phDone)
-                                                <div class="text-success small mb-1">
-                                                    <i class="fas fa-check"></i>
-                                                    pH {{ $rd ? number_format($rd->computed_value, 2) : '—' }}
-                                                </div>
-                                                <a href="{{ route('ph-test.show', $sample) }}"
-                                                   class="btn btn-outline-secondary btn-sm py-0 px-2">
-                                                    <i class="fas fa-redo" style="font-size:.75rem;"></i> Re-test
-                                                </a>
-                                            @else
-                                                <a href="{{ route('ph-test.show', $sample) }}"
-                                                   class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-flask me-1"></i>pH Test
-                                                </a>
-                                            @endif
-                                        @elseif($rd)
-                                            <div class="text-success small mb-1">
-                                                <i class="fas fa-check"></i>
-                                                {{ number_format($rd->computed_value, 2) }} {{ $meta['unit'] }}
-                                            </div>
-                                            <button class="btn btn-outline-secondary btn-sm py-0 px-2"
-                                                    id="btn-{{ $key }}-{{ $testNum }}"
-                                                    onclick="captureTest('{{ $key }}', {{ $testNum }})">
-                                                <i class="fas fa-redo" style="font-size:.75rem;"></i> Redo
-                                            </button>
-                                        @else
-                                            <button class="btn btn-sm btn-success"
-                                                    id="btn-{{ $key }}-{{ $testNum }}"
-                                                    onclick="captureTest('{{ $key }}', {{ $testNum }})">
-                                                <i class="fas fa-camera"></i> Capture
-                                            </button>
-                                        @endif
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                        <div class="small {{ $tabDoneCount === 4 ? 'text-success fw-bold' : 'text-muted' }}">
-                            <i class="fas {{ $tabDoneCount === 4 ? 'fa-check-circle' : 'fa-info-circle' }} me-1"></i>
-                            {{ $tabDoneCount }}/4 parameters captured for Test {{ $testNum }}.
-                            @if($tabDoneCount === 4 && $testNum < 3)
-                                Proceed to Test {{ $testNum + 1 }}.
-                            @elseif($tabDoneCount === 4 && $testNum === 3)
-                                All tests complete — ready to compute!
+                        <div class="small mb-2 {{ $done ? 'text-success fw-bold' : 'text-muted' }}">
+                            @if($done)
+                                <i class="fas fa-check-circle me-1"></i>3/3 Complete
+                            @else
+                                {{ $pc['count'] }}/3 captures
                             @endif
                         </div>
 
-                        @else
-                        <div class="text-center py-4 text-muted">
-                            <i class="fas fa-lock fa-2x mb-2 opacity-50"></i>
-                            <p class="mb-0">Complete <strong>Test {{ $testNum - 1 }}</strong> for all 4 parameters to unlock this step.</p>
-                        </div>
+                        {{-- Average color swatch --}}
+                        @if($pc['avgHex'])
+                        <div style="width:44px;height:24px;background:{{ $pc['avgHex'] }};border:1px solid #ccc;
+                                    border-radius:4px;margin:0 auto 4px;"></div>
+                        <div class="text-muted" style="font-size:10px;">{{ $pc['avgHex'] }}</div>
                         @endif
 
                     </div>
-                    @endfor
-                </div>
-
-                {{-- Overall progress --}}
-                @php $done = (int)($sample->tests_completed ?? 0); @endphp
-                <div class="mt-3">
-                    <div class="d-flex justify-content-between small text-muted mb-1">
-                        <span>Overall Progress</span>
-                        <span id="progressLabel">{{ $done }}/12 tests</span>
-                    </div>
-                    <div class="progress" style="height:8px;">
-                        <div class="progress-bar bg-success" id="progressBar"
-                             style="width:{{ round($done/12*100) }}%"></div>
+                    <div class="card-footer text-center py-2">
+                        <a href="{{ $pc['route'] }}"
+                           class="btn btn-sm {{ $done ? 'btn-outline-success' : 'btn-' . $pc['color'] }} w-100">
+                            @if($done)
+                                <i class="fas fa-redo me-1"></i>Re-test
+                            @else
+                                <i class="fas fa-camera me-1"></i>
+                                {{ $pc['count'] > 0 ? 'Continue' : 'Start' }} Test
+                            @endif
+                        </a>
                     </div>
                 </div>
+            </div>
+            @endforeach
+        </div>
 
-                {{-- Compute button --}}
-                <div id="computeSection" class="{{ $sample->allAveraged() ? '' : 'd-none' }} mt-3">
-                    <div class="alert alert-success py-2 mb-2">
-                        <i class="fas fa-check-circle me-1"></i>All 12 tests captured. Ready to compute results.
-                    </div>
-                    <a href="{{ route('samples.show', $sample) }}" class="btn btn-success w-100">
-                        <i class="fas fa-calculator me-1"></i>Compute &amp; View Results
-                    </a>
-                </div>
+        {{-- Overall progress bar --}}
+        <div class="mb-3">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+                <span>Overall Progress</span>
+                <span>{{ $totalDone }}/12 captures</span>
+            </div>
+            <div class="progress" style="height:10px;">
+                <div class="progress-bar bg-success"
+                     style="width:{{ round($totalDone/12*100) }}%;transition:width .4s;"></div>
+            </div>
+        </div>
 
-            </div>{{-- /col-md-7 --}}
-        </div>{{-- /row --}}
+        {{-- Compute button --}}
+        @if($sample->allAveraged())
+        <div class="alert alert-success py-2 mb-2">
+            <i class="fas fa-check-circle me-1"></i>
+            All 12 captures complete. Ready to compute the full soil analysis.
+        </div>
+        <a href="{{ route('samples.show', $sample) }}" class="btn btn-success w-100">
+            <i class="fas fa-calculator me-1"></i>Compute &amp; View Results
+        </a>
+        @endif
+
     </div>
 </div>
 @endif
@@ -490,45 +426,183 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
 
 {{-- CROP RECOMMENDATIONS --}}
 <div class="card mb-4">
-    <div class="card-header bg-success text-white">
+    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-seedling me-2"></i>Crop Recommendations</h5>
+        @if($sample->isAnalyzed())
+        <a href="{{ route('samples.pdf', $sample) }}" target="_blank"
+           class="btn btn-sm btn-light">
+            <i class="fas fa-print me-1"></i>Print / Save as PDF
+        </a>
+        @endif
     </div>
     <div class="card-body">
-        @if($recommendations->isEmpty())
-        <div class="alert alert-warning mb-0">No crop match for these soil conditions. Consider soil amendments to adjust pH or NPK levels.</div>
-        @else
-        <p class="text-muted small mb-3">Scored by how many parameters fall within the crop's tolerance range (4 = perfect match).</p>
-        <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle table-sm">
-                <thead class="table-success">
-                    <tr><th>#</th><th>Crop</th><th>pH Range</th><th>N (ppm)</th><th>P (ppm)</th><th>K (ppm)</th><th>Match</th></tr>
-                </thead>
-                <tbody>
-                    @foreach($recommendations as $i => $crop)
-                    <tr>
-                        <td>{{ $i + 1 }}</td>
-                        <td>
-                            <strong>{{ $crop->name }}</strong>
-                            @if($i === 0)<span class="badge bg-warning text-dark ms-1">Top Pick</span>@endif
-                        </td>
-                        <td>{{ $crop->min_ph }} – {{ $crop->max_ph }}</td>
-                        <td>{{ $crop->min_nitrogen }} – {{ $crop->max_nitrogen }}</td>
-                        <td>{{ $crop->min_phosphorus }} – {{ $crop->max_phosphorus }}</td>
-                        <td>{{ $crop->min_potassium }} – {{ $crop->max_potassium }}</td>
-                        <td>
-                            @php $s = $crop->match_score; $mc = $s==4?'success':($s>=3?'warning':($s>=2?'info':'danger')); @endphp
-                            <span class="badge bg-{{ $mc }}">{{ $s }}/4</span>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+
+    @if(!$sample->isAnalyzed())
+        <p class="text-muted mb-0">Complete all 4 soil tests to see crop recommendations.</p>
+    @else
+
+    {{-- Tab navigation --}}
+    <ul class="nav nav-tabs mb-3" id="cropTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-tolerance" data-bs-toggle="tab"
+                    data-bs-target="#pane-tolerance" type="button">
+                <i class="fas fa-check-double me-1 text-success"></i>
+                Tolerance Match
+                <span class="badge bg-success ms-1">{{ count($cropsByTolerance) }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-fertility" data-bs-toggle="tab"
+                    data-bs-target="#pane-fertility" type="button">
+                <i class="fas fa-leaf me-1 text-warning"></i>
+                Fertility Score
+                <span class="badge bg-warning text-dark ms-1">{{ count($cropsByFertility) }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-ph" data-bs-toggle="tab"
+                    data-bs-target="#pane-ph" type="button">
+                <i class="fas fa-flask me-1 text-info"></i>
+                pH Threshold
+                <span class="badge bg-info text-white ms-1">{{ count($cropsByPh) }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="cropTabContent">
+
+        {{-- ── Group 1: Tolerance Match ──────────────────────────────── --}}
+        <div class="tab-pane fade show active" id="pane-tolerance" role="tabpanel">
+            <p class="text-muted small mb-2">
+                <i class="fas fa-info-circle me-1"></i>
+                Crops where the soil <strong>pH is within range</strong> and scored by how many
+                of the 4 parameters (pH + N + P + K) match.. <strong>Can be planted with current soil as-is.</strong>
+            </p>
+            @if(count($cropsByTolerance) === 0)
+                <div class="alert alert-warning mb-0">No crops match this soil's pH. Consider a lime or sulfur amendment.</div>
+            @else
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle table-sm mb-0">
+                    <thead class="table-success">
+                        <tr><th>#</th><th>Crop</th><th>pH Range</th><th>N (ppm)</th><th>P (ppm)</th><th>K (ppm)</th><th>Score</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach($cropsByTolerance as $i => $crop)
+                        @php $s = $crop->match_score; $mc = $s==4?'success':($s>=3?'warning':($s>=2?'info':'secondary')); @endphp
+                        <tr>
+                            <td>{{ $i+1 }}</td>
+                            <td>
+                                <strong>{{ $crop->name }}</strong>
+                                @if($i===0)<span class="badge bg-warning text-dark ms-1">Top Pick</span>@endif
+                            </td>
+                            <td><small>{{ $crop->min_ph }}–{{ $crop->max_ph }}</small></td>
+                            <td><small>{{ $crop->min_nitrogen }}–{{ $crop->max_nitrogen }}</small></td>
+                            <td><small>{{ $crop->min_phosphorus }}–{{ $crop->max_phosphorus }}</small></td>
+                            <td><small>{{ $crop->min_potassium }}–{{ $crop->max_potassium }}</small></td>
+                            <td><span class="badge bg-{{ $mc }}">{{ $s }}/4</span></td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
         </div>
-        @endif
+
+        {{-- ── Group 2: Fertility Score ──────────────────────────────── --}}
+        <div class="tab-pane fade" id="pane-fertility" role="tabpanel">
+            <p class="text-muted small mb-2">
+                <i class="fas fa-info-circle me-1"></i>
+                Crops ranked by <strong>NPK compatibility only</strong> — pH is not filtered.
+                Includes crops whose pH requirement differs slightly; a
+                <strong>lime or sulfur amendment</strong> can fix the pH..
+            </p>
+            @if(count($cropsByFertility) === 0)
+                <div class="alert alert-warning mb-0">No NPK data available yet.</div>
+            @else
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle table-sm mb-0">
+                    <thead class="table-warning">
+                        <tr><th>#</th><th>Crop</th><th>pH Range</th><th>N (ppm)</th><th>P (ppm)</th><th>K (ppm)</th><th>NPK Score</th><th>pH Match?</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach($cropsByFertility as $i => $crop)
+                        @php
+                            $ns = $crop->npk_score;
+                            $pct = round($ns / 3 * 100);
+                            $nc = $ns==3?'success':($ns>=2?'warning':'info');
+                            $phOk = $sample->ph_level >= $crop->min_ph && $sample->ph_level <= $crop->max_ph;
+                        @endphp
+                        <tr>
+                            <td>{{ $i+1 }}</td>
+                            <td>
+                                <strong>{{ $crop->name }}</strong>
+                                @if($i===0)<span class="badge bg-warning text-dark ms-1">Top Pick</span>@endif
+                            </td>
+                            <td><small>{{ $crop->min_ph }}–{{ $crop->max_ph }}</small></td>
+                            <td><small>{{ $crop->min_nitrogen }}–{{ $crop->max_nitrogen }}</small></td>
+                            <td><small>{{ $crop->min_phosphorus }}–{{ $crop->max_phosphorus }}</small></td>
+                            <td><small>{{ $crop->min_potassium }}–{{ $crop->max_potassium }}</small></td>
+                            <td><span class="badge bg-{{ $nc }}">{{ $pct }}%</span></td>
+                            <td>
+                                @if($phOk)
+                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Yes</span>
+                                @else
+                                    <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Needs fix</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
+        </div>
+
+        {{-- ── Group 3: pH Threshold ─────────────────────────────────── --}}
+        <div class="tab-pane fade" id="pane-ph" role="tabpanel">
+            <p class="text-muted small mb-2">
+                <i class="fas fa-info-circle me-1"></i>
+                All crops whose <strong>pH tolerance covers pH {{ number_format($sample->ph_level,1) }}</strong>,
+                sorted by NPK score. Shows every species that can survive this soil's acidity level.
+                Nutrient amendments may still be needed..
+            </p>
+            @if(count($cropsByPh) === 0)
+                <div class="alert alert-warning mb-0">No crops tolerate this pH level. Consider soil pH amendment.</div>
+            @else
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle table-sm mb-0">
+                    <thead class="table-info">
+                        <tr><th>#</th><th>Crop</th><th>pH Range</th><th>N (ppm)</th><th>P (ppm)</th><th>K (ppm)</th><th>NPK Score</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach($cropsByPh as $i => $crop)
+                        @php $ns=$crop->npk_score; $nc=$ns==3?'success':($ns>=2?'warning':($ns>=1?'info':'secondary')); @endphp
+                        <tr>
+                            <td>{{ $i+1 }}</td>
+                            <td>
+                                <strong>{{ $crop->name }}</strong>
+                                @if($i===0)<span class="badge bg-warning text-dark ms-1">Top Pick</span>@endif
+                            </td>
+                            <td><small>{{ $crop->min_ph }}–{{ $crop->max_ph }}</small></td>
+                            <td><small>{{ $crop->min_nitrogen }}–{{ $crop->max_nitrogen }}</small></td>
+                            <td><small>{{ $crop->min_phosphorus }}–{{ $crop->max_phosphorus }}</small></td>
+                            <td><small>{{ $crop->min_potassium }}–{{ $crop->max_potassium }}</small></td>
+                            <td><span class="badge bg-{{ $nc }}">{{ $ns }}/3</span></td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
+        </div>
+
+    </div>{{-- /tab-content --}}
+    @endif
     </div>
 </div>
 
 {{-- AI RECOMMENDATION --}}
+<!--
 <div class="card mb-4" id="aiSection">
     <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-robot me-2"></i>AI Agronomic Advisor</h5>
@@ -591,6 +665,124 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
 
     </div>
 </div>
+-->
+{{-- ── GEMINI AI CROP RECOMMENDATIONS ─────────────────────────────────── --}}
+<div class="card mb-4" id="geminiSection">
+    <div class="card-header d-flex justify-content-between align-items-center"
+         style="background:linear-gradient(135deg,#1a73e8 0%,#34a853 60%,#fbbc04 100%);color:#fff;">
+        <h5 class="mb-0">
+            <i class="fas fa-robot me-2"></i>
+            Gemini AI — Philippine Crop Recommendations
+        </h5>
+        @if($geminiEnabled)
+            <span class="badge bg-light text-dark">
+                <i class="fas fa-circle text-success me-1" style="font-size:.6rem;"></i>Gemini Ready
+            </span>
+        @else
+            <span class="badge bg-secondary">
+                <i class="fas fa-circle me-1" style="font-size:.6rem;"></i>API Not Configured
+            </span>
+        @endif
+    </div>
+
+    <div class="card-body">
+        @if(!$sample->isAnalyzed())
+            <p class="text-muted mb-0">Complete all 4 soil tests first to enable Gemini crop recommendations.</p>
+
+        @elseif(!$geminiEnabled)
+            {{-- API key not configured --}}
+            <div class="alert alert-warning mb-3">
+                <h6 class="alert-heading mb-2"><i class="fas fa-key me-2"></i>Gemini API Key Required</h6>
+                <p class="mb-2">
+                    This feature uses <strong>Google Gemini AI</strong> to recommend up to 10 suitable Philippine
+                    crops grouped by season and crop type, with per-crop fertilizer calculations.
+                </p>
+                <ol class="mb-2 small">
+                    <li>Create an account at <strong>aistudio.google.com</strong></li>
+                    <li>Generate an API key from Google AI Studio</li>
+                    <li>Add <code>GEMINI_API_KEY=your-key-here</code> to the server's <code>.env</code> file</li>
+                    <li>Restart the application server</li>
+                </ol>
+                <hr class="my-2">
+                <p class="mb-0 small text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    The API key is stored server-side only and is <strong>never sent to the browser</strong>.
+                </p>
+            </div>
+            <button class="btn btn-secondary" disabled>
+                <i class="fas fa-seedling me-1"></i> Get Gemini Crop Recommendations
+                <span class="ms-2 badge bg-light text-dark" style="font-size:.7rem;">Not Available</span>
+            </button>
+
+        @else
+            {{-- API ready --}}
+            <p class="text-muted mb-3">
+                Gemini AI will recommend up to <strong>10 Philippine crops</strong> suited to your soil,
+                grouped by <em>season</em> (Wet / Dry / Year-round) and <em>crop type</em>
+                (Grain, Vegetable, Root Crop, Legume, Fruit, Cash Crop) — each with a
+                tailored fertilizer plan.
+            </p>
+
+            {{-- Optional preferred-crop selector --}}
+            <div class="card border-0 bg-light p-3 mb-3">
+                <label class="form-label fw-semibold mb-1">
+                    <i class="fas fa-hand-pointer me-1 text-success"></i>
+                    Farmer's Preferred Crop <span class="text-muted fw-normal">(optional)</span>
+                </label>
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-5">
+                        <select class="form-select" id="geminiPreferredCrop">
+                            <option value="">— No preference, recommend best crops —</option>
+                            @foreach($allCrops as $crop)
+                                <option value="{{ $crop->name }}">{{ $crop->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-7 text-muted small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Select a crop if the farmer has a specific one in mind. Gemini will assess its
+                        soil compatibility and suggest amendments if needed.
+                    </div>
+                </div>
+            </div>
+
+            {{-- Stored recommendation display --}}
+            @if(!empty($sample->gemini_crop_recommendation))
+            <div id="geminiStoredResult" class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-semibold text-success">
+                        <i class="fas fa-check-circle me-1"></i> Gemini Recommendation (saved)
+                    </span>
+                    <button class="btn btn-sm btn-outline-primary" onclick="generateGemini()" id="geminiRegenerateBtn">
+                        <i class="fas fa-sync me-1"></i> Regenerate
+                    </button>
+                </div>
+                <div id="geminiRecommendationText"
+                     class="p-3 rounded border bg-white"
+                     style="white-space:pre-wrap;font-size:.92rem;line-height:1.6;">{{ $sample->gemini_crop_recommendation }}</div>
+            </div>
+            @endif
+
+            {{-- Generate button --}}
+            <div id="geminiGenerateArea" class="{{ !empty($sample->gemini_crop_recommendation) ? 'd-none' : '' }}">
+                <button class="btn btn-lg"
+                        style="background:linear-gradient(135deg,#1a73e8,#34a853);color:#fff;"
+                        onclick="generateGemini()" id="geminiBtn">
+                    <i class="fas fa-seedling me-2"></i>Get Gemini Crop Recommendations
+                </button>
+            </div>
+
+            {{-- Loading / result / error --}}
+            <div id="geminiLoading" class="d-none mt-3">
+                <div class="spinner-border spinner-border-sm me-2" style="color:#1a73e8;"></div>
+                Consulting Gemini AI — analyzing soil profile and matching Philippine crops...
+            </div>
+            <div id="geminiResult" class="mt-3 p-3 rounded border bg-white d-none"
+                 style="white-space:pre-wrap;font-size:.92rem;line-height:1.6;"></div>
+            <div id="geminiError" class="alert alert-danger mt-3 d-none"></div>
+        @endif
+    </div>
+</div>
 
 <div class="row mb-4">
     <div class="col text-end">
@@ -602,6 +794,12 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
            onclick="return confirm('This will reset ALL readings for this sample. Continue?');">
             <i class="fas fa-redo me-1"></i> Re-capture All
         </a>
+        @if(Auth::user()->isAdmin())
+        <button type="button" class="btn btn-danger ms-2"
+                data-bs-toggle="modal" data-bs-target="#deleteSampleModal">
+            <i class="fas fa-trash me-1"></i> Delete Sample
+        </button>
+        @endif
         <a href="{{ route('export', ['sample_id' => $sample->id]) }}" class="btn btn-success ms-2">
             <i class="fas fa-file-excel me-1"></i> Export to Excel
         </a>
@@ -612,72 +810,61 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
 </div>
 @endif
 
+{{-- ── Delete Sample Modal (admin only) ───────────────────────── --}}
+@if(Auth::user()->isAdmin())
+<div class="modal fade" id="deleteSampleModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Sample Permanently
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ route('samples.destroy', $sample) }}">
+                @csrf
+                @method('DELETE')
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <strong>This cannot be undone.</strong> Deleting this sample will permanently remove:
+                        <ul class="mb-0 mt-1 small">
+                            <li>All soil test readings (pH, N, P, K)</li>
+                            <li>All captured webcam photos</li>
+                            <li>The analysis result and fertilizer recommendation</li>
+                        </ul>
+                    </div>
+                    <p class="mb-1">Sample to delete:</p>
+                    <div class="p-2 rounded bg-light border mb-3 fw-semibold">
+                        {{ $sample->sample_name }} — {{ $sample->farmer_name }}
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">
+                            Enter your admin password to confirm:
+                        </label>
+                        <input type="password" class="form-control" name="admin_password"
+                               placeholder="Admin password" autocomplete="current-password" required>
+                        @if(session('error'))
+                        <div class="text-danger small mt-1">{{ session('error') }}</div>
+                        @endif
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> Delete Permanently
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
+
 @endsection
 
 @section('scripts')
-@if(!$sample->isAnalyzed())
-<script>
-const sampleId   = {{ $sample->id }};
-const csrfToken  = document.querySelector('meta[name="csrf-token"]').content;
-let   videoStream = null;
-let   totalReadings = {{ (int)($sample->tests_completed ?? 0) }};
-
-function startCamera() {
-    navigator.mediaDevices.getUserMedia({ video: { width: 380, height: 280 }, audio: false })
-        .then(stream => {
-            videoStream = stream;
-            document.getElementById('webcam').srcObject = stream;
-            const btn = document.getElementById('startCameraBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-check-circle"></i> Camera Active';
-            btn.classList.replace('btn-outline-secondary', 'btn-success');
-            document.getElementById('cameraStatus').textContent = 'Camera is live. Point at the test strip and click Capture.';
-        })
-        .catch(err => alert('Could not access webcam: ' + err.message));
-}
-
-function captureTest(parameter, testNumber) {
-    if (!videoStream) { alert('Please start the camera first.'); return; }
-
-    const video  = document.getElementById('webcam');
-    const canvas = document.getElementById('snapshot');
-    const ctx    = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const cx   = Math.floor(canvas.width / 2) - 40;
-    const cy   = Math.floor(canvas.height / 2) - 40;
-    const data = ctx.getImageData(cx, cy, 80, 80).data;
-    let r = 0, g = 0, b = 0, n = 0;
-    for (let i = 0; i < data.length; i += 4) { r += data[i]; g += data[i+1]; b += data[i+2]; n++; }
-    r = Math.round(r/n); g = Math.round(g/n); b = Math.round(b/n);
-    const hex = '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('').toUpperCase();
-
-    const btn = document.getElementById(`btn-${parameter}-${testNumber}`);
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
-
-    fetch('{{ route("color-readings.store") }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-        body: JSON.stringify({ sample_id: sampleId, parameter, color_hex: hex, r, g, b, test_number: testNumber })
-    })
-    .then(res => res.json())
-    .then(resp => {
-        if (!resp.success) { alert('Error: ' + resp.message); return; }
-        totalReadings = resp.total_readings;
-        document.getElementById('progressLabel').textContent = totalReadings + '/12 tests';
-        document.getElementById('progressBar').style.width = Math.round(totalReadings / 12 * 100) + '%';
-        if (totalReadings >= 12) {
-            document.getElementById('computeSection').classList.remove('d-none');
-        }
-        setTimeout(() => location.reload(), 600);
-    })
-    .catch(() => {
-        alert('Network error — please try again.');
-        if (btn) { btn.disabled = false; btn.innerHTML = `<i class="fas fa-camera"></i> Capture`; }
-    });
-}
-</script>
-@endif
 
 @if($sample->isAnalyzed())
 <script>
@@ -773,21 +960,21 @@ function calculateFertilizer() {
 
     cards += card('fa-seedling', 'success',
         fert.name,
-        `${fmt(primaryBagsTotal)} bags`,
-        `${fmt(primaryBagsHa)} bags/ha × ${fmt(area)} ha`,
+        `${fmt(primaryBagsTotal * BAG)} kg`,
+        `${fmt(primaryBagsHa * BAG)} kg/ha × ${fmt(area)} ha`,
         `Limited by: ${limitedBy || 'N/A'}`);
 
     if (suppPBagsHa > 0) {
         cards += card('fa-atom', 'primary',
             'TSP (0-46-0) — Supp. P',
-            `${fmt(suppPBagsHa * area)} bags`,
-            `${fmt(suppPBagsHa)} bags/ha × ${fmt(area)} ha`, 'Phosphorus supplement');
+            `${fmt(suppPBagsHa * area * BAG)} kg`,
+            `${fmt(suppPBagsHa * BAG)} kg/ha × ${fmt(area)} ha`, 'Phosphorus supplement');
     }
     if (suppKBagsHa > 0) {
         cards += card('fa-flask', 'info',
             'MOP (0-0-60) — Supp. K',
-            `${fmt(suppKBagsHa * area)} bags`,
-            `${fmt(suppKBagsHa)} bags/ha × ${fmt(area)} ha`, 'Potassium supplement');
+            `${fmt(suppKBagsHa * area * BAG)} kg`,
+            `${fmt(suppKBagsHa * BAG)} kg/ha × ${fmt(area)} ha`, 'Potassium supplement');
     }
 
     // Deficits row
@@ -798,6 +985,7 @@ function calculateFertilizer() {
                 <thead class="table-light"><tr>
                     <th>Nutrient</th>
                     <th class="text-center">Crop Target (ppm)</th>
+                    <th class="text-center">Crop Target (kg/ha)</th>
                     <th class="text-center">Current Soil (ppm)</th>
                     <th class="text-center">Deficit (ppm)</th>
                     <th class="text-center">Deficit (kg/ha)</th>
@@ -806,6 +994,7 @@ function calculateFertilizer() {
                     <tr>
                         <td>Nitrogen (N)</td>
                         <td class="text-center">${req.n}</td>
+                        <td class="text-center text-secondary">${fmt(req.n * 2)}</td>
                         <td class="text-center">${fmt(soilN)}</td>
                         <td class="text-center fw-bold ${defNppm > 0 ? 'text-danger' : 'text-success'}">${fmt(defNppm)}</td>
                         <td class="text-center text-muted">${fmt(defN)}</td>
@@ -813,6 +1002,7 @@ function calculateFertilizer() {
                     <tr>
                         <td>Phosphorus (P)</td>
                         <td class="text-center">${req.p}</td>
+                        <td class="text-center text-secondary">${fmt(req.p * 2)}</td>
                         <td class="text-center">${fmt(soilP)}</td>
                         <td class="text-center fw-bold ${defPppm > 0 ? 'text-danger' : 'text-success'}">${fmt(defPppm)}</td>
                         <td class="text-center text-muted">${fmt(defP)}</td>
@@ -820,6 +1010,7 @@ function calculateFertilizer() {
                     <tr>
                         <td>Potassium (K)</td>
                         <td class="text-center">${req.k}</td>
+                        <td class="text-center text-secondary">${fmt(req.k * 2)}</td>
                         <td class="text-center">${fmt(soilK)}</td>
                         <td class="text-center fw-bold ${defKppm > 0 ? 'text-danger' : 'text-success'}">${fmt(defKppm)}</td>
                         <td class="text-center text-muted">${fmt(defK)}</td>
@@ -895,6 +1086,87 @@ function generateAI() {
         if (loading) loading.classList.add('d-none');
         if (errDiv) { errDiv.textContent = 'Network error contacting AI service.'; errDiv.classList.remove('d-none'); }
         if (btn) btn.disabled = false;
+    });
+}
+
+// ── Gemini AI Crop Recommendations ────────────────────────────────────────
+let geminiInFlight = false;
+
+function generateGemini() {
+    if (geminiInFlight) return;
+    geminiInFlight = true;
+
+    const btn          = document.getElementById('geminiBtn');
+    const regenBtn     = document.getElementById('geminiRegenerateBtn');
+    const loading      = document.getElementById('geminiLoading');
+    const result       = document.getElementById('geminiResult');
+    const errDiv       = document.getElementById('geminiError');
+    const storedDiv    = document.getElementById('geminiStoredResult');
+    const generateArea = document.getElementById('geminiGenerateArea');
+    const cropSelect   = document.getElementById('geminiPreferredCrop');
+
+    if (btn)     btn.disabled = true;
+    if (regenBtn) regenBtn.disabled = true;
+    if (loading) loading.classList.remove('d-none');
+    if (result)  result.classList.add('d-none');
+    if (errDiv)  errDiv.classList.add('d-none');
+
+    const preferredCrop = cropSelect ? cropSelect.value.trim() : '';
+
+    fetch('{{ route("gemini-crop-recommendations.generate") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            sample_id:      {{ $sample->id }},
+            preferred_crop: preferredCrop || null
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (loading) loading.classList.add('d-none');
+        if (data.success) {
+            // Show in new result panel
+            if (result) {
+                result.textContent = data.recommendation;
+                result.classList.remove('d-none');
+            }
+            // Also update stored result panel if it exists
+            const storedText = document.getElementById('geminiRecommendationText');
+            if (storedText) {
+                storedText.textContent = data.recommendation;
+                if (storedDiv) storedDiv.classList.remove('d-none');
+            }
+            // Hide the primary generate button after first successful call
+            if (generateArea) generateArea.classList.add('d-none');
+            // Scroll to the result after the DOM updates
+            setTimeout(() => {
+                const target = result && !result.classList.contains('d-none') ? result
+                             : storedDiv && !storedDiv.classList.contains('d-none') ? storedDiv
+                             : null;
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 50);
+        } else {
+            if (errDiv) {
+                errDiv.textContent = 'Gemini Error: ' + data.message;
+                errDiv.classList.remove('d-none');
+            }
+        }
+        if (btn)     btn.disabled = false;
+        if (regenBtn) regenBtn.disabled = false;
+        geminiInFlight = false;
+    })
+    .catch(() => {
+        if (loading) loading.classList.add('d-none');
+        if (errDiv) {
+            errDiv.textContent = 'Network error contacting Gemini AI service.';
+            errDiv.classList.remove('d-none');
+        }
+        if (btn)     btn.disabled = false;
+        if (regenBtn) regenBtn.disabled = false;
+        geminiInFlight = false;
     });
 }
 </script>
