@@ -73,21 +73,21 @@
                             @endif
                         </td>
                         {{-- pH --}}
-                        <td class="text-center">{{ $crop->ph_low  ?? '—' }}</td>
-                        <td class="text-center">{{ $crop->ph_med  ?? '—' }}</td>
-                        <td class="text-center">{{ $crop->ph_high ?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->ph_low ,0) ?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->ph_med ,0) ?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->ph_high,0) ?? '—' }}</td>
                         {{-- N --}}
-                        <td class="text-center">{{ $crop->n_low  ?? '—' }}</td>
-                        <td class="text-center">{{ $crop->n_med  ?? '—' }}</td>
-                        <td class="text-center">{{ $crop->n_high ?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->n_low  ,0)?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->n_med  ,0)?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->n_high ,0)?? '—' }}</td>
                         {{-- P --}}
-                        <td class="text-center">{{ $crop->p_low  ?? '—' }}</td>
-                        <td class="text-center">{{ $crop->p_med  ?? '—' }}</td>
-                        <td class="text-center">{{ $crop->p_high ?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->p_low  ,0)?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->p_med  ,0)?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->p_high ,0)?? '—' }}</td>
                         {{-- K --}}
-                        <td class="text-center">{{ $crop->k_low  ?? '—' }}</td>
-                        <td class="text-center">{{ $crop->k_med  ?? '—' }}</td>
-                        <td class="text-center">{{ $crop->k_high ?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->k_low  ,0)?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->k_med  ,0)?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->k_high ,0)?? '—' }}</td>
                         {{-- Status --}}
                         <td class="text-center">
                             @if($crop->status === 'active')

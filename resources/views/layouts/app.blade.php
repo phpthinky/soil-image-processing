@@ -144,12 +144,12 @@
                                             <i class="fa fa-users me-1"></i>Users
                                         </a>
                                     </li>
-                                    <li>
+                                    <li class="d-none">
                                         <a class="dropdown-item" href="{{ route('admin.ph-color-charts') }}">
                                             <i class="fa fa-palette me-1"></i>pH Color Charts
                                         </a>
                                     </li>
-                                    <li>
+                                    <li class="d-none">
                                         <a class="dropdown-item" href="{{ route('admin.npk-color-charts') }}">
                                             <i class="fa fa-seedling me-1"></i>NPK Color Charts
                                         </a>
@@ -255,13 +255,13 @@
                             <i class="fa fa-users"></i> Users
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item d-none">
                         <a class="nav-link {{ request()->routeIs('admin.ph-color-charts') ? 'active' : '' }}"
                            href="{{ route('admin.ph-color-charts') }}">
                             <i class="fa fa-palette"></i> pH Color Charts
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item d-none">
                         <a class="nav-link {{ request()->routeIs('admin.npk-color-charts') ? 'active' : '' }}"
                            href="{{ route('admin.npk-color-charts') }}">
                             <i class="fa fa-seedling"></i> NPK Color Charts
@@ -299,7 +299,7 @@
                         <i class="fa fa-seedling"></i> Crops
                     </a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item d-none">
                     <a class="nav-link {{ request()->routeIs('crops.requirements*') ? 'active' : '' }}"
                        href="{{ route('crops.requirements') }}">
                         <i class="fa fa-leaf"></i> Crop Requirements

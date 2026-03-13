@@ -63,6 +63,7 @@
         @error('ph_high')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 </div>
+<h4 class="text-primary">Crop target fertilizer - STK</h4>
 
 {{-- Nitrogen --}}
 <h6 class="text-success mb-2"><i class="fas fa-atom me-1"></i>Nitrogen (N) Thresholds <small class="text-muted fw-normal">(ppm)</small></h6>
@@ -71,27 +72,25 @@
         <label class="form-label">N Low</label>
         <input type="number" step="0.01" min="0" name="n_low"
                class="form-control @error('n_low') is-invalid @enderror"
-               value="{{ old('n_low', $crop->n_low ?? '') }}" placeholder="e.g. 10">
-        <div class="form-text">Soil N below this = <span class="badge bg-warning text-dark">Low</span></div>
+               value="{{ old('n_low', $crop->n_low ?? '') }}" placeholder="e.g. 90">
         @error('n_low')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-4">
         <label class="form-label">N Medium <small class="text-muted">(optimal target)</small></label>
         <input type="number" step="0.01" min="0" name="n_med"
                class="form-control @error('n_med') is-invalid @enderror"
-               value="{{ old('n_med', $crop->n_med ?? '') }}" placeholder="e.g. 20">
-        <div class="form-text">Ideal N for this crop <span class="badge bg-success">Medium</span></div>
+               value="{{ old('n_med', $crop->n_med ?? '') }}" placeholder="e.g. 60">
         @error('n_med')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-4">
         <label class="form-label">N High</label>
         <input type="number" step="0.01" min="0" name="n_high"
                class="form-control @error('n_high') is-invalid @enderror"
-               value="{{ old('n_high', $crop->n_high ?? '') }}" placeholder="e.g. 40">
-        <div class="form-text">Soil N above this = <span class="badge bg-info">High</span></div>
+               value="{{ old('n_high', $crop->n_high ?? '') }}" placeholder="e.g. 20">
         @error('n_high')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 </div>
+
 
 {{-- Phosphorus --}}
 <h6 class="text-success mb-2"><i class="fas fa-atom me-1"></i>Phosphorus (P) Thresholds <small class="text-muted fw-normal">(ppm)</small></h6>
@@ -100,8 +99,7 @@
         <label class="form-label">P Low</label>
         <input type="number" step="0.01" min="0" name="p_low"
                class="form-control @error('p_low') is-invalid @enderror"
-               value="{{ old('p_low', $crop->p_low ?? '') }}" placeholder="e.g. 5">
-        <div class="form-text">Soil P below this = <span class="badge bg-warning text-dark">Low</span></div>
+               value="{{ old('p_low', $crop->p_low ?? '') }}" placeholder="e.g. 20">
         @error('p_low')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-4">
@@ -109,15 +107,13 @@
         <input type="number" step="0.01" min="0" name="p_med"
                class="form-control @error('p_med') is-invalid @enderror"
                value="{{ old('p_med', $crop->p_med ?? '') }}" placeholder="e.g. 15">
-        <div class="form-text">Ideal P for this crop <span class="badge bg-success">Medium</span></div>
         @error('p_med')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-4">
         <label class="form-label">P High</label>
         <input type="number" step="0.01" min="0" name="p_high"
                class="form-control @error('p_high') is-invalid @enderror"
-               value="{{ old('p_high', $crop->p_high ?? '') }}" placeholder="e.g. 30">
-        <div class="form-text">Soil P above this = <span class="badge bg-info">High</span></div>
+               value="{{ old('p_high', $crop->p_high ?? '') }}" placeholder="e.g. 10">
         @error('p_high')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 </div>
@@ -129,8 +125,7 @@
         <label class="form-label">K Low</label>
         <input type="number" step="0.01" min="0" name="k_low"
                class="form-control @error('k_low') is-invalid @enderror"
-               value="{{ old('k_low', $crop->k_low ?? '') }}" placeholder="e.g. 50">
-        <div class="form-text">Soil K below this = <span class="badge bg-warning text-dark">Low</span></div>
+               value="{{ old('k_low', $crop->k_low ?? '') }}" placeholder="e.g. 200">
         @error('k_low')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-4">
@@ -138,15 +133,13 @@
         <input type="number" step="0.01" min="0" name="k_med"
                class="form-control @error('k_med') is-invalid @enderror"
                value="{{ old('k_med', $crop->k_med ?? '') }}" placeholder="e.g. 100">
-        <div class="form-text">Ideal K for this crop <span class="badge bg-success">Medium</span></div>
         @error('k_med')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-4">
         <label class="form-label">K High</label>
         <input type="number" step="0.01" min="0" name="k_high"
                class="form-control @error('k_high') is-invalid @enderror"
-               value="{{ old('k_high', $crop->k_high ?? '') }}" placeholder="e.g. 200">
-        <div class="form-text">Soil K above this = <span class="badge bg-info">High</span></div>
+               value="{{ old('k_high', $crop->k_high ?? '') }}" placeholder="e.g. 50">
         @error('k_high')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
 </div>
