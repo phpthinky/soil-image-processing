@@ -12,6 +12,13 @@ class Crop extends Model
         'min_nitrogen', 'max_nitrogen',
         'min_phosphorus', 'max_phosphorus',
         'min_potassium', 'max_potassium',
+        // Low / Medium / High threshold bands (set by technicians)
+        'ph_low_max', 'ph_medium_min', 'ph_medium_max', 'ph_high_min',
+        'n_low_max',  'n_medium_min',  'n_medium_max',  'n_high_min',
+        'p_low_max',  'p_medium_min',  'p_medium_max',  'p_high_min',
+        'k_low_max',  'k_medium_min',  'k_medium_max',  'k_high_min',
+        // Fertilizer fractions for the formula: current_soil / fraction = fertilizer_amount
+        'n_fertilizer_fraction', 'p_fertilizer_fraction', 'k_fertilizer_fraction',
     ];
 
     /**
