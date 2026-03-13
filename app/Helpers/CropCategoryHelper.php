@@ -3,19 +3,37 @@
 namespace App\Helpers;
 
 class CropCategoryHelper {
-    public static function calculateNutrientCategory($nutrientValues) {
-        $totalNutrients = array_sum($nutrientValues);
-        $numNutrients = count($nutrientValues);
-        $midpoint = $totalNutrients / $numNutrients;
-
-        if ($midpoint < 20) {
-            return 'Low';
-        } elseif ($midpoint >= 20 && $midpoint < 50) {
-            return 'Medium';
-        } else {
-            return 'High';
-        }
+   
+   publi static function classify($value,$min,$max)
+   {
+       // code...
+    if ($value < $min) {
+        // code...
+        return 'Low';
     }
+    if ($value > $max) {
+        // code...
+        return 'High';
+    }
+    if ($value <= $max) {
+        // code...
+        return 'Neutral';
+    }
+   }
+   public static function score($soilLevel,$cropLevel){
+
+    return match($soilLevel){
+        $cropLevel => 1,
+        'Neutral'=> 0.66,
+        default => 0.33
+    }
+   }
+
+   public static function overAllScore($scores)
+   {
+       // code...
+    return round(array_sum($scores) /count($scores) * 100,2 );
+   }
 }
 
 ?>

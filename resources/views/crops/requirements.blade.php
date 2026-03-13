@@ -88,21 +88,22 @@
                         </tr>
                         <tr>
                             <th></th>
-                            <th>Low</th>
-                            <th>Medium</th>
-                            <th>High</th>
+                            <th class="bg-warning">Low</th>
+                            <th class=" bg-success">Neutral</th>
+                            <th class=" bg-info">High</th>
 
-                            <th>Low</th>
-                            <th>Medium</th>
-                            <th>High</th>
+                            <th class="bg-warning">Low</th>
+                            <th class=" bg-success">Neutral</th>
+                            <th class=" bg-info">High</th>
 
-                            <th>Low</th>
-                            <th>Medium</th>
-                            <th>High</th>
-                            
-                            <th>Low</th>
-                            <th>Medium</th>
-                            <th>High</th>
+                            <th class="bg-warning">Low</th>
+                            <th class=" bg-success">Neutral</th>
+                            <th class=" bg-info">High</th>
+
+                            <th class="bg-warning">Low</th>
+                            <th class=" bg-success">Optimal</th>
+                            <th class=" bg-info">High</th>
+
                         </tr>
                     </thead>
                     <tbody>
@@ -110,16 +111,16 @@
                         <tr>
                             <td class="text-center text-muted">{{ $i + 1 }}</td>
                             <td class="fw-semibold">{{ $crop->name }}</td>
-                            <td class="text-center">
+                            <td class="text-center bg-warning">
                                 <span class="range-badge ph-badge">
-                                    {{ number_format($crop->min_ph, 1) }}
+                                     {{ number_format($crop->min_ph, 1) }}
                                 </span>
                             </td>
-                             <td class="text-center">
+                             <td class="text-center bg-success">
                                 <span class="range-badge ph-badge">
-                                    {{ number_format(($crop->min_ph + $crop->max_ph / 2), 1) }}
+                                    {{ number_format($crop->min_ph, 1) }} - {{  number_format($crop->max_ph, 1) }}
                                 </span>
-                            </td> <td class="text-center">
+                            </td> <td class="text-center bg-info">
                                 <span class="range-badge ph-badge">
                                     {{  number_format($crop->max_ph, 1) }}
                                 </span>
@@ -127,18 +128,17 @@
 
 
 
-                            <td class="text-center">
+                            <td class="text-center bg-warning">
                                 <span class="range-badge n-badge">
                                     {{ number_format($crop->min_nitrogen, 0) }} 
                                 </span>
                             </td>
-
-                            <td class="text-center">
+                            <td class="text-center bg-success">
                                 <span class="range-badge n-badge">
-                                    {{ number_format(($crop->min_nitrogen + $crop->max_nitrogen /2 ), 0) }}
+                                    {{ number_format($crop->min_nitrogen , 0) }} -  {{ number_format($crop->min_nitrogen , 0) }}
                                 </span>
                             </td>
-                            <td class="text-center">
+                            <td class="text-center bg-info">
                                 <span class="range-badge n-badge">
                                     {{ number_format($crop->max_nitrogen, 0) }}
                                 </span>
@@ -146,39 +146,39 @@
 
 
 
-                            <td class="text-center">
+                            <td class="text-center bg-warning   ">
                                 <span class="range-badge p-badge">
                                     {{ number_format($crop->min_phosphorus, 0) }} 
                                 </span>
                             </td>
                             
 
-                            <td class="text-center">
+                            <td class="text-center bg-success">
                                 <span class="range-badge p-badge">
-                                    {{ number_format(($crop->min_phosphorus + $crop->max_phosphorus /2 ), 0) }}
+                                    {{ number_format($crop->min_phosphorus, 0) }} -  {{ number_format($crop->max_phosphorus, 0) }}
                                 </span>
                             </td>
                             
 
-                            <td class="text-center">
+                            <td class="text-center bg-info">
                                 <span class="range-badge p-badge">
-                                    {{ number_format($crop->max_phosphorus, 0) }}
+                                   {{ number_format($crop->max_phosphorus, 0) }}
                                 </span>
                             </td>
                             
-                            <td class="text-center">
+                            <td class="text-center bg-warning   ">
                                 <span class="range-badge k-badge">
-                                    {{ number_format($crop->min_potassium, 0) }} 
+                                  {{ number_format($crop->min_potassium, 0) }} 
                                 </span>
                             </td>
-                            <td class="text-center">
+                            <td class="text-center bg-success   ">
                                 <span class="range-badge k-badge">
-                                    {{ number_format(($crop->min_potassium + $crop->max_potassium / 2), 0) }}
+                                    {{ number_format($crop->min_potassium, 0) }} - {{ number_format($crop->max_potassium, 0) }}
                                 </span>
                             </td>
-                            <td class="text-center">
+                            <td class="text-center bg-info  ">
                                 <span class="range-badge k-badge">
-                                   {{ number_format($crop->max_potassium, 0) }}
+                                  {{ number_format($crop->max_potassium, 0) }}
                                 </span>
                             </td>
                         </tr>

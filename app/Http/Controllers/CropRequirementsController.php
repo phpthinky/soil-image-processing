@@ -10,9 +10,6 @@ class CropRequirementsController extends Controller
     public function index()
     {
         $crops = Crop::orderBy('name')->get();
-
-
-
         return view('crops.requirements', compact('crops'));
     }
 
@@ -33,10 +30,10 @@ class CropRequirementsController extends Controller
 
             fputcsv($out, [
                 '#', 'Crop Name', 'Description',
-                'pH Min', 'pH Med','pH Max',
-                'N Min (ppm)', 'N Med (ppm)','N Max (ppm)',
-                'P Min (ppm)', 'P Med (ppm)', 'P Max (ppm)',
-                'K Min (ppm)', 'K Med (ppm)', 'K Max (ppm)',
+                'pH Min', 'pH Max',
+                'N Min (ppm)', 'N Max (ppm)',
+                'P Min (ppm)', 'P Max (ppm)',
+                'K Min (ppm)', 'K Max (ppm)',
             ]);
 
             foreach ($crops as $i => $crop) {
@@ -45,16 +42,12 @@ class CropRequirementsController extends Controller
                     $crop->name,
                     $crop->description ?? '',
                     number_format((float) $crop->min_ph, 2),
-                    number_format((float) ($crop->min_ph + $crop->max_ph /2), 2),
                     number_format((float) $crop->max_ph, 2),
                     number_format((float) $crop->min_nitrogen, 2),
-                    number_format((float) ($crop->min_nitrogen + $crop->max_nitrogen /2), 2),
                     number_format((float) $crop->max_nitrogen, 2),
                     number_format((float) $crop->min_phosphorus, 2),
-                    number_format((float) ($crop->min_phosphorus + $crop->max_phosphorus/2), 2),
                     number_format((float) $crop->max_phosphorus, 2),
                     number_format((float) $crop->min_potassium, 2),
-                    number_format((float) ($crop->min_potassium + $crop->max_potassium /2), 2),
                     number_format((float) $crop->max_potassium, 2),
                 ]);
             }
