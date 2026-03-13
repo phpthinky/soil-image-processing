@@ -442,7 +442,6 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
     @else
 
     @php
-        use App\Helpers\CropCategoryHelper;
         $ph = (float)$sample->ph_level;
         $n  = (float)$sample->nitrogen_level;
         $p  = (float)$sample->phosphorus_level;
@@ -474,19 +473,19 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                 @php
                     $cropRows = [];
                     foreach ($allCrops as $crop) {
-                        $phClass = CropCategoryHelper::classify($ph, $crop->min_ph, $crop->max_ph);
-                        $nClass  = CropCategoryHelper::classify($n,  $crop->min_nitrogen,   $crop->max_nitrogen);
-                        $pClass  = CropCategoryHelper::classify($p,  $crop->min_phosphorus, $crop->max_phosphorus);
-                        $kClass  = CropCategoryHelper::classify($k,  $crop->min_potassium,  $crop->max_potassium);
+                        $phClass = \App\Helpers\CropCategoryHelper::classify($ph, $crop->min_ph, $crop->max_ph);
+                        $nClass  = \App\Helpers\CropCategoryHelper::classify($n,  $crop->min_nitrogen,   $crop->max_nitrogen);
+                        $pClass  = \App\Helpers\CropCategoryHelper::classify($p,  $crop->min_phosphorus, $crop->max_phosphorus);
+                        $kClass  = \App\Helpers\CropCategoryHelper::classify($k,  $crop->min_potassium,  $crop->max_potassium);
 
                         $scores = [
-                            CropCategoryHelper::score($phClass, 'Neutral'),
-                            CropCategoryHelper::score($nClass,  'Neutral'),
-                            CropCategoryHelper::score($pClass,  'Neutral'),
-                            CropCategoryHelper::score($kClass,  'Neutral'),
+                            \App\Helpers\CropCategoryHelper::score($phClass, 'Neutral'),
+                            \App\Helpers\CropCategoryHelper::score($nClass,  'Neutral'),
+                            \App\Helpers\CropCategoryHelper::score($pClass,  'Neutral'),
+                            \App\Helpers\CropCategoryHelper::score($kClass,  'Neutral'),
                         ];
 
-                        $percentage = CropCategoryHelper::overAllScore($scores);
+                        $percentage = \App\Helpers\CropCategoryHelper::overAllScore($scores);
 
                         $cropRows[] = [
                             'crop'       => $crop,
