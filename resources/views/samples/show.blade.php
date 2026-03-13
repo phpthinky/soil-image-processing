@@ -441,162 +441,91 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
         <p class="text-muted mb-0">Complete all 4 soil tests to see crop recommendations.</p>
     @else
 
-    {{-- Tab navigation --}}
-    <ul class="nav nav-tabs mb-3" id="cropTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="tab-tolerance" data-bs-toggle="tab"
-                    data-bs-target="#pane-tolerance" type="button">
-                <i class="fas fa-check-double me-1 text-success"></i>
-                Tolerance Match
-                <span class="badge bg-success ms-1">{{ count($cropsByTolerance) }}</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-fertility" data-bs-toggle="tab"
-                    data-bs-target="#pane-fertility" type="button">
-                <i class="fas fa-leaf me-1 text-warning"></i>
-                Fertility Score
-                <span class="badge bg-warning text-dark ms-1">{{ count($cropsByFertility) }}</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-ph" data-bs-toggle="tab"
-                    data-bs-target="#pane-ph" type="button">
-                <i class="fas fa-flask me-1 text-info"></i>
-                pH Threshold
-                <span class="badge bg-info text-white ms-1">{{ count($cropsByPh) }}</span>
-            </button>
-        </li>
-    </ul>
+    @php
+        use App\Helpers\CropCategoryHelper;
+        $ph = (float)$sample->ph_level;
+        $n  = (float)$sample->nitrogen_level;
+        $p  = (float)$sample->phosphorus_level;
+        $k  = (float)$sample->potassium_level;
 
-    <div class="tab-content" id="cropTabContent">
+        $levelColor = ['Low' => 'warning', 'Neutral' => 'success', 'High' => 'info'];
+    @endphp
 
-        {{-- ── Group 1: Tolerance Match ──────────────────────────────── --}}
-        <div class="tab-pane fade show active" id="pane-tolerance" role="tabpanel">
-            <p class="text-muted small mb-2">
-                <i class="fas fa-info-circle me-1"></i>
-                Crops where the soil <strong>pH is within range</strong> and scored by how many
-                of the 4 parameters (pH + N + P + K) match.. <strong>Can be planted with current soil as-is.</strong>
-            </p>
-            @if(count($cropsByTolerance) === 0)
-                <div class="alert alert-warning mb-0">No crops match this soil's pH. Consider a lime or sulfur amendment.</div>
-            @else
-            <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle table-sm mb-0">
-                    <thead class="table-success">
-                        <tr><th>#</th><th>Crop</th><th>pH Range</th><th>N (ppm)</th><th>P (ppm)</th><th>K (ppm)</th><th>Score</th></tr>
-                    </thead>
-                    <tbody>
-                        @foreach($cropsByTolerance as $i => $crop)
-                        @php $s = $crop->match_score; $mc = $s==4?'success':($s>=3?'warning':($s>=2?'info':'secondary')); @endphp
-                        <tr>
-                            <td>{{ $i+1 }}</td>
-                            <td>
-                                <strong>{{ $crop->name }}</strong>
-                                @if($i===0)<span class="badge bg-warning text-dark ms-1">Top Pick</span>@endif
-                            </td>
-                            <td><small>{{ $crop->min_ph }}–{{ $crop->max_ph }}</small></td>
-                            <td><small>{{ $crop->min_nitrogen }}–{{ $crop->max_nitrogen }}</small></td>
-                            <td><small>{{ $crop->min_phosphorus }}–{{ $crop->max_phosphorus }}</small></td>
-                            <td><small>{{ $crop->min_potassium }}–{{ $crop->max_potassium }}</small></td>
-                            <td><span class="badge bg-{{ $mc }}">{{ $s }}/4</span></td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            @endif
-        </div>
+    <p class="text-muted small mb-2">
+        <i class="fas fa-info-circle me-1"></i>
+        All crops ranked by overall soil compatibility. <strong>Neutral</strong> means the soil value is within the crop's ideal range.
+        <strong>Low</strong> or <strong>High</strong> indicates the soil value is outside the crop's preferred range for that nutrient.
+    </p>
 
-        {{-- ── Group 2: Fertility Score ──────────────────────────────── --}}
-        <div class="tab-pane fade" id="pane-fertility" role="tabpanel">
-            <p class="text-muted small mb-2">
-                <i class="fas fa-info-circle me-1"></i>
-                Crops ranked by <strong>NPK compatibility only</strong> — pH is not filtered.
-                Includes crops whose pH requirement differs slightly; a
-                <strong>lime or sulfur amendment</strong> can fix the pH..
-            </p>
-            @if(count($cropsByFertility) === 0)
-                <div class="alert alert-warning mb-0">No NPK data available yet.</div>
-            @else
-            <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle table-sm mb-0">
-                    <thead class="table-warning">
-                        <tr><th>#</th><th>Crop</th><th>pH Range</th><th>N (ppm)</th><th>P (ppm)</th><th>K (ppm)</th><th>NPK Score</th><th>pH Match?</th></tr>
-                    </thead>
-                    <tbody>
-                        @foreach($cropsByFertility as $i => $crop)
-                        @php
-                            $ns = $crop->npk_score;
-                            $pct = round($ns / 3 * 100);
-                            $nc = $ns==3?'success':($ns>=2?'warning':'info');
-                            $phOk = $sample->ph_level >= $crop->min_ph && $sample->ph_level <= $crop->max_ph;
-                        @endphp
-                        <tr>
-                            <td>{{ $i+1 }}</td>
-                            <td>
-                                <strong>{{ $crop->name }}</strong>
-                                @if($i===0)<span class="badge bg-warning text-dark ms-1">Top Pick</span>@endif
-                            </td>
-                            <td><small>{{ $crop->min_ph }}–{{ $crop->max_ph }}</small></td>
-                            <td><small>{{ $crop->min_nitrogen }}–{{ $crop->max_nitrogen }}</small></td>
-                            <td><small>{{ $crop->min_phosphorus }}–{{ $crop->max_phosphorus }}</small></td>
-                            <td><small>{{ $crop->min_potassium }}–{{ $crop->max_potassium }}</small></td>
-                            <td><span class="badge bg-{{ $nc }}">{{ $pct }}%</span></td>
-                            <td>
-                                @if($phOk)
-                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Yes</span>
-                                @else
-                                    <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Needs fix</span>
-                                @endif
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            @endif
-        </div>
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle table-sm mb-0">
+            <thead class="table-success">
+                <tr>
+                    <th>#</th>
+                    <th>Crop</th>
+                    <th>pH</th>
+                    <th>Nitrogen</th>
+                    <th>Phosphorus</th>
+                    <th>Potassium</th>
+                    <th>Percentage</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $cropRows = [];
+                    foreach ($allCrops as $crop) {
+                        $phClass = CropCategoryHelper::classify($ph, $crop->min_ph, $crop->max_ph);
+                        $nClass  = CropCategoryHelper::classify($n,  $crop->min_nitrogen,   $crop->max_nitrogen);
+                        $pClass  = CropCategoryHelper::classify($p,  $crop->min_phosphorus, $crop->max_phosphorus);
+                        $kClass  = CropCategoryHelper::classify($k,  $crop->min_potassium,  $crop->max_potassium);
 
-        {{-- ── Group 3: pH Threshold ─────────────────────────────────── --}}
-        <div class="tab-pane fade" id="pane-ph" role="tabpanel">
-            <p class="text-muted small mb-2">
-                <i class="fas fa-info-circle me-1"></i>
-                All crops whose <strong>pH tolerance covers pH {{ number_format($sample->ph_level,1) }}</strong>,
-                sorted by NPK score. Shows every species that can survive this soil's acidity level.
-                Nutrient amendments may still be needed..
-            </p>
-            @if(count($cropsByPh) === 0)
-                <div class="alert alert-warning mb-0">No crops tolerate this pH level. Consider soil pH amendment.</div>
-            @else
-            <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle table-sm mb-0">
-                    <thead class="table-info">
-                        <tr><th>#</th><th>Crop</th><th>pH Range</th><th>N (ppm)</th><th>P (ppm)</th><th>K (ppm)</th><th>NPK Score</th></tr>
-                    </thead>
-                    <tbody>
-                        @foreach($cropsByPh as $i => $crop)
-                        @php $ns=$crop->npk_score; $nc=$ns==3?'success':($ns>=2?'warning':($ns>=1?'info':'secondary')); @endphp
-                        <tr>
-                            <td>{{ $i+1 }}</td>
-                            <td>
-                                <strong>{{ $crop->name }}</strong>
-                                @if($i===0)<span class="badge bg-warning text-dark ms-1">Top Pick</span>@endif
-                            </td>
-                            <td><small>{{ $crop->min_ph }}–{{ $crop->max_ph }}</small></td>
-                            <td><small>{{ $crop->min_nitrogen }}–{{ $crop->max_nitrogen }}</small></td>
-                            <td><small>{{ $crop->min_phosphorus }}–{{ $crop->max_phosphorus }}</small></td>
-                            <td><small>{{ $crop->min_potassium }}–{{ $crop->max_potassium }}</small></td>
-                            <td><span class="badge bg-{{ $nc }}">{{ $ns }}/3</span></td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            @endif
-        </div>
+                        $scores = [
+                            CropCategoryHelper::score($phClass, 'Neutral'),
+                            CropCategoryHelper::score($nClass,  'Neutral'),
+                            CropCategoryHelper::score($pClass,  'Neutral'),
+                            CropCategoryHelper::score($kClass,  'Neutral'),
+                        ];
 
-    </div>{{-- /tab-content --}}
+                        $percentage = CropCategoryHelper::overAllScore($scores);
+
+                        $cropRows[] = [
+                            'crop'       => $crop,
+                            'phClass'    => $phClass,
+                            'nClass'     => $nClass,
+                            'pClass'     => $pClass,
+                            'kClass'     => $kClass,
+                            'percentage' => $percentage,
+                        ];
+                    }
+
+                    // Sort by percentage descending
+                    usort($cropRows, fn($a, $b) => $b['percentage'] <=> $a['percentage']);
+                @endphp
+
+                @forelse($cropRows as $i => $row)
+                @php
+                    $pct = $row['percentage'];
+                    $pctColor = $pct >= 75 ? 'success' : ($pct >= 50 ? 'warning' : ($pct >= 25 ? 'info' : 'secondary'));
+                @endphp
+                <tr>
+                    <td>{{ $i + 1 }}</td>
+                    <td>
+                        <strong>{{ $row['crop']->name }}</strong>
+                        @if($i === 0)<span class="badge bg-warning text-dark ms-1">Top Pick</span>@endif
+                    </td>
+                    <td><span class="badge bg-{{ $levelColor[$row['phClass']] }}">{{ $row['phClass'] }}</span></td>
+                    <td><span class="badge bg-{{ $levelColor[$row['nClass'] ] }}">{{ $row['nClass']  }}</span></td>
+                    <td><span class="badge bg-{{ $levelColor[$row['pClass'] ] }}">{{ $row['pClass']  }}</span></td>
+                    <td><span class="badge bg-{{ $levelColor[$row['kClass'] ] }}">{{ $row['kClass']  }}</span></td>
+                    <td><span class="badge bg-{{ $pctColor }}">{{ $pct }}%</span></td>
+                </tr>
+                @empty
+                    <tr><td colspan="7" class="text-center text-muted">No crops found.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
     @endif
     </div>
 </div>

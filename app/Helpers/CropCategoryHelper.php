@@ -4,7 +4,7 @@ namespace App\Helpers;
 
 class CropCategoryHelper {
    
-   publi static function classify($value,$min,$max)
+   public static function classify($value,$min,$max)
    {
        // code...
     if ($value < $min) {
@@ -26,7 +26,7 @@ class CropCategoryHelper {
         $cropLevel => 1,
         'Neutral'=> 0.66,
         default => 0.33
-    }
+    };
    }
 
    public static function overAllScore($scores)
