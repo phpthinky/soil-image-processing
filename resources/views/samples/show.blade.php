@@ -442,87 +442,212 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
     @else
 
     @php
-        $ph = (float)$sample->ph_level;
-        $n  = (float)$sample->nitrogen_level;
-        $p  = (float)$sample->phosphorus_level;
-        $k  = (float)$sample->potassium_level;
+        $ph  = (float)$sample->ph_level;
+        $ppm_n = (float)$sample->nitrogen_level;
+        $ppm_p = (float)$sample->phosphorus_level;
+        $ppm_k = (float)$sample->potassium_level;
 
-        $levelColor = ['Low' => 'warning', 'Neutral' => 'success', 'High' => 'info'];
+        // Convert ppm → kg/ha  (factor: ppm × bulk_density × depth_cm × 0.1)
+        // Standard assumption: bulk density 1.3 g/cm³, plough depth 20 cm → factor = 2.6
+        $n = \App\Helpers\SoilClassificationHelper::ppmToKgPerHa($ppm_n);
+        $p = \App\Helpers\SoilClassificationHelper::ppmToKgPerHa($ppm_p);
+        $k = \App\Helpers\SoilClassificationHelper::ppmToKgPerHa($ppm_k);
+
+        $levelColor = ['Low' => 'warning', 'Medium' => 'success', 'High' => 'info'];
     @endphp
+
+    {{-- ── CLIENT FORMULA DISPLAY ── --}}
+    <div class="alert alert-light border mb-3" style="background:#f8fff8; border-color:#28a745 !important;">
+        <h6 class="text-success mb-2">
+            <i class="fas fa-calculator me-1"></i>
+            Fertilizer Calculation Formula (BSWM Standard)
+        </h6>
+        <div class="row g-2">
+            <div class="col-md-6">
+                <div class="p-2 rounded border" style="background:#fff; font-family:monospace; font-size:.88rem;">
+                    <strong>Step 1 — Deficit:</strong><br>
+                    <span class="text-success">crop target</span>
+                    &minus; <span class="text-danger">deficit</span>
+                    = <span class="text-primary">current soil</span><br>
+                    <span class="text-muted">∴ deficit = crop target − current soil</span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-2 rounded border" style="background:#fff; font-family:monospace; font-size:.88rem;">
+                    <strong>Step 2 — Fertilizer Amount:</strong><br>
+                    <span class="text-primary">current soil</span>
+                    ÷ <span class="text-warning">nutrient fraction</span>
+                    = <span class="text-danger">fertilizer (kg/ha)</span><br>
+                    <span class="text-muted">nutrient fraction = % nutrient in fertilizer product</span>
+                </div>
+            </div>
+        </div>
+        <small class="text-muted d-block mt-2">
+            <i class="fas fa-info-circle me-1"></i>
+            Soil values converted from ppm to <strong>kg/ha</strong> using:
+            <code>kg/ha = ppm × 1.3 (bulk density) × 20 cm (depth) × 0.1</code>
+            — standard BSWM/IRRI plough layer factor (= 2.6).
+            Current readings: N = <strong>{{ $n }} kg/ha</strong>,
+            P = <strong>{{ $p }} kg/ha</strong>,
+            K = <strong>{{ $k }} kg/ha</strong>
+            (from {{ $ppm_n }} / {{ $ppm_p }} / {{ $ppm_k }} ppm).
+        </small>
+    </div>
 
     <p class="text-muted small mb-2">
         <i class="fas fa-info-circle me-1"></i>
-        All crops ranked by overall soil compatibility. <strong>Neutral</strong> means the soil value is within the crop's ideal range.
-        <strong>Low</strong> or <strong>High</strong> indicates the soil value is outside the crop's preferred range for that nutrient.
+        All crops ranked by overall soil compatibility.
+        <strong>Medium</strong> = soil is within the crop's optimal range.
+        <strong>Low</strong> or <strong>High</strong> = outside optimal range; fertilizer deficit shown below.
     </p>
 
+    @php
+        $cropRows = [];
+        foreach ($allCrops as $crop) {
+            $classes = \App\Helpers\SoilClassificationHelper::classifyAll($crop, $ph, $n, $p, $k);
+
+            $scores = [
+                \App\Helpers\SoilClassificationHelper::score($classes['ph']),
+                \App\Helpers\SoilClassificationHelper::score($classes['n']),
+                \App\Helpers\SoilClassificationHelper::score($classes['p']),
+                \App\Helpers\SoilClassificationHelper::score($classes['k']),
+            ];
+
+            $percentage = \App\Helpers\SoilClassificationHelper::overallScore($scores);
+            $fertRecs   = \App\Helpers\SoilClassificationHelper::fertilizerRecommendation($crop, $n, $p, $k);
+
+            $cropRows[] = [
+                'crop'       => $crop,
+                'classes'    => $classes,
+                'percentage' => $percentage,
+                'fertRecs'   => $fertRecs,
+            ];
+        }
+        usort($cropRows, fn($a, $b) => $b['percentage'] <=> $a['percentage']);
+    @endphp
+
     <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle table-sm mb-0">
+        <table class="table table-bordered table-hover align-middle table-sm mb-0">
             <thead class="table-success">
                 <tr>
-                    <th>#</th>
-                    <th>Crop</th>
-                    <th>pH</th>
-                    <th>Nitrogen</th>
-                    <th>Phosphorus</th>
-                    <th>Potassium</th>
-                    <th>Percentage</th>
+                    <th rowspan="2">#</th>
+                    <th rowspan="2">Crop</th>
+                    <th rowspan="2" class="text-center">pH</th>
+                    <th colspan="3" class="text-center">Nitrogen (kg/ha)</th>
+                    <th colspan="3" class="text-center">Phosphorus (kg/ha)</th>
+                    <th colspan="3" class="text-center">Potassium (kg/ha)</th>
+                    <th rowspan="2" class="text-center">Match %</th>
+                </tr>
+                <tr>
+                    <th class="text-center bg-light" style="font-size:.75rem;">Status</th>
+                    <th class="text-center bg-light" style="font-size:.75rem;">Deficit</th>
+                    <th class="text-center bg-light" style="font-size:.75rem;">Fertilizer</th>
+                    <th class="text-center bg-light" style="font-size:.75rem;">Status</th>
+                    <th class="text-center bg-light" style="font-size:.75rem;">Deficit</th>
+                    <th class="text-center bg-light" style="font-size:.75rem;">Fertilizer</th>
+                    <th class="text-center bg-light" style="font-size:.75rem;">Status</th>
+                    <th class="text-center bg-light" style="font-size:.75rem;">Deficit</th>
+                    <th class="text-center bg-light" style="font-size:.75rem;">Fertilizer</th>
                 </tr>
             </thead>
             <tbody>
-                @php
-                    $cropRows = [];
-                    foreach ($allCrops as $crop) {
-                        $phClass = \App\Helpers\CropCategoryHelper::classify($ph, $crop->min_ph, $crop->max_ph);
-                        $nClass  = \App\Helpers\CropCategoryHelper::classify($n,  $crop->min_nitrogen,   $crop->max_nitrogen);
-                        $pClass  = \App\Helpers\CropCategoryHelper::classify($p,  $crop->min_phosphorus, $crop->max_phosphorus);
-                        $kClass  = \App\Helpers\CropCategoryHelper::classify($k,  $crop->min_potassium,  $crop->max_potassium);
-
-                        $scores = [
-                            \App\Helpers\CropCategoryHelper::score($phClass, 'Neutral'),
-                            \App\Helpers\CropCategoryHelper::score($nClass,  'Neutral'),
-                            \App\Helpers\CropCategoryHelper::score($pClass,  'Neutral'),
-                            \App\Helpers\CropCategoryHelper::score($kClass,  'Neutral'),
-                        ];
-
-                        $percentage = \App\Helpers\CropCategoryHelper::overAllScore($scores);
-
-                        $cropRows[] = [
-                            'crop'       => $crop,
-                            'phClass'    => $phClass,
-                            'nClass'     => $nClass,
-                            'pClass'     => $pClass,
-                            'kClass'     => $kClass,
-                            'percentage' => $percentage,
-                        ];
-                    }
-
-                    // Sort by percentage descending
-                    usort($cropRows, fn($a, $b) => $b['percentage'] <=> $a['percentage']);
-                @endphp
-
                 @forelse($cropRows as $i => $row)
                 @php
-                    $pct = $row['percentage'];
+                    $pct      = $row['percentage'];
                     $pctColor = $pct >= 75 ? 'success' : ($pct >= 50 ? 'warning' : ($pct >= 25 ? 'info' : 'secondary'));
+                    $cls      = $row['classes'];
+                    $fr       = $row['fertRecs'];
                 @endphp
-                <tr>
-                    <td>{{ $i + 1 }}</td>
+                <tr style="font-size:.82rem;">
+                    <td class="text-center text-muted">{{ $i + 1 }}</td>
                     <td>
                         <strong>{{ $row['crop']->name }}</strong>
-                        @if($i === 0)<span class="badge bg-warning text-dark ms-1">Top Pick</span>@endif
+                        @if($i === 0)<span class="badge bg-warning text-dark ms-1" style="font-size:.68rem;">Top Pick</span>@endif
                     </td>
-                    <td><span class="badge bg-{{ $levelColor[$row['phClass']] }}">{{ $row['phClass'] }}</span></td>
-                    <td><span class="badge bg-{{ $levelColor[$row['nClass'] ] }}">{{ $row['nClass']  }}</span></td>
-                    <td><span class="badge bg-{{ $levelColor[$row['pClass'] ] }}">{{ $row['pClass']  }}</span></td>
-                    <td><span class="badge bg-{{ $levelColor[$row['kClass'] ] }}">{{ $row['kClass']  }}</span></td>
-                    <td><span class="badge bg-{{ $pctColor }}">{{ $pct }}%</span></td>
+                    <td class="text-center">
+                        <span class="badge bg-{{ $levelColor[$cls['ph']] }}">{{ $cls['ph'] }}</span>
+                    </td>
+
+                    {{-- Nitrogen --}}
+                    <td class="text-center">
+                        <span class="badge bg-{{ $levelColor[$cls['n']] }}">{{ $cls['n'] }}</span>
+                    </td>
+                    <td class="text-center text-danger fw-semibold">
+                        @if($fr['n']['deficit'] > 0)
+                            {{ $fr['n']['deficit'] }} kg/ha
+                        @else
+                            <span class="text-success">—</span>
+                        @endif
+                    </td>
+                    <td class="text-center">
+                        @if($fr['n']['fertilizer_kgha'] > 0)
+                            <span class="badge bg-danger">{{ $fr['n']['fertilizer_kgha'] }} kg/ha</span>
+                            <br><small class="text-muted" style="font-size:.68rem;">÷ {{ $fr['n']['fraction'] }}</small>
+                        @else
+                            <span class="text-success small">Sufficient</span>
+                        @endif
+                    </td>
+
+                    {{-- Phosphorus --}}
+                    <td class="text-center">
+                        <span class="badge bg-{{ $levelColor[$cls['p']] }}">{{ $cls['p'] }}</span>
+                    </td>
+                    <td class="text-center text-danger fw-semibold">
+                        @if($fr['p']['deficit'] > 0)
+                            {{ $fr['p']['deficit'] }} kg/ha
+                        @else
+                            <span class="text-success">—</span>
+                        @endif
+                    </td>
+                    <td class="text-center">
+                        @if($fr['p']['fertilizer_kgha'] > 0)
+                            <span class="badge bg-danger">{{ $fr['p']['fertilizer_kgha'] }} kg/ha</span>
+                            <br><small class="text-muted" style="font-size:.68rem;">÷ {{ $fr['p']['fraction'] }}</small>
+                        @else
+                            <span class="text-success small">Sufficient</span>
+                        @endif
+                    </td>
+
+                    {{-- Potassium --}}
+                    <td class="text-center">
+                        <span class="badge bg-{{ $levelColor[$cls['k']] }}">{{ $cls['k'] }}</span>
+                    </td>
+                    <td class="text-center text-danger fw-semibold">
+                        @if($fr['k']['deficit'] > 0)
+                            {{ $fr['k']['deficit'] }} kg/ha
+                        @else
+                            <span class="text-success">—</span>
+                        @endif
+                    </td>
+                    <td class="text-center">
+                        @if($fr['k']['fertilizer_kgha'] > 0)
+                            <span class="badge bg-danger">{{ $fr['k']['fertilizer_kgha'] }} kg/ha</span>
+                            <br><small class="text-muted" style="font-size:.68rem;">÷ {{ $fr['k']['fraction'] }}</small>
+                        @else
+                            <span class="text-success small">Sufficient</span>
+                        @endif
+                    </td>
+
+                    <td class="text-center">
+                        <span class="badge bg-{{ $pctColor }}">{{ $pct }}%</span>
+                    </td>
                 </tr>
                 @empty
-                    <tr><td colspan="7" class="text-center text-muted">No crops found.</td></tr>
+                    <tr><td colspan="13" class="text-center text-muted">No crops found.</td></tr>
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    <div class="px-1 pt-2">
+        <small class="text-muted">
+            <strong>Fertilizer defaults used:</strong>
+            N fraction = 0.46 (Urea 46-0-0) &bull;
+            P fraction = 0.20 (SSP 0-20-0) &bull;
+            K fraction = 0.60 (MOP 0-0-60).
+            Technicians can override these per crop in the Crops management page.
+            Deficit = 0 when current soil already meets or exceeds the crop target.
+        </small>
     </div>
 
     @endif
