@@ -56,15 +56,21 @@
                 <strong>Crop pH &amp; NPK Requirements</strong>
                 <span class="badge bg-light text-dark ms-2">{{ $crops->count() }} crops</span>
                 <div class="mt-1" style="font-size:.78rem; font-weight:normal; opacity:.92;">
-                    <i class="fas fa-book-open me-1"></i>Data sourced from:
-                    <a href="https://bswm.da.gov.ph" target="_blank" rel="noopener"
+                    <i class="fas fa-book-open me-1"></i>
+                    Based on guidelines from:
+                    <a href="https://www.bswm.da.gov.ph/download/bswm-fertilizer-recommendation/" target="_blank" rel="noopener"
                        class="text-warning text-decoration-underline ms-1">
-                        BSWM – Bureau of Soils and Water Management (DA)
+                        BSWM Fertilizer Recommendation Guide
                     </a>
                     &nbsp;&amp;&nbsp;
-                    <a href="https://www.philrice.gov.ph" target="_blank" rel="noopener"
+                    <a href="https://www.philrice.gov.ph/wp-content/uploads/2023/10/RS4DM_Balanced-fertilization.pdf" target="_blank" rel="noopener"
                        class="text-warning text-decoration-underline">
-                        PhilRice – Philippine Rice Research Institute
+                        PhilRice Balanced Fertilization (2023)
+                    </a>
+                    &nbsp;&amp;&nbsp;
+                    <a href="https://www.philrice.gov.ph/balanced-fertilization-cuts-fertilizer-costs-by-p2-4k-experts/" target="_blank" rel="noopener"
+                       class="text-warning text-decoration-underline">
+                        PhilRice Nutrient Management
                     </a>
                 </div>
             </div>
@@ -212,17 +218,42 @@
                     <span class="range-badge k-badge">Potassium</span>
                     &nbsp;values are in ppm (mg/kg) except pH.
                 </small>
-                <div class="mt-1">
+                <div class="mt-2 p-2 rounded border" style="background:#fff8e1;">
                     <small>
-                        <i class="fas fa-external-link-alt me-1 text-secondary"></i>
-                        <strong>Official References:</strong>
-                        <a href="https://bswm.da.gov.ph" target="_blank" rel="noopener" class="ms-1">
-                            BSWM – Bureau of Soils and Water Management
-                        </a>
-                        &nbsp;&bull;&nbsp;
-                        <a href="https://www.philrice.gov.ph" target="_blank" rel="noopener">
-                            PhilRice – Philippine Rice Research Institute
-                        </a>
+                        <i class="fas fa-external-link-alt me-1 text-warning"></i>
+                        <strong>References used for this data:</strong>
+                        <ul class="mb-0 mt-1 ps-3" style="line-height:1.8;">
+                            <li>
+                                <a href="https://www.bswm.da.gov.ph/download/bswm-fertilizer-recommendation/" target="_blank" rel="noopener">
+                                    BSWM Fertilizer Recommendation Guide
+                                </a>
+                                — DA Bureau of Soils and Water Management
+                            </li>
+                            <li>
+                                <a href="https://www.philrice.gov.ph/wp-content/uploads/2023/10/RS4DM_Balanced-fertilization.pdf" target="_blank" rel="noopener">
+                                    PhilRice: Balanced Fertilization (RS4DM, 2023 PDF)
+                                </a>
+                                — Philippine Rice Research Institute
+                            </li>
+                            <li>
+                                <a href="https://www.philrice.gov.ph/balanced-fertilization-cuts-fertilizer-costs-by-p2-4k-experts/" target="_blank" rel="noopener">
+                                    PhilRice: Balanced Fertilization Cuts Fertilizer Costs
+                                </a>
+                                — Nutrient management article, PhilRice
+                            </li>
+                            <li>
+                                <a href="https://www.bswm.da.gov.ph/program/sha-nsst/" target="_blank" rel="noopener">
+                                    BSWM: National Soil Sampling &amp; Testing for Rice and Corn
+                                </a>
+                                — Soil Health Assessment Program
+                            </li>
+                        </ul>
+                        <span class="text-muted d-block mt-1">
+                            <i class="fas fa-info-circle me-1"></i>
+                            pH and NPK ranges are consistent with DA-BSWM and PhilRice soil fertility guidelines.
+                            For crop-specific soil analysis, have your soil tested at the nearest
+                            <a href="https://www.bswm.da.gov.ph" target="_blank" rel="noopener">BSWM</a> or DA regional laboratory.
+                        </span>
                     </small>
                 </div>
             </div>
