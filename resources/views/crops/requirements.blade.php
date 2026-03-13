@@ -120,9 +120,9 @@
                     </thead>
                     <tbody>
                         @foreach($crops as $i => $crop)
-                        <tr>
+                        <tr style="font-size: 0.8em">
                             <td class="text-center text-muted">{{ $i + 1 }}</td>
-                            <td class="fw-semibold">{{ $crop->name }}</td>
+                            <td class="">{{ $crop->name }}</td>
                             <td class="text-center bg-warning">
                                 <span class="range-badge ph-badge">
                                      {{ number_format($crop->min_ph, 1) }}
