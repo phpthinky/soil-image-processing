@@ -55,6 +55,18 @@
                 <i class="fas fa-seedling me-2"></i>
                 <strong>Crop pH &amp; NPK Requirements</strong>
                 <span class="badge bg-light text-dark ms-2">{{ $crops->count() }} crops</span>
+                <div class="mt-1" style="font-size:.78rem; font-weight:normal; opacity:.92;">
+                    <i class="fas fa-book-open me-1"></i>Data sourced from:
+                    <a href="https://bswm.da.gov.ph" target="_blank" rel="noopener"
+                       class="text-warning text-decoration-underline ms-1">
+                        BSWM – Bureau of Soils and Water Management (DA)
+                    </a>
+                    &nbsp;&amp;&nbsp;
+                    <a href="https://www.philrice.gov.ph" target="_blank" rel="noopener"
+                       class="text-warning text-decoration-underline">
+                        PhilRice – Philippine Rice Research Institute
+                    </a>
+                </div>
             </div>
             <div class="d-flex gap-2 no-print">
                 <a href="{{ route('crops.requirements.export') }}"
@@ -200,6 +212,19 @@
                     <span class="range-badge k-badge">Potassium</span>
                     &nbsp;values are in ppm (mg/kg) except pH.
                 </small>
+                <div class="mt-1">
+                    <small>
+                        <i class="fas fa-external-link-alt me-1 text-secondary"></i>
+                        <strong>Official References:</strong>
+                        <a href="https://bswm.da.gov.ph" target="_blank" rel="noopener" class="ms-1">
+                            BSWM – Bureau of Soils and Water Management
+                        </a>
+                        &nbsp;&bull;&nbsp;
+                        <a href="https://www.philrice.gov.ph" target="_blank" rel="noopener">
+                            PhilRice – Philippine Rice Research Institute
+                        </a>
+                    </small>
+                </div>
             </div>
             @endif
         </div>
