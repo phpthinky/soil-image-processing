@@ -16,6 +16,7 @@ use App\Http\Controllers\ParameterTestController;
 use App\Http\Controllers\GeminiCropRecommendationController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\CropRequirementsController;
+use App\Http\Controllers\CropController;
 use Illuminate\Support\Facades\Route;
 
 // Redirect root to login or dashboard
@@ -85,9 +86,17 @@ Route::middleware('auth')->group(function () {
     // Help & Guidelines
     Route::get('/help', [HelpController::class, 'index'])->name('help.index');
 
-    // Crop pH & NPK Requirements reference
+    // Crop pH & NPK Requirements reference (read-only public view)
     Route::get('/crop-requirements',         [CropRequirementsController::class, 'index'])->name('crops.requirements');
     Route::get('/crop-requirements/export',  [CropRequirementsController::class, 'export'])->name('crops.requirements.export');
+
+    // Crops CRUD (admin + technician management)
+    Route::get('/crops',              [CropController::class, 'index'])->name('crops.index');
+    Route::get('/crops/create',       [CropController::class, 'create'])->name('crops.create');
+    Route::post('/crops',             [CropController::class, 'store'])->name('crops.store');
+    Route::get('/crops/{crop}/edit',  [CropController::class, 'edit'])->name('crops.edit');
+    Route::put('/crops/{crop}',       [CropController::class, 'update'])->name('crops.update');
+    Route::delete('/crops/{crop}',    [CropController::class, 'destroy'])->name('crops.destroy');
 
     // ── Admin-only ────────────────────────────────────────────────────────────
     Route::middleware('can:admin')->prefix('admin')->name('admin.')->group(function () {

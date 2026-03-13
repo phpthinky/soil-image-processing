@@ -15,7 +15,6 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             UserSeeder::class,
-            PhilippineCropSeeder::class,
             PhColorChartSeeder::class,
             NpkColorChartSeeder::class,
         ]);

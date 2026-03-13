@@ -127,11 +127,8 @@ class SampleController extends Controller
             return redirect()->route('samples.show', $sample);
         }
 
-        $readings        = $sample->getReadingsByParameter();
-        $cropsByTolerance = [];
-        $cropsByFertility = [];
-        $cropsByPh        = [];
-        $fertRec          = [];
+        $readings = $sample->getReadingsByParameter();
+        $fertRec  = [];
 
         if ($sample->isAnalyzed()) {
             $ph = (float)$sample->ph_level;
@@ -139,19 +136,15 @@ class SampleController extends Controller
             $p  = (float)$sample->phosphorus_level;
             $k  = (float)$sample->potassium_level;
 
-            $cropsByTolerance = Crop::groupByTolerance($ph, $n, $p, $k);
-            $cropsByFertility = Crop::groupByFertility($n, $p, $k);
-            $cropsByPh        = Crop::groupByPh($ph, $n, $p, $k);
-            $fertRec          = $this->fertilizer->recommend($ph, $n, $p, $k);
+            $fertRec = $this->fertilizer->recommend($ph, $n, $p, $k);
         }
 
         $aiEnabled     = !empty(env('ANTHROPIC_API_KEY'));
         $geminiEnabled = !empty(config('services.gemini.api_key'));
-        $allCrops      = Crop::orderBy('name')->get();
+        $allCrops      = Crop::active()->orderBy('name')->get();
 
         return view('samples.show', compact(
             'sample', 'readings',
-            'cropsByTolerance', 'cropsByFertility', 'cropsByPh',
             'fertRec', 'aiEnabled', 'geminiEnabled', 'allCrops'
         ));
     }
@@ -178,11 +171,8 @@ class SampleController extends Controller
             abort(403);
         }
 
-        $phTest           = $sample->phTest;
-        $cropsByTolerance = [];
-        $cropsByFertility = [];
-        $cropsByPh        = [];
-        $fertRec          = [];
+        $phTest  = $sample->phTest;
+        $fertRec = [];
 
         if ($sample->isAnalyzed()) {
             $ph = (float)$sample->ph_level;
@@ -190,16 +180,13 @@ class SampleController extends Controller
             $p  = (float)$sample->phosphorus_level;
             $k  = (float)$sample->potassium_level;
 
-            $cropsByTolerance = Crop::groupByTolerance($ph, $n, $p, $k);
-            $cropsByFertility = Crop::groupByFertility($n, $p, $k);
-            $cropsByPh        = Crop::groupByPh($ph, $n, $p, $k);
-            $fertRec          = $this->fertilizer->recommend($ph, $n, $p, $k);
+            $fertRec = $this->fertilizer->recommend($ph, $n, $p, $k);
         }
 
+        $allCrops = Crop::active()->orderBy('name')->get();
+
         return view('samples.pdf', compact(
-            'sample', 'phTest',
-            'cropsByTolerance', 'cropsByFertility', 'cropsByPh',
-            'fertRec'
+            'sample', 'phTest', 'fertRec', 'allCrops'
         ));
     }
 

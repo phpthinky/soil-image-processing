@@ -443,15 +443,9 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
 
     @php
         $ph  = (float)$sample->ph_level;
-        $ppm_n = (float)$sample->nitrogen_level;
-        $ppm_p = (float)$sample->phosphorus_level;
-        $ppm_k = (float)$sample->potassium_level;
-
-        // Convert ppm → kg/ha  (factor: ppm × bulk_density × depth_cm × 0.1)
-        // Standard assumption: bulk density 1.3 g/cm³, plough depth 20 cm → factor = 2.6
-        $n = \App\Helpers\SoilClassificationHelper::ppmToKgPerHa($ppm_n);
-        $p = \App\Helpers\SoilClassificationHelper::ppmToKgPerHa($ppm_p);
-        $k = \App\Helpers\SoilClassificationHelper::ppmToKgPerHa($ppm_k);
+        $n   = (float)$sample->nitrogen_level;    // ppm — matches crop threshold units
+        $p   = (float)$sample->phosphorus_level;  // ppm
+        $k   = (float)$sample->potassium_level;   // ppm
 
         $levelColor = ['Low' => 'warning', 'Medium' => 'success', 'High' => 'info'];
     @endphp
@@ -475,22 +469,20 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
             <div class="col-md-6">
                 <div class="p-2 rounded border" style="background:#fff; font-family:monospace; font-size:.88rem;">
                     <strong>Step 2 — Fertilizer Amount:</strong><br>
-                    <span class="text-primary">current soil</span>
+                    <span class="text-primary">deficit (kg/ha)</span>
                     ÷ <span class="text-warning">nutrient fraction</span>
                     = <span class="text-danger">fertilizer (kg/ha)</span><br>
-                    <span class="text-muted">nutrient fraction = % nutrient in fertilizer product</span>
+                    <span class="text-muted">deficit ppm → kg/ha: ppm × 1.3 × 20 × 0.1</span>
                 </div>
             </div>
         </div>
         <small class="text-muted d-block mt-2">
             <i class="fas fa-info-circle me-1"></i>
-            Soil values converted from ppm to <strong>kg/ha</strong> using:
-            <code>kg/ha = ppm × 1.3 (bulk density) × 20 cm (depth) × 0.1</code>
-            — standard BSWM/IRRI plough layer factor (= 2.6).
-            Current readings: N = <strong>{{ $n }} kg/ha</strong>,
-            P = <strong>{{ $p }} kg/ha</strong>,
-            K = <strong>{{ $k }} kg/ha</strong>
-            (from {{ $ppm_n }} / {{ $ppm_p }} / {{ $ppm_k }} ppm).
+            Current soil readings: pH = <strong>{{ $ph }}</strong>,
+            N = <strong>{{ $n }} ppm</strong>,
+            P = <strong>{{ $p }} ppm</strong>,
+            K = <strong>{{ $k }} ppm</strong>.
+            Crop thresholds are set in ppm. Deficits are converted to kg/ha (× 2.6) before fertilizer calculation.
         </small>
     </div>
 
@@ -573,8 +565,8 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                         <span class="badge bg-{{ $levelColor[$cls['n']] }}">{{ $cls['n'] }}</span>
                     </td>
                     <td class="text-center text-danger fw-semibold">
-                        @if($fr['n']['deficit'] > 0)
-                            {{ $fr['n']['deficit'] }} kg/ha
+                        @if($fr['n']['deficit_kgha'] > 0)
+                            {{ $fr['n']['deficit_kgha'] }} kg/ha
                         @else
                             <span class="text-success">—</span>
                         @endif
@@ -593,8 +585,8 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                         <span class="badge bg-{{ $levelColor[$cls['p']] }}">{{ $cls['p'] }}</span>
                     </td>
                     <td class="text-center text-danger fw-semibold">
-                        @if($fr['p']['deficit'] > 0)
-                            {{ $fr['p']['deficit'] }} kg/ha
+                        @if($fr['p']['deficit_kgha'] > 0)
+                            {{ $fr['p']['deficit_kgha'] }} kg/ha
                         @else
                             <span class="text-success">—</span>
                         @endif
@@ -613,8 +605,8 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                         <span class="badge bg-{{ $levelColor[$cls['k']] }}">{{ $cls['k'] }}</span>
                     </td>
                     <td class="text-center text-danger fw-semibold">
-                        @if($fr['k']['deficit'] > 0)
-                            {{ $fr['k']['deficit'] }} kg/ha
+                        @if($fr['k']['deficit_kgha'] > 0)
+                            {{ $fr['k']['deficit_kgha'] }} kg/ha
                         @else
                             <span class="text-success">—</span>
                         @endif
