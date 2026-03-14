@@ -10,6 +10,8 @@ use App\Services\FertilizerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Helpers\CropFertilizerHelper;
+
 
 class SampleController extends Controller
 {
@@ -90,65 +92,63 @@ class SampleController extends Controller
         return redirect()->route('samples.show', $sample)
             ->with('success', 'Soil sample added successfully! Ready for webcam analysis.');
     }
-
-    // Show sample detail (also handles the auto-compute trigger)
-    public function show(SoilSample $sample)
-    {
-        $user = Auth::user();
-        if (!$user->isAdmin() && $sample->user_id !== $user->id) {
-            abort(403);
-        }
-
-        // Auto-compute when all 4 averaged colors are present and not yet analyzed
-        if ($sample->allAveraged() && !$sample->isAnalyzed()) {
-            // Prefer the 2-step pH test result (CPR/BCG/BTB) when it is complete.
-            // Falling back to colorToPhLevel() on the averaged hex gives a ~0.6
-            // overestimate because the generic PH_COLOR_CHART uses different indicator
-            // colors than the BSWM CPR/BCG/BTB reagents.
-            $phTest = $sample->phTest;
-            $ph = ($phTest && $phTest->status === 'complete' && $phTest->final_ph)
-                ? (float) $phTest->final_ph
-                : $this->colorScience->colorToPhLevel($sample->ph_color_hex);
-            $n  = $this->colorScience->colorToNitrogenLevel($sample->nitrogen_color_hex);
-            $p  = $this->colorScience->colorToPhosphorusLevel($sample->phosphorus_color_hex);
-            $k  = $this->colorScience->colorToPotassiumLevel($sample->potassium_color_hex);
-            $fs = $this->fertilizer->computeFertilityScore($ph, $n, $p, $k);
-
-            $sample->update([
-                'ph_level'         => $ph,
-                'nitrogen_level'   => $n,
-                'phosphorus_level' => $p,
-                'potassium_level'  => $k,
-                'fertility_score'  => $fs,
-                'recommended_crop' => Crop::topMatchName($ph, $n, $p, $k),
-                'analyzed_at'      => now(),
-            ]);
-
-            return redirect()->route('samples.show', $sample);
-        }
-
-        $readings = $sample->getReadingsByParameter();
-        $fertRec  = [];
-
-        if ($sample->isAnalyzed()) {
-            $ph = (float)$sample->ph_level;
-            $n  = (float)$sample->nitrogen_level;
-            $p  = (float)$sample->phosphorus_level;
-            $k  = (float)$sample->potassium_level;
-
-            $fertRec = $this->fertilizer->recommend($ph, $n, $p, $k);
-        }
-
-        $aiEnabled     = !empty(env('ANTHROPIC_API_KEY'));
-        $geminiEnabled = !empty(config('services.gemini.api_key'));
-        $allCrops      = Crop::active()->orderBy('name')->get();
-
-        return view('samples.show', compact(
-            'sample', 'readings',
-            'fertRec', 'aiEnabled', 'geminiEnabled', 'allCrops'
-        ));
+public function show(SoilSample $sample)
+{
+    $user = Auth::user();
+    if (!$user->isAdmin() && $sample->user_id !== $user->id) {
+        abort(403);
     }
 
+    // Auto-compute when all 4 averaged colors are present and not yet analyzed
+    if ($sample->allAveraged() && !$sample->isAnalyzed()) {
+        $phTest = $sample->phTest;
+        $ph = ($phTest && $phTest->status === 'complete' && $phTest->final_ph)
+            ? (float) $phTest->final_ph
+            : $this->colorScience->colorToPhLevel($sample->ph_color_hex);
+        $n  = $this->colorScience->colorToNitrogenLevel($sample->nitrogen_color_hex);
+        $p  = $this->colorScience->colorToPhosphorusLevel($sample->phosphorus_color_hex);
+        $k  = $this->colorScience->colorToPotassiumLevel($sample->potassium_color_hex);
+        $fs = $this->fertilizer->computeFertilityScore($ph, $n, $p, $k);
+
+        $sample->update([
+            'ph_level'         => $ph,
+            'nitrogen_level'   => $n,
+            'phosphorus_level' => $p,
+            'potassium_level'  => $k,
+            'fertility_score'  => $fs,
+            'recommended_crop' => Crop::topMatchName($ph, $n, $p, $k),
+            'analyzed_at'      => now(),
+        ]);
+
+        return redirect()->route('samples.show', $sample);
+    }
+
+    $readings = $sample->getReadingsByParameter();
+    $fertRec  = [];
+    $allCrops = Crop::active()->orderBy('name')->get(); // ← single fetch
+    $cropFertData = [];
+
+    if ($sample->isAnalyzed()) {
+        $ph = (float) $sample->ph_level;
+        $n  = (float) $sample->nitrogen_level;
+        $p  = (float) $sample->phosphorus_level;
+        $k  = (float) $sample->potassium_level;
+
+        $fertRec = $this->fertilizer->recommend($ph, $n, $p, $k);
+
+        foreach ($allCrops as $crop) {
+            $cropFertData[$crop->id] = CropFertilizerHelper::computeFertilizer($n, $p, $k, $crop);
+        }
+    }
+
+    $aiEnabled     = !empty(env('ANTHROPIC_API_KEY'));
+    $geminiEnabled = !empty(config('services.gemini.api_key'));
+
+    return view('samples.show', compact(
+        'sample', 'readings',
+        'fertRec', 'aiEnabled', 'geminiEnabled', 'allCrops', 'cropFertData'
+    ));
+}
     // Show individual test readings report
     public function report(SoilSample $sample)
     {
