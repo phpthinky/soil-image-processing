@@ -792,6 +792,66 @@
             </div>
         </div>
 
+            <div class="px-3 py-2 border-top bg-light no-print">
+               
+                <div class="mt-2 p-2 rounded border" style="background:#fff8e1;">
+                    <small>
+                        <i class="fas fa-external-link-alt me-1 text-warning"></i>
+                        <strong>Official References (verified):</strong>
+                        <ul class="mb-0 mt-1 ps-3" style="line-height:1.9;">
+                            <li>
+                                <a href="http://www.knowledgebank.irri.org/step-by-step-production/growth/soil-fertility" target="_blank" rel="noopener">
+                                    IRRI Rice Knowledge Bank — Soil Fertility
+                                </a>
+                                — Confirms Rice pH <strong>5.0–6.5</strong>, Olsen P &gt;10 mg/kg
+                                <span class="badge bg-success ms-1" style="font-size:.7rem;">Rice pH confirmed</span>
+                            </li>
+                            <li>
+                                <a href="https://www.bswm.da.gov.ph/download/bswm-fertilizer-recommendation/" target="_blank" rel="noopener">
+                                    BSWM Fertilizer Recommendation Guide
+                                </a>
+                                — DA Bureau of Soils and Water Management (official fertilizer guide per soil test)
+                                <span class="badge bg-primary ms-1" style="font-size:.7rem;">BSWM official</span>
+                            </li>
+                            <li>
+                                <a href="https://www.pca.gov.ph/images/cocotech/PNS_BAFS_238_2018_Code_of_Good_Agricultural_Practices_for_Coconut.pdf" target="_blank" rel="noopener">
+                                    PCA — PNS/BAFS 238:2018 Code of GAP for Coconut (PDF)
+                                </a>
+                                — Philippine National Standard; confirms Coconut pH <strong>5.0–8.0</strong>
+                                <span class="badge bg-success ms-1" style="font-size:.7rem;">Coconut pH confirmed</span>
+                            </li>
+                            <li>
+                                <a href="https://philcoffeeboard.com/7-steps-in-planting-coffee/" target="_blank" rel="noopener">
+                                    Philippine Coffee Board — 7 Steps in Planting Coffee
+                                </a>
+                                — Confirms Coffee pH <strong>5.0–6.5</strong>
+                                <span class="badge bg-success ms-1" style="font-size:.7rem;">Coffee pH confirmed</span>
+                            </li>
+                            <li>
+                                <a href="https://cagayanvalley.da.gov.ph/wp-content/uploads/2018/02/corn_techno_guide_final.pdf" target="_blank" rel="noopener">
+                                    DA Cagayan Valley — Corn Techno Guide (PDF)
+                                </a>
+                                — Confirms Corn optimal pH range (5.3–7.3)
+                                <span class="badge bg-warning text-dark ms-1" style="font-size:.7rem;">Corn pH within range</span>
+                            </li>
+                            <li>
+                                <a href="https://www.bswm.da.gov.ph/program/sha-nsst/" target="_blank" rel="noopener">
+                                    BSWM — National Soil Sampling &amp; Testing (Rice &amp; Corn)
+                                </a>
+                                — BSWM Soil Health Assessment Program; soil pH, N, P, K status maps
+                                <span class="badge bg-primary ms-1" style="font-size:.7rem;">BSWM official</span>
+                            </li>
+                        </ul>
+                        <span class="text-muted d-block mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <strong>Note on NPK ppm values:</strong> BSWM, PhilRice, and IRRI express crop nutrient requirements in kg/ha or %, not ppm.
+                            The ppm ranges shown here are the soil-available nutrient thresholds consistent with those guidelines.
+                            For a certified crop-specific soil analysis, submit samples to the nearest
+                            <a href="https://www.bswm.da.gov.ph" target="_blank" rel="noopener">BSWM</a> or DA regional laboratory.
+                        </span>
+                    </small>
+                </div>
+            </div>
         <div class="text-muted small text-center mb-4">
             <i class="fas fa-info-circle me-1"></i>
             For technical issues or account problems, contact your system administrator.
