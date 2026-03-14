@@ -32,16 +32,29 @@
             </a>
         </div>
         @else
-        <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle table-sm mb-0" style="font-size:.85rem;">
+<div class="table-responsive">
+             
+             <ul class="nav nav-tabs">
+  <li class="nav-item">
+    <a class="nav-link active cursor-pointer" aria-current="page" data-bs-toggle="tab" data-bs-target="#cropkgha">Crops kg/ha</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link cursor-pointer" data-bs-toggle="tab" data-bs-target="#cropppm">Crops PPM</a>
+  </li>
+</ul>
+
+
+            <div class="tab-content" id="cropsTab">
+                <div id="cropkgha" class="tab-pane active fade show">
+                     <table class="table table-striped table-hover align-middle table-sm mb-0" style="font-size:.85rem;">
                 <thead class="table-success">
                     <tr>
                         <th rowspan="2" class="align-middle">#</th>
                         <th rowspan="2" class="align-middle">Crop</th>
                         <th colspan="3" class="text-center">pH</th>
-                        <th colspan="3" class="text-center">Nitrogen (ppm)</th>
-                        <th colspan="3" class="text-center">Phosphorus (ppm)</th>
-                        <th colspan="3" class="text-center">Potassium (ppm)</th>
+                        <th colspan="3" class="text-center">Nitrogen (kg/ha)</th>
+                        <th colspan="3" class="text-center">Phosphorus (kg/ha)</th>
+                        <th colspan="3" class="text-center">Potassium (kg/ha)</th>
                         <th rowspan="2" class="align-middle text-center">Status</th>
                         <th rowspan="2" class="align-middle text-center">Created</th>
                         <th rowspan="2" class="align-middle text-center">By</th>
@@ -123,6 +136,95 @@
                     @endforeach
                 </tbody>
             </table>
+                </div>
+
+
+
+                <div id="cropppm" class="tab-pane fade">
+                     <table class="table table-striped table-hover align-middle table-sm mb-0" style="font-size:.85rem;">
+                <thead class="table-success">
+                    <tr>
+                        <th rowspan="2" class="align-middle">#</th>
+                        <th rowspan="2" class="align-middle">Crop</th>
+                        <th colspan="3" class="text-center">pH</th>
+                        <th colspan="3" class="text-center">Nitrogen (ppm)</th>
+                        <th colspan="3" class="text-center">Phosphorus (ppm)</th>
+                        <th colspan="3" class="text-center">Potassium (ppm)</th>
+                        <th rowspan="2" class="align-middle text-center">Status</th>
+                        <th rowspan="2" class="align-middle text-center">Created</th>
+                        <th rowspan="2" class="align-middle text-center">By</th>
+                        <th rowspan="2" class="align-middle text-center">Actions</th>
+                    </tr>
+                    <tr>
+                        <th class="text-center bg-warning bg-opacity-25" style="font-size:.72rem;">Low</th>
+                        <th class="text-center bg-success bg-opacity-25" style="font-size:.72rem;">Med</th>
+                        <th class="text-center bg-info   bg-opacity-25" style="font-size:.72rem;">High</th>
+                        <th class="text-center bg-warning bg-opacity-25" style="font-size:.72rem;">Low</th>
+                        <th class="text-center bg-success bg-opacity-25" style="font-size:.72rem;">Med</th>
+                        <th class="text-center bg-info   bg-opacity-25" style="font-size:.72rem;">High</th>
+                        <th class="text-center bg-warning bg-opacity-25" style="font-size:.72rem;">Low</th>
+                        <th class="text-center bg-success bg-opacity-25" style="font-size:.72rem;">Med</th>
+                        <th class="text-center bg-info   bg-opacity-25" style="font-size:.72rem;">High</th>
+                        <th class="text-center bg-warning bg-opacity-25" style="font-size:.72rem;">Low</th>
+                        <th class="text-center bg-success bg-opacity-25" style="font-size:.72rem;">Med</th>
+                        <th class="text-center bg-info   bg-opacity-25" style="font-size:.72rem;">High</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($crops as $i => $crop)
+                    <tr>
+                        <td class="text-muted">{{ $i + 1 }}</td>
+                        <td>
+                            <strong>{{ $crop->name }}</strong>
+                            @if($crop->description)
+                                <br><small class="text-muted">{{ Str::limit($crop->description, 60) }}</small>
+                            @endif
+                        </td>
+                        {{-- pH --}}
+                        <td class="text-center">{{ number_format($crop->ph_low ,0) ?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->ph_med ,0) ?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->ph_high,0) ?? '—' }}</td>
+                        {{-- N --}}
+                        <td class="text-center">{{ number_format($crop->n_low/2  ,0)?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->n_med/2  ,0)?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->n_high/2 ,0)?? '—' }}</td>
+                        {{-- P --}}
+                        <td class="text-center">{{ number_format($crop->p_low/2  ,0)?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->p_med/2  ,0)?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->p_high/2 ,0)?? '—' }}</td>
+                        {{-- K --}}
+                        <td class="text-center">{{ number_format($crop->k_low/2  ,0)?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->k_med/2  ,0)?? '—' }}</td>
+                        <td class="text-center">{{ number_format($crop->k_high/2 ,0)?? '—' }}</td>
+                        {{-- Status --}}
+                        <td class="text-center">
+                            @if($crop->status === 'active')
+                                <span class="badge bg-success">Active</span>
+                            @else
+                                <span class="badge bg-secondary">Inactive</span>
+                            @endif
+                        </td>
+                        {{-- Created date --}}
+                        <td class="text-center text-muted" style="font-size:.75rem;">
+                            {{ $crop->created_at->format('M d, Y') }}
+                        </td>
+                        {{-- Created by --}}
+                        <td class="text-center text-muted" style="font-size:.75rem;">
+                            {{ $crop->creator->username ?? '—' }}
+                        </td>
+                        {{-- Actions --}}
+                        <td class="text-center" style="white-space:nowrap;">
+                            -
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+
+                </div>
+            </div>
+
+           
         </div>
         <div class="p-3 text-muted small border-top">
             {{ $crops->count() }} crop(s) total &mdash;

@@ -64,9 +64,16 @@
     </div>
 </div>
 <h4 class="text-primary">Crop target fertilizer - STK</h4>
-
+<div class="alert alert-info d-flex align-items-center" role="alert">
+  
+  <div>
+    <p><i class="fa fa-info-circle me-2 fs-5"></i> <strong>Unit Conversion Guide:</strong></p>
+    <p> Note: Crop nutrient requirements in this system are stored in <strong>kg/ha</strong> (e.g., OMA). If your data is in <strong>ppm</strong>,please convert it first using the formula below.</p>
+    <span class="fw-medium">Conversion formula:</span> <ul><li>ppm = kg/ha &divide; 2</li><li>kg/ha = ppm x 2</li></ul> 
+  </div>
+</div>
 {{-- Nitrogen --}}
-<h6 class="text-success mb-2"><i class="fas fa-atom me-1"></i>Nitrogen (N) Thresholds <small class="text-muted fw-normal">(ppm)</small></h6>
+<h6 class="text-success mb-2"><i class="fas fa-atom me-1"></i>Nitrogen (N) Thresholds <small class="text-muted fw-normal">(kg/ha)</small></h6>
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <label class="form-label">N Low</label>
@@ -93,7 +100,7 @@
 
 
 {{-- Phosphorus --}}
-<h6 class="text-success mb-2"><i class="fas fa-atom me-1"></i>Phosphorus (P) Thresholds <small class="text-muted fw-normal">(ppm)</small></h6>
+<h6 class="text-success mb-2"><i class="fas fa-atom me-1"></i>Phosphorus (P) Thresholds <small class="text-muted fw-normal">(kg/ha)</small></h6>
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <label class="form-label">P Low</label>
@@ -119,7 +126,7 @@
 </div>
 
 {{-- Potassium --}}
-<h6 class="text-success mb-2"><i class="fas fa-atom me-1"></i>Potassium (K) Thresholds <small class="text-muted fw-normal">(ppm)</small></h6>
+<h6 class="text-success mb-2"><i class="fas fa-atom me-1"></i>Potassium (K) Thresholds <small class="text-muted fw-normal">(kg/ha)</small></h6>
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <label class="form-label">K Low</label>
