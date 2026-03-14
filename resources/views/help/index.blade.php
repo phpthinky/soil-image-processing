@@ -41,8 +41,10 @@
                 <li><a href="#npk-tests"><i class="fas fa-circle fa-xs me-1 text-muted"></i> N / P / K Tests</a></li>
                 <li><a href="#capture-guide"><i class="fas fa-circle fa-xs me-1 text-muted"></i> Capture Guide</a></li>
                 <li><a href="#fertilizer-calc"><i class="fas fa-circle fa-xs me-1 text-muted"></i> Fertilizer Calculator</a></li>
-                <li class="ms-3"><a href="#fert-formulas"><i class="fas fa-circle fa-xs me-1 text-muted"></i> Formulas</a></li>
+                <li class="ms-3"><a href="#fert-formulas"><i class="fas fa-circle fa-xs me-1 text-muted"></i> Reversed LMH Formulas</a></li>
                 <li class="ms-3"><a href="#fert-thresholds"><i class="fas fa-circle fa-xs me-1 text-muted"></i> BSWM Thresholds</a></li>
+                <li><a href="#crop-management"><i class="fas fa-circle fa-xs me-1 text-muted"></i> Crop Management (CRUD)</a></li>
+                <li class="ms-3"><a href="#crop-lhm-encoding"><i class="fas fa-circle fa-xs me-1 text-muted"></i> LHM Encoding</a></li>
                 <li><a href="#crop-requirements"><i class="fas fa-circle fa-xs me-1 text-muted"></i> Crop Requirements</a></li>
                 <li><a href="#samples-workflow"><i class="fas fa-circle fa-xs me-1 text-muted"></i> Sample Workflow</a></li>
                 <li><a href="#roles"><i class="fas fa-circle fa-xs me-1 text-muted"></i> User Roles</a></li>
@@ -375,73 +377,117 @@
 
                 {{-- ── Formulas ──────────────────────────────────────── --}}
                 <h6 id="fert-formulas" class="section-anchor fw-bold mt-4 mb-2">
-                    <i class="fas fa-superscript me-1 text-warning"></i>Calculation Formulas
+                    <i class="fas fa-superscript me-1 text-warning"></i>Reversed LMH Calculation Formulas
                 </h6>
 
-                <div class="alert alert-secondary small mb-3">
-                    <strong>Step 1 — Convert crop NPK targets from ppm to kg/ha</strong><br>
-                    The crop's required nutrient level is stored in ppm. To convert:
+                <div class="alert alert-info small mb-3">
+                    <i class="fas fa-circle-info me-1"></i>
+                    <strong>Key concept — Reversed LMH:</strong> In this system, <em>High soil nutrient level = Low fertilizer need</em>.
+                    Crop thresholds are stored in the database in <strong>kg/ha</strong> and divided by 2 to get <strong>ppm</strong>
+                    before comparing with measured soil readings.
                     <div class="bg-white border rounded p-2 mt-2 font-monospace">
-                        Target<sub>kg/ha</sub> = Target<sub>ppm</sub> × 2
+                        Threshold<sub>ppm</sub> = Threshold<sub>kg/ha (DB)</sub> ÷ 2
                     </div>
                     <div class="text-muted mt-1">
-                        Basis: 1 ppm ≈ 2 kg/ha at 0–15 cm sampling depth
-                        (soil bulk density ~1.33 g/cm³ × 15 cm × 10,000 m²/ha ÷ 1,000,000 ≈ 2 kg/ha per ppm).
+                        Basis: 1 ppm ≈ 2 kg/ha at 0–15 cm depth (2,000,000 kg soil/ha)
                     </div>
                 </div>
 
                 <div class="alert alert-secondary small mb-3">
-                    <strong>Step 2 — Nutrient Deficit</strong><br>
-                    The deficit is the gap between what the crop needs and what the soil already has.
-                    A negative deficit means no fertilizer is needed for that nutrient.
+                    <strong>Step 1 — Convert DB Thresholds to ppm</strong><br>
+                    Crop nutrient thresholds are stored in <strong>kg/ha</strong> in the Crops table.
+                    Divide each by 2 to get the ppm value used for classification:
                     <div class="bg-white border rounded p-2 mt-2 font-monospace">
-                        Deficit<sub>ppm</sub> = max(0, &nbsp;Target<sub>ppm</sub> − Soil<sub>ppm</sub>)<br>
-                        Deficit<sub>kg/ha</sub> = Deficit<sub>ppm</sub> × 2
+                        n_low<sub>ppm</sub> = n_low<sub>kg/ha</sub> ÷ 2 &nbsp;(e.g. 90 ÷ 2 = <strong>45 ppm</strong>)<br>
+                        n_med<sub>ppm</sub> = n_med<sub>kg/ha</sub> ÷ 2 &nbsp;(e.g. 60 ÷ 2 = <strong>30 ppm</strong>)<br>
+                        (same conversion for P and K)
                     </div>
                 </div>
 
                 <div class="alert alert-secondary small mb-3">
-                    <strong>Step 3 — Primary Fertilizer Rate (bags/ha)</strong><br>
-                    The system calculates how many 50-kg bags of the <em>chosen fertilizer</em> are needed per hectare,
-                    computed independently for each nutrient the fertilizer can supply, then takes the
-                    <strong>maximum</strong> (the most limiting nutrient drives the rate):
+                    <strong>Step 2 — Reversed LMH Classification</strong><br>
+                    Compare the measured soil reading (ppm) against the converted ppm thresholds.
+                    Because high soil nutrients mean <em>less</em> fertilizer is needed, the classification is reversed:
+                    <div class="table-responsive mt-2">
+                        <table class="table table-bordered table-sm text-center align-middle mb-0" style="font-size:.82rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Soil Reading (ppm)</th>
+                                    <th>Fertilizer Need</th>
+                                    <th>Target for Deficit</th>
+                                    <th>Meaning</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="table-success">
+                                    <td>Soil ≥ <code>n_low ÷ 2</code> (e.g. ≥ 45 ppm)</td>
+                                    <td><span class="badge bg-success">Low</span></td>
+                                    <td><code>n_low ÷ 2</code> (45 ppm)</td>
+                                    <td>Soil already sufficient — deficit ≈ 0</td>
+                                </tr>
+                                <tr class="table-warning">
+                                    <td>Soil ≥ <code>n_med ÷ 2</code> (e.g. ≥ 30 ppm)</td>
+                                    <td><span class="badge bg-warning text-dark">Medium</span></td>
+                                    <td><code>n_low ÷ 2</code> (45 ppm)</td>
+                                    <td>Moderate amendment — bring up to sufficiency</td>
+                                </tr>
+                                <tr class="table-danger">
+                                    <td>Soil &lt; <code>n_med ÷ 2</code> (e.g. &lt; 30 ppm)</td>
+                                    <td><span class="badge bg-danger">High</span></td>
+                                    <td><code>n_low ÷ 2</code> (45 ppm)</td>
+                                    <td>Significant amendment — bring up to sufficiency</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary small mb-3">
+                    <strong>Step 3 — Deficit &amp; Fertilizer Product</strong><br>
+                    Calculate the gap between the crop target and the soil reading, then convert to fertilizer product:
                     <div class="bg-white border rounded p-2 mt-2 font-monospace">
-                        BagsForN = Deficit<sub>N, kg/ha</sub> ÷ (50 × N_grade)<br>
-                        BagsForP = Deficit<sub>P, kg/ha</sub> ÷ (50 × P_grade)<br>
-                        BagsForK = Deficit<sub>K, kg/ha</sub> ÷ (50 × K_grade)<br>
+                        1. Deficit<sub>ppm</sub> = max(0, target<sub>ppm</sub> − soil<sub>ppm</sub>)<br>
+                        2. Pure nutrient deficit<sub>kg/ha</sub> = deficit<sub>ppm</sub> × 2<br>
+                        3. Fertilizer product<sub>kg/ha</sub> = pure_nutrient<sub>kg/ha</sub> ÷ fertilizer_fraction
+                    </div>
+                    <div class="text-muted mt-2">
+                        Fertilizer fractions: <strong>Urea 46-0-0</strong> → N fraction = 0.46 &nbsp;|&nbsp;
+                        <strong>DAP 18-46-0</strong> → P fraction = 0.18 &nbsp;|&nbsp;
+                        <strong>MOP 0-0-60</strong> → K fraction = 0.60
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary small mb-3">
+                    <strong>Step 4 — Primary Fertilizer (most-limiting nutrient)</strong><br>
+                    The primary fertilizer rate is driven by whichever nutrient requires the most product per hectare:
+                    <div class="bg-white border rounded p-2 mt-2 font-monospace">
+                        primaryKgHa = max(defN ÷ N_grade, defP ÷ P_grade, defK ÷ K_grade)
+                    </div>
+                    <div class="text-muted mt-1">
+                        Division is skipped for any grade = 0 (nutrient not in that fertilizer).
+                        The nutrient driving the maximum is shown as "Limited by: …" in results.
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary small mb-3">
+                    <strong>Step 5 — Supplemental Fertilizers (TSP &amp; MOP)</strong><br>
+                    If the primary fertilizer does not supply P or K, supplemental products are added automatically:
+                    <div class="bg-white border rounded p-2 mt-2 font-monospace">
+                        if primary has no P and defP &gt; 0:<br>
+                        &nbsp;&nbsp;TSP kg/ha = defP<sub>kg/ha</sub> ÷ 0.46<br>
                         <br>
-                        Primary bags/ha = max(BagsForN, BagsForP, BagsForK)
+                        if primary has no K and defK &gt; 0:<br>
+                        &nbsp;&nbsp;MOP kg/ha = defK<sub>kg/ha</sub> ÷ 0.60
                     </div>
                     <div class="text-muted mt-1">
-                        <em>N_grade, P_grade, K_grade</em> are the fractional nutrient contents of the fertilizer
-                        (e.g., Urea 46-0-0 → N_grade = 0.46, P_grade = 0, K_grade = 0).
-                        Division by zero is skipped for grades = 0.
+                        TSP (Triple Superphosphate 0-46-0) &nbsp;|&nbsp; MOP (Muriate of Potash 0-0-60)
                     </div>
                 </div>
 
                 <div class="alert alert-secondary small mb-3">
-                    <strong>Step 4 — Supplemental Fertilizers (TSP &amp; MOP)</strong><br>
-                    After the primary fertilizer is applied, the system checks whether the remaining P and K deficits
-                    are still unmet. If so, supplemental fertilizers are added:
+                    <strong>Step 6 — Total Fertilizer for Farm Area</strong>
                     <div class="bg-white border rounded p-2 mt-2 font-monospace">
-                        Remaining P deficit = Deficit<sub>P, kg/ha</sub> − (Primary bags/ha × 50 × 0.46)<br>
-                        <span class="text-muted">if Remaining P &gt; 0:</span><br>
-                        &nbsp;&nbsp;TSP bags/ha = Remaining P ÷ (50 × 0.46)<br>
-                        <br>
-                        Remaining K deficit = Deficit<sub>K, kg/ha</sub> − (Primary bags/ha × 50 × 0.60)<br>
-                        <span class="text-muted">if Remaining K &gt; 0:</span><br>
-                        &nbsp;&nbsp;MOP bags/ha = Remaining K ÷ (50 × 0.60)
-                    </div>
-                    <div class="text-muted mt-1">
-                        TSP grade = 0.46 (Triple Superphosphate 0-46-0) &nbsp;|&nbsp;
-                        MOP grade = 0.60 (Muriate of Potash 0-0-60)
-                    </div>
-                </div>
-
-                <div class="alert alert-secondary small mb-3">
-                    <strong>Step 5 — Total Fertilizer for Farm Area</strong>
-                    <div class="bg-white border rounded p-2 mt-2 font-monospace">
-                        Total kg = (bags/ha × 50 kg/bag) × Area<sub>ha</sub>
+                        Total kg = fertilizer_kg_ha × farm_area_ha
                     </div>
                 </div>
 
@@ -456,6 +502,26 @@
                     <div class="text-muted mt-1">
                         Total lime (tonnes) = Lime rate (t/ha) × Farm area (ha)
                     </div>
+                </div>
+
+                {{-- Worked Example ──────────────────────────────── --}}
+                <h6 class="fw-bold text-info mb-2">
+                    <i class="fas fa-seedling me-1"></i>Worked Example — Garlic, Nitrogen
+                </h6>
+                <div class="table-responsive mb-3">
+                    <table class="table table-bordered table-sm align-middle mb-0" style="font-size:.82rem;">
+                        <tbody>
+                            <tr><td class="text-muted" style="width:45%">DB threshold <code>n_low</code></td><td><strong>90 kg/ha</strong></td></tr>
+                            <tr><td class="text-muted">Convert to ppm (÷ 2)</td><td><strong>45 ppm</strong></td></tr>
+                            <tr><td class="text-muted">DB threshold <code>n_med</code></td><td><strong>60 kg/ha → 30 ppm</strong></td></tr>
+                            <tr><td class="text-muted">Soil N reading</td><td><strong>7.60 ppm</strong></td></tr>
+                            <tr><td class="text-muted">Classification</td><td>7.60 &lt; 30 ppm → <span class="badge bg-danger">High</span> fertilizer need</td></tr>
+                            <tr><td class="text-muted">Target (High → n_low ÷ 2)</td><td><strong>45 ppm</strong></td></tr>
+                            <tr><td class="text-muted">Deficit (ppm)</td><td>45 − 7.60 = <strong>37.40 ppm</strong></td></tr>
+                            <tr><td class="text-muted">Pure nutrient deficit (kg/ha)</td><td>37.40 × 2 = <strong>74.80 kg N/ha</strong></td></tr>
+                            <tr><td class="text-muted">Urea needed (kg/ha)</td><td>74.80 ÷ 0.46 = <strong>162.6 kg Urea/ha</strong></td></tr>
+                        </tbody>
+                    </table>
                 </div>
 
                 {{-- BSWM Thresholds ───────────────────────────── --}}
@@ -545,6 +611,174 @@
                     All fertilizer rates above are per hectare using 50-kg commercial bags.
                     Source: BSWM/PhilRice Soil Fertility Management Guidelines.
                 </div>
+            </div>
+        </div>
+
+        {{-- ── CROP MANAGEMENT (CRUD) ─────────────────────────────── --}}
+        <div id="crop-management" class="section-anchor card mb-4">
+            <div class="card-header text-white" style="background:#2e7d32;">
+                <i class="fas fa-seedling me-2"></i>Crop Management — Encoding Reversed LHM Nutrient Deficiency
+            </div>
+            <div class="card-body">
+
+                <p>
+                    The <strong>Crops</strong> module lets you manually define crop-specific nutrient thresholds
+                    used by the Fertilizer Calculator. Navigate to
+                    <a href="{{ route('crops.index') }}" class="text-success fw-semibold">
+                        <i class="fas fa-arrow-up-right-from-square fa-xs"></i> Crops
+                    </a>
+                    in the sidebar to add, edit, or deactivate crops.
+                </p>
+
+                <div class="alert alert-warning mb-3">
+                    <i class="fas fa-triangle-exclamation me-1"></i>
+                    <strong>Important:</strong> Crop threshold values must be entered in <strong>kg/ha</strong> — not ppm.
+                    The system automatically divides by 2 at calculation time to compare with ppm soil readings.
+                    <span class="d-block mt-1 small text-muted">
+                        Formula: <code>ppm = kg/ha ÷ 2</code> &nbsp;|&nbsp; <code>kg/ha = ppm × 2</code>
+                    </span>
+                </div>
+
+                {{-- What is Reversed LHM ─────────────────────────────────── --}}
+                <h6 id="crop-lhm-encoding" class="section-anchor fw-bold mb-3">
+                    <i class="fas fa-arrows-rotate me-1 text-warning"></i>Understanding the Reversed LHM Encoding
+                </h6>
+                <p class="small">
+                    Standard LHM (Low-Medium-High) labels soil nutrient level.
+                    This system uses a <strong>reversed</strong> interpretation to label
+                    <em>fertilizer need</em> — the higher the soil nutrient, the lower the fertilizer need.
+                </p>
+
+                <div class="table-responsive mb-3">
+                    <table class="table table-bordered table-sm align-middle text-center" style="font-size:.83rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-start">Threshold field</th>
+                                <th>Meaning (soil level at this value)</th>
+                                <th>Fertilizer Need</th>
+                                <th>Example — Nitrogen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="table-success">
+                                <td class="text-start fw-semibold"><code>n_low</code> (kg/ha)</td>
+                                <td>Soil is <strong>already sufficient</strong> at this level</td>
+                                <td><span class="badge bg-success">Low</span></td>
+                                <td>90 kg/ha = 45 ppm — if soil ≥ 45 ppm, Low need</td>
+                            </tr>
+                            <tr class="table-warning">
+                                <td class="text-start fw-semibold"><code>n_med</code> (kg/ha)</td>
+                                <td>Soil is in the <strong>marginal zone</strong></td>
+                                <td><span class="badge bg-warning text-dark">Medium</span></td>
+                                <td>60 kg/ha = 30 ppm — if soil ≥ 30 ppm, Medium need</td>
+                            </tr>
+                            <tr class="table-danger">
+                                <td class="text-start fw-semibold"><code>n_high</code> (kg/ha)</td>
+                                <td>Soil is <strong>critically deficient</strong> below this</td>
+                                <td><span class="badge bg-danger">High</span></td>
+                                <td>20 kg/ha = 10 ppm — if soil &lt; 30 ppm, High need</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-info small mb-3">
+                    <i class="fas fa-circle-info me-1"></i>
+                    <strong>Rule of thumb for data entry:</strong>
+                    Set <code>n_low</code> to the <em>sufficiency threshold</em> (highest value — soil at or above this needs no amendment),
+                    <code>n_med</code> to the <em>marginal threshold</em>, and <code>n_high</code> to the <em>critical deficiency level</em>.
+                    Values should decrease: <code>n_low &gt; n_med &gt; n_high</code>.
+                </div>
+
+                {{-- Steps to add a crop ──────────────────────────────────── --}}
+                <h6 class="fw-bold mb-3">
+                    <i class="fas fa-plus-circle me-1 text-success"></i>How to Add or Edit a Crop
+                </h6>
+                @php
+                $cropSteps = [
+                    'Go to <strong>Crops</strong> in the sidebar and click <strong>Add Crop</strong>.',
+                    'Enter the <strong>Crop Name</strong> (e.g., Rice, Corn, Garlic) and an optional description.',
+                    'Set the <strong>Status</strong> to <em>Active</em> so it appears in the Fertilizer Calculator dropdown. Inactive crops are hidden from analysis.',
+                    'Enter <strong>pH thresholds</strong> (Low / Medium / High) on the 0–14 scale to define the acceptable pH range for the crop.',
+                    'Enter <strong>N, P, K thresholds</strong> in <strong>kg/ha</strong>. Remember: <code>Low = sufficiency threshold</code>, <code>Medium = marginal</code>, <code>High = critical</code>.',
+                    'Click <strong>Save</strong>. The crop is immediately available in the Fertilizer Calculator.',
+                ];
+                @endphp
+                @foreach($cropSteps as $i => $s)
+                <div class="step-row">
+                    <span class="step-badge">{{ $i + 1 }}</span>
+                    <p>{!! $s !!}</p>
+                </div>
+                @endforeach
+
+                {{-- Fertilizer fractions reference ──────────────────── --}}
+                <h6 class="fw-bold mt-3 mb-2">
+                    <i class="fas fa-flask me-1 text-primary"></i>Fertilizer Product Fractions Reference
+                </h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm align-middle mb-0" style="font-size:.82rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fertilizer</th>
+                                <th class="text-center">Grade</th>
+                                <th class="text-center">N fraction</th>
+                                <th class="text-center">P fraction</th>
+                                <th class="text-center">K fraction</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Urea</strong></td>
+                                <td class="text-center">46-0-0</td>
+                                <td class="text-center fw-bold text-success">0.46</td>
+                                <td class="text-center text-muted">—</td>
+                                <td class="text-center text-muted">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Complete</strong></td>
+                                <td class="text-center">14-14-14</td>
+                                <td class="text-center fw-bold text-success">0.14</td>
+                                <td class="text-center fw-bold text-primary">0.14</td>
+                                <td class="text-center fw-bold text-info">0.14</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Ammonium Sulfate</strong></td>
+                                <td class="text-center">21-0-0</td>
+                                <td class="text-center fw-bold text-success">0.21</td>
+                                <td class="text-center text-muted">—</td>
+                                <td class="text-center text-muted">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>DAP</strong></td>
+                                <td class="text-center">18-46-0</td>
+                                <td class="text-center fw-bold text-success">0.18</td>
+                                <td class="text-center fw-bold text-primary">0.46</td>
+                                <td class="text-center text-muted">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>MOP (Muriate of Potash)</strong></td>
+                                <td class="text-center">0-0-60</td>
+                                <td class="text-center text-muted">—</td>
+                                <td class="text-center text-muted">—</td>
+                                <td class="text-center fw-bold text-info">0.60</td>
+                            </tr>
+                            <tr>
+                                <td><strong>TSP (Triple Superphosphate)</strong></td>
+                                <td class="text-center">0-46-0</td>
+                                <td class="text-center text-muted">—</td>
+                                <td class="text-center fw-bold text-primary">0.46</td>
+                                <td class="text-center text-muted">—</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-2 small text-muted">
+                    <i class="fas fa-circle-info me-1"></i>
+                    The Fertilizer Calculator uses these fractions to convert the pure-nutrient deficit (kg/ha)
+                    into the amount of fertilizer <em>product</em> to apply:
+                    <code>product kg/ha = deficit kg/ha ÷ fraction</code>.
+                </div>
+
             </div>
         </div>
 
