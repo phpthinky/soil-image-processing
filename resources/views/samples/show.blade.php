@@ -516,9 +516,9 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                             // Values stored as ppm; display as ppm to match Soil Analysis Results
                             $calcParams = [
                                 ['key'=>'ph',         'label'=>'Soil pH',   'value'=>(float)$sample->ph_level,                         'unit'=>''],
-                                ['key'=>'nitrogen',   'label'=>'Nitrogen',  'value'=>(float)$sample->nitrogen_level,                   'unit'=>' ppm'],
-                                ['key'=>'phosphorus', 'label'=>'Phosphorus','value'=>(float)$sample->phosphorus_level,                 'unit'=>' ppm'],
-                                ['key'=>'potassium',  'label'=>'Potassium', 'value'=>(float)$sample->potassium_level,                  'unit'=>' ppm'],
+                                ['key'=>'nitrogen',   'label'=>'Nitrogen',  'value'=>(float)$sample->nitrogen_level,                   'unit'=>' kg/ha'],
+                                ['key'=>'phosphorus', 'label'=>'Phosphorus','value'=>(float)$sample->phosphorus_level,                 'unit'=>' kg/ha'],
+                                ['key'=>'potassium',  'label'=>'Potassium', 'value'=>(float)$sample->potassium_level,                  'unit'=>' kg/ha'],
                             ];
                             @endphp
                             @foreach($calcParams as $cp)
@@ -536,7 +536,7 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                             @endphp
                             <tr>
                                 <td>{{ $cp['label'] }}</td>
-                                <td class="text-center fw-bold">{{ number_format($displayVal, 1) }}{{ $cp['unit'] }}</td>
+                                <td class="text-center fw-bold">{{ number_format($displayVal * 2, 1) }}{{ $cp['unit'] }}</td>
                                 <td class="text-center">
                                     <span class="badge bg-{{ $stBg }}">{{ $st }}</span>
                                 </td>
@@ -1039,11 +1039,11 @@ function calculateFertilizer() {
                         <thead class="table-light">
                             <tr>
                                 <th>Nutrient</th>
-                                <th class="text-center">Soil<br><small class="text-muted">(ppm)</small></th>
-                                <th class="text-center">DB Threshold<br><small class="text-muted">(kg/ha stored)</small></th>
-                                <th class="text-center">Threshold<br><small class="text-muted">(÷2 = ppm)</small></th>
-                                <th class="text-center">Deficit<br><small class="text-muted">(ppm)</small></th>
-                                <th class="text-center">Pure Nutrient<br><small class="text-muted">deficit (kg/ha)</small></th>
+                                <th class="text-center">Current Soil Nutrients<br><small class="text-muted">(kg/ha)</small></th>
+                                <th class="text-center">Crop Target<br><small class="text-muted">(kg/ha stored)</small></th>
+                                <th class="text-center d-none">Threshold<br><small class="text-muted">(÷2 = ppm)</small></th>
+                                <th class="text-center d-none">Deficit<br><small class="text-muted">(ppm)</small></th>
+                                <th class="text-center d-none">Pure Nutrient<br><small class="text-muted">deficit (kg/ha)</small></th>
                                 <th class="text-center">Fertilizer Product<br><small class="text-muted">needed (kg/ha)</small></th>
                                 <th class="text-center">Need</th>
                             </tr>
@@ -1052,19 +1052,19 @@ function calculateFertilizer() {
                             ${rows.map(r => `
                             <tr>
                                 <td class="fw-semibold">${r.label}</td>
-                                <td class="text-center">${fmt(r.d.soil_ppm)}</td>
+                                <td class="text-center">${fmt(r.d.soil_ppm * 2)}</td>
                                 <td class="text-center text-primary fw-bold">
                                     ${fmt(r.d.target_ppm * 2)}
                                     <div class="text-muted fw-normal" style="font-size:10px;">in DB</div>
                                 </td>
-                                <td class="text-center text-info fw-bold">
+                                <td class="text-center d-none text-info fw-bold">
                                     ${fmt(r.d.target_ppm)}
                                     <div class="text-muted fw-normal" style="font-size:10px;">${fmt(r.d.target_ppm * 2)} ÷ 2</div>
                                 </td>
-                                <td class="text-center fw-bold ${r.d.deficit_ppm > 0 ? 'text-danger' : 'text-success'}">
+                                <td class="text-center fw-bold d-none ${r.d.deficit_ppm > 0 ? 'text-danger' : 'text-success'}">
                                     ${fmt(r.d.deficit_ppm)}
                                 </td>
-                                <td class="text-center text-muted">
+                                <td class="text-center d-none text-muted">
                                     ${fmt(r.defKgHa)}
                                     <div style="font-size:10px;">${fmt(r.d.deficit_ppm)} × 2</div>
                                 </td>
