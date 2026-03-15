@@ -220,6 +220,12 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
             'High'          => 'primary',
             default         => 'secondary'
         };
+        $statusLabel = match($status) {
+            'Acidic'  => 'Low',
+            'Optimal' => 'Medium',
+            'Alkaline'=> 'High',
+            default   => $status,
+        };
     @endphp
     <div class="col-md-3 mb-3">
         <div class="card h-100 border-{{ $bsColor }}">
@@ -235,7 +241,7 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                     <div style="width:50px;height:25px;background:{{ $rp['hex'] }};border:1px solid #ccc;border-radius:4px;margin:0 auto;"></div>
                     <small class="text-muted">{{ $rp['hex'] }}</small>
                 </div>
-                <span class="badge bg-{{ $bsColor }}">{{ $status }}</span>
+                <span class="badge bg-{{ $bsColor }}">{{ $statusLabel }}</span>
             </div>
         </div>
     </div>
@@ -531,12 +537,18 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                                 'High'         => 'primary',
                                 default        => 'secondary',
                             };
+                            $stLabel = match($st) {
+                                'Acidic'   => 'Low',
+                                'Optimal'  => 'Medium',
+                                'Alkaline' => 'High',
+                                default    => $st,
+                            };
                             @endphp
                             <tr>
                                 <td>{{ $cp['label'] }}</td>
                                 <td class="text-center fw-bold">{{ number_format($cp['value'],1) }}{{ $cp['unit'] }}</td>
                                 <td class="text-center">
-                                    <span class="badge bg-{{ $stBg }}">{{ $st }}</span>
+                                    <span class="badge bg-{{ $stBg }}">{{ $stLabel }}</span>
                                 </td>
                             </tr>
                             @endforeach
