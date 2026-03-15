@@ -220,12 +220,6 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
             'High'          => 'primary',
             default         => 'secondary'
         };
-        $statusLabel = match($status) {
-            'Acidic'  => 'Low',
-            'Optimal' => 'Medium',
-            'Alkaline'=> 'High',
-            default   => $status,
-        };
     @endphp
     <div class="col-md-3 mb-3">
         <div class="card h-100 border-{{ $bsColor }}">
@@ -241,7 +235,7 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                     <div style="width:50px;height:25px;background:{{ $rp['hex'] }};border:1px solid #ccc;border-radius:4px;margin:0 auto;"></div>
                     <small class="text-muted">{{ $rp['hex'] }}</small>
                 </div>
-                <span class="badge bg-{{ $bsColor }}">{{ $statusLabel }}</span>
+                <span class="badge bg-{{ $bsColor }}">{{ $status }}</span>
             </div>
         </div>
     </div>
@@ -519,16 +513,18 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                         </thead>
                         <tbody>
                             @php
+                            // Values stored as ppm; display as ppm to match Soil Analysis Results
                             $calcParams = [
-                                ['key'=>'ph',         'label'=>'Soil pH',   'value'=>$sample->ph_level,         'unit'=>''],
-                                ['key'=>'nitrogen',   'label'=>'Nitrogen',  'value'=>$sample->nitrogen_level,   'unit'=>' ppm'],
-                                ['key'=>'phosphorus', 'label'=>'Phosphorus','value'=>$sample->phosphorus_level, 'unit'=>' ppm'],
-                                ['key'=>'potassium',  'label'=>'Potassium', 'value'=>$sample->potassium_level,  'unit'=>' ppm'],
+                                ['key'=>'ph',         'label'=>'Soil pH',   'value'=>(float)$sample->ph_level,                         'unit'=>''],
+                                ['key'=>'nitrogen',   'label'=>'Nitrogen',  'value'=>(float)$sample->nitrogen_level,                   'unit'=>' ppm'],
+                                ['key'=>'phosphorus', 'label'=>'Phosphorus','value'=>(float)$sample->phosphorus_level,                 'unit'=>' ppm'],
+                                ['key'=>'potassium',  'label'=>'Potassium', 'value'=>(float)$sample->potassium_level,                  'unit'=>' ppm'],
                             ];
                             @endphp
                             @foreach($calcParams as $cp)
                             @php
-                            $st   = $fertilizerSvc->getNutrientStatus($cp['key'], (float)$cp['value']);
+                            $displayVal = $cp['key'] !== 'ph' ? (float)$cp['value'] : (float)$cp['value'];
+                            $st   = $fertilizerSvc->getNutrientStatus($cp['key'], $displayVal);
                             $stBg = match($st) {
                                 'Acidic','Low' => 'danger',
                                 'Medium'       => 'warning',
@@ -537,18 +533,12 @@ $fertilizerSvc = app(\App\Services\FertilizerService::class);
                                 'High'         => 'primary',
                                 default        => 'secondary',
                             };
-                            $stLabel = match($st) {
-                                'Acidic'   => 'Low',
-                                'Optimal'  => 'Medium',
-                                'Alkaline' => 'High',
-                                default    => $st,
-                            };
                             @endphp
                             <tr>
                                 <td>{{ $cp['label'] }}</td>
-                                <td class="text-center fw-bold">{{ number_format($cp['value'],1) }}{{ $cp['unit'] }}</td>
+                                <td class="text-center fw-bold">{{ number_format($displayVal, 1) }}{{ $cp['unit'] }}</td>
                                 <td class="text-center">
-                                    <span class="badge bg-{{ $stBg }}">{{ $stLabel }}</span>
+                                    <span class="badge bg-{{ $stBg }}">{{ $st }}</span>
                                 </td>
                             </tr>
                             @endforeach
